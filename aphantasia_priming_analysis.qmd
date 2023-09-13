@@ -1,0 +1,64 @@
+---
+title: "Sensory priming in aphantasia - Data analysis"
+author: "Maël Delem"
+format: html
+---
+
+```{r setup}
+#| include: false
+
+# --- packages ---
+# librairian will ease the package management with the "shelf" function
+if (!require(librarian)) install.packages(librarian)
+library(librarian)
+
+# now putting packages on our library's shelves:
+shelf(
+  quarto,
+  # --- xlsx, json, txt file management
+  readxl,
+  jsonlite,
+  fs,
+  # --- data analysis packages:
+  easystats,      # framework for data analysis functions
+  # MASS,           # Box-Cox transformation
+  # cluster,        # self-explanatory (i.e. cluster analyses)
+  # mclust,         # mixture clustering
+  # factoextra,     # multivariate analysis visualization
+  # FactoMineR,     # multivariate analysis
+  # rstanarm,       # bayesian models
+  # BayesFactor,    # self-explanatory (i.e. Bayes Factors)
+  # --- data visualization/exploration packages:
+  ggpubr,         # layout and statistics display
+  ggradar,        # radar charts
+  ggsci,          # scientific palettes
+  wesanderson,    # artistic palettes
+  viridis,        # colour-blind friendly palettes
+  # --- tables ---
+  # qwraps2,        # mean_sd function
+  # and the basics:
+  tidyverse
+)
+
+# --- global theme ---
+theme_set(
+  theme_bw(
+    base_size = 14,
+    base_family = "serif",
+  )
+)
+
+# creating colour-blind friendly coulour palettes
+duo_pal <- c("#003d73", "#889be0")
+trio_pal <- c("#f2bb7b", "#e57774", "#6c0009")
+full_pal <- c("#f2bb7b", "#e57774", "#6c0009", "#003d73", "#889be0")
+
+# table formatting
+# options(qwraps2_markup = "")
+# options(
+#   knitr.kable.NA = '',
+#   knitr.table.format = "markdown")
+
+# --- fixing a seed for reproducibility ---
+set.seed(14051998)
+```
