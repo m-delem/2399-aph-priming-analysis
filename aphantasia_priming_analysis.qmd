@@ -17,8 +17,9 @@ shelf(
   quarto,
   # --- xlsx, json, txt file management
   readxl,
-  jsonlite,
-  fs,
+  # openxlsx,
+  # jsonlite,
+  # fs,
   # --- data analysis packages:
   easystats,      # framework for data analysis functions
   # MASS,           # Box-Cox transformation
@@ -49,9 +50,9 @@ theme_set(
 )
 
 # creating colour-blind friendly coulour palettes
-duo_pal <- c("#003d73", "#889be0")
-trio_pal <- c("#f2bb7b", "#e57774", "#6c0009")
-full_pal <- c("#f2bb7b", "#e57774", "#6c0009", "#003d73", "#889be0")
+# duo_pal <- c("#003d73", "#889be0")
+# trio_pal <- c("#f2bb7b", "#e57774", "#6c0009")
+# full_pal <- c("#f2bb7b", "#e57774", "#6c0009", "#003d73", "#889be0")
 
 # table formatting
 # options(qwraps2_markup = "")
@@ -62,3 +63,39 @@ full_pal <- c("#f2bb7b", "#e57774", "#6c0009", "#003d73", "#889be0")
 # --- fixing a seed for reproducibility ---
 set.seed(14051998)
 ```
+
+```{r importing_data}
+
+df_raw <- read_excel("data/aphantasia_priming_tidy_data.xlsx", sheet = "data_raw")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

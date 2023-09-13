@@ -15,6 +15,7 @@ shelf(
   quarto,
   # --- xlsx, json, txt file management
   readxl,
+  openxlsx,
   jsonlite,
   fs,
   # --- data analysis packages:
@@ -38,27 +39,93 @@ shelf(
   tidyverse
 )
 
-# ---- Extraction --------------------------------------------------------------
+# ---- Extraction and integrating previous data --------------------------------
 
-# --- retrieving file paths for each .txt datafile
-# listing all folders in the data folder
-datafiles <-
-  dir_ls(path = "data", regexp = "study") %>% 
-  # transforming it into a character vector
-  as.character() %>% 
-  # searching the subfolder for each folder...
-  map_chr(dir_ls) %>% 
-  # ... and the datafile in each subfolder.
-  map_chr(dir_ls)
+# the last version of raw data
+df_raw <- read_excel("data/aphantasia_priming_data_130923.xlsx")
 
-# --- reading the .txt as JSON
-jsons <- datafiles %>% map(read_json) 
+# retrieving processed data for questionnaires
+df_jasp <- read_excel("data/aphantasia_priming_processed.xlsx", sheet = "JASP") 
 
-# --- rectangling into a dataframe
-df <-
-  jsons %>% 
-  tibble() %>% 
-  rename(data = ".") %>% 
-  unnest_wider(data) %>% 
-  unnest_longer(data) %>% 
-  unnest_wider(data)
+# finding the participant names with no questionnaire data (N = 15 / 166)
+no_questionnaires <- 
+  df_jasp[,1:6] %>% 
+  filter(is.na(`TOTAL VVIQ /80`)) %>% 
+  select(Participants) %>% 
+  unlist %>% 
+  as.character
+
+# removing their data from the raw dataset
+df_raw <- df_raw %>% filter(!subjectid %in% no_questionnaires & 
+                              subjectid != "sbasle" & subjectid != "tmaselli")
+
+# creating one dataset for each task with relevant columns
+df_asso <- 
+  df_raw %>% 
+  filter(task == "association task") %>% 
+  select(
+    subjectid,
+    orientation, response,
+    correct_association_task_response,
+    response_time_association_task_response
+  )
+
+df_implicit <-
+  df_raw %>% 
+  filter(task == "implicit task") %>% 
+  select(
+    subjectid,
+    color, congruence, orientation, response,
+    correct_implicit_task_response,
+    response_time_implicit_task_response
+  )
+
+df_explicit <-
+  df_raw %>% 
+  filter(task == "explicit task") %>% 
+  select(
+    subjectid,
+    color, congruence, orientation, response,
+    correct_explicite_task_response,
+    response_time_explicite_task_response
+  )
+
+df_rotation <-
+  df_raw %>% 
+  filter(task == "rotation task") %>%   
+  select(
+    subjectid,
+    response,
+    correct_keyboard_response_rotation_task,
+    response_time_keyboard_response_rotation_task,
+    stimuli
+  )
+
+# need to add questionnaire data
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# 
+# saving in the xlsx
+write.xlsx(
+  list(
+    "data_raw" = df_raw,
+    "data_asso" = df_asso,
+    "data_implicit" = df_implicit,
+    "data_explicit" = df_explicit,
+    "data_rotation" = df_rotation),
+  "data/aphantasia_priming_tidy_data.xlsx",
+  asTable = TRUE,
+  colNames = TRUE,
+  colWidths = "auto",
+  borders = "all",
+  tableStyle = "TableStyleMedium16"
+)
