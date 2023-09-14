@@ -2,26 +2,36 @@
 title: "Sensory priming in aphantasia - Data analysis"
 author: "Maël Delem"
 format: html
+code-fold: true
+warning: false
+error: false
+message: false
+cap-location: bottom
 ---
 
-```{r setup}
-#| include: false
+Below is the setup code, including two essential steps: 1) installing the required packages for this data analysis; and 2) importing data into the dataframes used throughout this data analysis. I left this step there for reference in a view of transparency for the interested reader.
 
-# --- packages ---
-# librairian will ease the package management with the "shelf" function
+```{r setup}
+
+# --- Packages -----------------------------------------------------------------
+
+# The package `librairian` will ease the package management with the "shelf" 
+# function, which automatically: 
+# 1) checks if a package is installed 
+# 2) installs it if need be
+# 3) loads the package like the "library()" function would.
 if (!require(librarian)) install.packages(librarian)
 library(librarian)
 
 # now putting packages on our library's shelves:
 shelf(
-  quarto,
-  # --- xlsx, json, txt file management
+  # the basics
+  tidyverse,
+  # Excel files management
   readxl,
-  # openxlsx,
-  # jsonlite,
-  # fs,
   # --- data analysis packages:
   easystats,      # framework for data analysis functions
+  brms,           # bayesian modeling
   # MASS,           # Box-Cox transformation
   # cluster,        # self-explanatory (i.e. cluster analyses)
   # mclust,         # mixture clustering
@@ -37,11 +47,9 @@ shelf(
   viridis,        # colour-blind friendly palettes
   # --- tables ---
   # qwraps2,        # mean_sd function
-  # and the basics:
-  tidyverse
 )
 
-# --- global theme ---
+# --- Global cosmetic theme ----------------------------------------------------
 theme_set(
   theme_bw(
     base_size = 14,
@@ -60,14 +68,30 @@ theme_set(
 #   knitr.kable.NA = '',
 #   knitr.table.format = "markdown")
 
-# --- fixing a seed for reproducibility ---
+# --- Fixing a seed for reproducibility ----------------------------------------
 set.seed(14051998)
-```
 
-```{r importing_data}
+# --- Importing data -----------------------------------------------------------
 
-df_raw <- read_excel("data/aphantasia_priming_tidy_data.xlsx", sheet = "data_raw")
+# Association task
+df_asso <- read_excel("data/aphantasia_priming_tidy_data.xlsx", 
+                     sheet = "data_asso")
 
+# Implicit task
+df_implicit <- read_excel("data/aphantasia_priming_tidy_data.xlsx", 
+                     sheet = "data_implicit")
+
+# Explicit task
+df_explicit <- read_excel("data/aphantasia_priming_tidy_data.xlsx", 
+                     sheet = "data_explicit")
+
+# Rotation task
+df_rotation <- read_excel("data/aphantasia_priming_tidy_data.xlsx", 
+                     sheet = "data_rotation")
+
+# Questionnaires
+df_questionnaires <- read_excel("data/aphantasia_priming_tidy_data.xlsx", 
+                     sheet = "data_questionnaires")
 ```
 
 
