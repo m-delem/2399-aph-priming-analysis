@@ -102,20 +102,23 @@ df_questionnaires <- read_excel("data/aphantasia_priming_tidy_data.xlsx",
 The four questionnaire variables (VVIQ, OSIQ-O and S, and SUIS) are meant to be used as predictors (independent variables) for the behavioural outcomes (RTs) of the study. Three of these - VVIQ, OSIQ-O and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors.
 
 ```{r}
+#| label: fig
 # Correlation between questionnaire scores
-df_questionnaires %>% 
+cor_questionnaires <- 
+  df_questionnaires %>% 
   select(vviq80:suis60) %>% 
   correlation(
-    bayesian = TRUE,
-    partial = TRUE,
-    method = "auto") %>% 
-  summary %>%
-  plot
+    bayesian = TRUE)
 
-cor_test(df_questionnaires, "vviq80", "suis60") %>% plot
-cor_test(df_questionnaires, "vviq80", "osiq_o75") %>% plot
-cor_test(df_questionnaires, "vviq80", "osiq_s75") %>% plot
-cor_test(df_questionnaires, "osiq_o75", "osiq_s75") %>% plot
+cor_questionnaires %>% summary %>% plot
+```
+
+
+```{r}
+cor_test(df_questionnaires, "vviq80", "suis60", bayesian = TRUE) %>% plot
+cor_test(df_questionnaires, "vviq80", "osiq_o75", bayesian = TRUE) %>% plot
+cor_test(df_questionnaires, "vviq80", "osiq_s75", bayesian = TRUE) %>% plot
+cor_test(df_questionnaires, "osiq_o75", "osiq_s75", bayesian = TRUE) %>% plot
 
 ```
 
