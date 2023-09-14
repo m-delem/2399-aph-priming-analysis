@@ -1,5 +1,5 @@
 
-# ------------ Sensory priming in aphantasia - Importing data ------------------
+# -------------- Sensory priming in aphantasia - Tidying data ------------------
 
 # Maël Delem
 # Email : m.delem@univ-lyon2.fr
@@ -49,7 +49,7 @@ df_jasp <- read_excel("data/aphantasia_priming_processed.xlsx", sheet = "JASP")
 
 # finding the participant names with no questionnaire data (N = 15 / 166)
 no_questionnaires <- 
-  df_jasp[,1:6] %>% 
+  df_jasp %>% 
   filter(is.na(`TOTAL VVIQ /80`)) %>% 
   select(Participants) %>% 
   unlist %>% 
@@ -101,19 +101,26 @@ df_rotation <-
     stimuli
   )
 
-# need to add questionnaire data
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# 
+# questionnaire data
+df_questionnaires <-
+  df_jasp %>% 
+  filter(!is.na(`TOTAL VVIQ /80`)) %>% 
+  select(
+    Participants, `Âge`, Sexe,
+    `TOTAL VVIQ /80`, `TOTAL OBJET /75`, `TOTAL SPATIAL /75`, `TOTAL SUIS /60`
+    ) %>% 
+  rename(
+    subjectid = "Participants",
+    age = "Âge",
+    sexe = "Sexe",
+    vviq80 = `TOTAL VVIQ /80`,
+    osiq_o75 = `TOTAL OBJET /75`,
+    osiq_s75 = `TOTAL SPATIAL /75`,
+    suis60 = `TOTAL SUIS /60`
+    ) %>% 
+  mutate(sexe = if_else(sexe == "Femme", "f", "h") %>% as.factor) %>% 
+  mutate(across(c(age, vviq80:suis60), as.numeric))
+
 # saving in the xlsx
 write.xlsx(
   list(
@@ -121,7 +128,9 @@ write.xlsx(
     "data_asso" = df_asso,
     "data_implicit" = df_implicit,
     "data_explicit" = df_explicit,
-    "data_rotation" = df_rotation),
+    "data_rotation" = df_rotation,
+    "data_questionnaires" = df_questionnaires
+    ),
   "data/aphantasia_priming_tidy_data.xlsx",
   asTable = TRUE,
   colNames = TRUE,
