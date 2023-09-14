@@ -56,8 +56,30 @@ no_questionnaires <-
   as.character
 
 # removing their data from the raw dataset
-df_raw <- df_raw %>% filter(!subjectid %in% no_questionnaires & 
-                              subjectid != "sbasle" & subjectid != "tmaselli")
+df_raw <- 
+  df_raw %>% 
+  filter(
+    !subjectid %in% no_questionnaires & 
+     subjectid != "sbasle" & subjectid != "tmaselli") %>% 
+  # renaming some ugly columns
+  rename(
+    # association task
+    correct_association = correct_association_task_response,
+    rt_association = response_time_association_task_response,
+    # implicit task
+    correct_implicit = correct_implicit_task_response,
+    rt_implicit = response_time_implicit_task_response,
+    # explicit task
+    correct_explicit = correct_explicite_task_response,
+    rt_explicit = response_time_explicite_task_response,
+    # rotation task
+    correct_rotation = correct_keyboard_response_rotation_task,
+    rt_rotation = response_time_keyboard_response_rotation_task
+  ) %>% 
+  # subjectid first
+  select(subjectid, everything()) %>% 
+  # alphabetical order
+  arrange(subjectid)
 
 # creating one dataset for each task with relevant columns
 df_asso <- 
@@ -66,8 +88,8 @@ df_asso <-
   select(
     subjectid,
     orientation, response,
-    correct_association_task_response,
-    response_time_association_task_response
+    correct_association,
+    rt_association
   )
 
 df_implicit <-
@@ -76,8 +98,8 @@ df_implicit <-
   select(
     subjectid,
     color, congruence, orientation, response,
-    correct_implicit_task_response,
-    response_time_implicit_task_response
+    correct_implicit,
+    rt_implicit
   )
 
 df_explicit <-
@@ -86,8 +108,8 @@ df_explicit <-
   select(
     subjectid,
     color, congruence, orientation, response,
-    correct_explicite_task_response,
-    response_time_explicite_task_response
+    correct_explicit,
+    rt_explicit
   )
 
 df_rotation <-
@@ -96,8 +118,8 @@ df_rotation <-
   select(
     subjectid,
     response,
-    correct_keyboard_response_rotation_task,
-    response_time_keyboard_response_rotation_task,
+    correct_rotation,
+    rt_rotation,
     stimuli
   )
 
