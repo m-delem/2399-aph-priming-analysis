@@ -1,0 +1,45 @@
+format: 
+  html:
+    code-fold: true
+    warning: false
+    error: false
+    message: false
+    cap-location: bottom
+    editor_options: 
+      chunk_output_type: console
+  pdf:
+    pdf-engine: pdflatex
+    documentclass: article
+    # table of contents
+    toc: true
+    number-sections: true
+    number-depth: 3
+    # text formatting
+    fontsize: 12pt
+    linestretch: 1.5
+    geometry: margin=1in
+    indent: true
+    # code reading options
+    echo: false
+    warning: false
+    error: false
+    message: false
+    # figure default positioning
+    fig-align: center
+    fig-cap-location: bottom
+    # fig-height: 8
+    # fig-width: 10
+    fig-pos: "h"
+    # captions
+    cap-location: bottom
+    tbl-cap-location: bottom
+    # links
+    links-as-notes: true
+    link-citations: true
+    # style (notably bibliography)
+    csl: apa.csl
+    # language
+    lang: fr
+    langid: french
+    # keeping tex if necessary
+    keep-tex: true

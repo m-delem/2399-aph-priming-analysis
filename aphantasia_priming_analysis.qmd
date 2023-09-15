@@ -1,14 +1,7 @@
 ---
 title: "Sensory priming in aphantasia - Data analysis"
 author: "Maël Delem"
-format: html
-code-fold: true
-warning: false
-error: false
-message: false
-cap-location: bottom
-editor_options: 
-  chunk_output_type: console
+format: pdf
 ---
 
 Below is the setup code, including two essential steps: 1) installing the required packages for this data analysis, and 2) importing data into the dataframes used throughout. I left this step there for reference in a view of transparency for the interested reader.
@@ -27,8 +20,6 @@ library(librarian)
 
 # now putting packages on our library's shelves:
 shelf(
-  # the basics
-  tidyverse,
   # Excel files management
   readxl,
   # --- data analysis packages:
@@ -44,19 +35,23 @@ shelf(
   # BayesFactor,    # self-explanatory (i.e. Bayes Factors)
   # --- data visualization/exploration packages:
   ggpubr,         # layout and statistics display
-  ggradar,        # radar charts
+  # ggradar,        # radar charts
   ggsci,          # scientific palettes
   wesanderson,    # artistic palettes
   viridis,        # colour-blind friendly palettes
+  tidygraph,
+  ggraph,
   # --- tables ---
   # qwraps2,        # mean_sd function
+  # the basics
+  tidyverse
 )
 
 # --- Global cosmetic theme ----------------------------------------------------
 theme_set(
   theme_bw(
     base_size = 14,
-    base_family = "serif",
+    # base_family = "serif",
   )
 )
 
@@ -99,27 +94,46 @@ df_questionnaires <- read_excel("data/aphantasia_priming_tidy_data.xlsx",
 
 ## Exploratory Data Analysis
 
-The four questionnaire variables (VVIQ, OSIQ-O and S, and SUIS) are meant to be used as predictors (independent variables) for the behavioural outcomes (RTs) of the study. Three of these - VVIQ, OSIQ-O and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors.
+The four questionnaire variables (VVIQ, OSIQ-O and S, and SUIS) are meant to be used as predictors (independent variables) for the behavioural outcomes (dependent variables, RTs and potentially accuracy) of the study. Three of these - VVIQ, OSIQ-O and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors and judge if they should be merged/omitted. The results of the Bayesian Pearson correlations between the four variables are displayed in @fig-cor_matrix.
 
 ```{r}
-#| label: fig
+#| label: fig-cor_matrix
+#| fig-cap: "Correlation matrix of the questionnaire variables."
+
 # Correlation between questionnaire scores
-cor_questionnaires <- 
+cor_questionnaires <-
   df_questionnaires %>% 
   select(vviq80:suis60) %>% 
   correlation(
-    bayesian = TRUE)
+    bayesian = TRUE,
+    rename = c("VVIQ", "OSIQ-O", "OSIQ-S", "SUIS")
+    )
 
-cor_questionnaires %>% summary %>% plot
+cor_questionnaires %>% 
+  summary %>% 
+  plot(
+    text = list(size = 5),
+    labs = list(title = "")
+    ) +
+  scale_fill_viridis(
+    option = "D",
+    name = expression(rho),
+    alpha = .25,
+    direction = 1,
+    limits = c(-1,1)
+    ) +
+  theme(axis.text = element_text(size = 14))
 ```
 
 
 ```{r}
-cor_test(df_questionnaires, "vviq80", "suis60", bayesian = TRUE) %>% plot
+#| eval: false
+
+cor_test(df_questionnaires, "vviq80", "suis60", bayesian = TRUE) %>% 
+  plot
 cor_test(df_questionnaires, "vviq80", "osiq_o75", bayesian = TRUE) %>% plot
 cor_test(df_questionnaires, "vviq80", "osiq_s75", bayesian = TRUE) %>% plot
 cor_test(df_questionnaires, "osiq_o75", "osiq_s75", bayesian = TRUE) %>% plot
-
 ```
 
 
