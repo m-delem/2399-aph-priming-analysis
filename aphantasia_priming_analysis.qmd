@@ -1,7 +1,7 @@
 ---
 title: "Sensory priming in aphantasia - Data analysis"
 author: "Maël Delem"
-format: pdf
+format: html
 ---
 
 Below is the setup code, including two essential steps: 1) installing the required packages for this data analysis, and 2) importing data into the dataframes used throughout. I left this step there for reference in a view of transparency for the interested reader.
