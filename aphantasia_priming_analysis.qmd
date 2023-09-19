@@ -6,7 +6,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-Just down below is the setup code, including two essential steps: 1) installing the required packages for this data analysis, and 2) importing data into the dataframes used throughout. I left this step there for reference in a view of transparency for the interested reader.
+Just down below is the setup code, including two essential steps: 1) installing the required packages for this data analysis, and 2) importing data into the dataframes used throughout. I left this (usually hidden) step there for reference in a view of transparency for the interested reader.
 
 ```{r setup}
 
@@ -28,7 +28,6 @@ shelf(
   broom,         # tidy modelling
   easystats,      # framework for data analysis functions
   brms,           # bayesian modeling
-  corrplot,
   # MASS,           # Box-Cox transformation
   # cluster,        # self-explanatory (i.e. cluster analyses)
   # mclust,         # mixture clustering
@@ -97,13 +96,13 @@ df_questionnaires <- read_excel("data/aphantasia_priming_tidy_data.xlsx",
 
 ## Exploratory Data Analysis
 
-The four questionnaire variables (VVIQ, OSIQ-O and S, and SUIS) are meant to be used as predictors (independent variables) for the behavioural outcomes (dependent variables, RTs and potentially accuracy) of the study. Three of these - VVIQ, OSIQ-O and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors and judge if they should be merged/omitted. The results of the Bayesian Pearson correlations between the four variables are displayed in @fig-cor_matrix and @tbl-cor_stats.
+The four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - are meant to be used as predictors (independent variables) for the behavioural outcomes of the experiment (dependent variables, RTs and potentially accuracy). Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors and judge if they should be merged/omitted. The results of the Bayesian partial correlations between the four variables are displayed in @fig-cor_matrix and @tbl-cor_stats. Partial correlations have been chosen here to account for the (theoretically huge) covariance between visual imagery variables. It will result in more conservative estimations of the correlations, and a better understanding of the relations between visual and spatial imagery measures.
 
 ```{r}
 #| label: fig-cor_matrix
-#| fig-cap: "Correlation matrix of the questionnaire variables. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = No evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
+#| fig-cap: "Correlation matrix of the questionnaire variables. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
 
-# Bayesian Pearson correlation between questionnaire scores
+# --- Bayesian Pearson correlation between questionnaire scores ----------------
 cor_questionnaires <-
   df_questionnaires %>%
   correlation(
@@ -115,7 +114,20 @@ cor_questionnaires <-
     bayesian_test = "bf"
     )
 
+# --- Correlation matrix -------------------------------------------------------
 cor_questionnaires %>%
+  mutate(Parameter1 = case_when(
+    Parameter1 == "vviq80" ~ "VVIQ",
+    Parameter1 == "suis60" ~ "SUIS",
+    Parameter1 == "osiq_o75" ~ "OSIQ-O",
+    Parameter1 == "osiq_s75" ~ "OSIQ-S"
+  )) %>% 
+  mutate(Parameter2 = case_when(
+    Parameter2 == "vviq80" ~ "VVIQ",
+    Parameter2 == "suis60" ~ "SUIS",
+    Parameter2 == "osiq_o75" ~ "OSIQ-O",
+    Parameter2 == "osiq_s75" ~ "OSIQ-S"
+  )) %>% 
   summary(digits = 2) %>% 
   plot(
     text = list(size = 5),
