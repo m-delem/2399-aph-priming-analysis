@@ -2,9 +2,11 @@
 title: "Sensory priming in aphantasia - Data analysis"
 author: "Maël Delem"
 format: html
+editor_options: 
+  chunk_output_type: console
 ---
 
-Below is the setup code, including two essential steps: 1) installing the required packages for this data analysis, and 2) importing data into the dataframes used throughout. I left this step there for reference in a view of transparency for the interested reader.
+Just down below is the setup code, including two essential steps: 1) installing the required packages for this data analysis, and 2) importing data into the dataframes used throughout. I left this step there for reference in a view of transparency for the interested reader.
 
 ```{r setup}
 
@@ -26,6 +28,7 @@ shelf(
   broom,         # tidy modelling
   easystats,      # framework for data analysis functions
   brms,           # bayesian modeling
+  corrplot,
   # MASS,           # Box-Cox transformation
   # cluster,        # self-explanatory (i.e. cluster analyses)
   # mclust,         # mixture clustering
@@ -94,23 +97,26 @@ df_questionnaires <- read_excel("data/aphantasia_priming_tidy_data.xlsx",
 
 ## Exploratory Data Analysis
 
-The four questionnaire variables (VVIQ, OSIQ-O and S, and SUIS) are meant to be used as predictors (independent variables) for the behavioural outcomes (dependent variables, RTs and potentially accuracy) of the study. Three of these - VVIQ, OSIQ-O and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors and judge if they should be merged/omitted. The results of the Bayesian Pearson correlations between the four variables are displayed in @fig-cor_matrix.
+The four questionnaire variables (VVIQ, OSIQ-O and S, and SUIS) are meant to be used as predictors (independent variables) for the behavioural outcomes (dependent variables, RTs and potentially accuracy) of the study. Three of these - VVIQ, OSIQ-O and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors and judge if they should be merged/omitted. The results of the Bayesian Pearson correlations between the four variables are displayed in @fig-cor_matrix and @tbl-cor_stats.
 
 ```{r}
 #| label: fig-cor_matrix
-#| fig-cap: "Correlation matrix of the questionnaire variables."
+#| fig-cap: "Correlation matrix of the questionnaire variables. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = No evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
 
-# Correlation between questionnaire scores
+# Bayesian Pearson correlation between questionnaire scores
 cor_questionnaires <-
-  df_questionnaires %>% 
-  select(vviq80:suis60) %>% 
+  df_questionnaires %>%
   correlation(
+    select = c("vviq80", "suis60","osiq_o75", "osiq_s75"),
+    # rename = c("VVIQ", "SUIS", "OSIQ-O", "OSIQ-S"),
     bayesian = TRUE,
-    rename = c("VVIQ", "OSIQ-O", "OSIQ-S", "SUIS")
+    partial = TRUE,
+    partial_bayesian = TRUE,
+    bayesian_test = "bf"
     )
 
-cor_questionnaires %>% 
-  summary %>% 
+cor_questionnaires %>%
+  summary(digits = 2) %>% 
   plot(
     text = list(size = 5),
     labs = list(title = "")
@@ -118,22 +124,32 @@ cor_questionnaires %>%
   scale_fill_viridis(
     option = "D",
     name = expression(rho),
-    alpha = .25,
+    alpha = .6,
     direction = 1,
     limits = c(-1,1)
     ) +
-  theme(axis.text = element_text(size = 14))
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(size = 14)
+    )
 ```
 
 
 ```{r}
-#| eval: false
+#| eval: true
+#| label: tbl-cor_stats
+#| tbl-cap: "Detailed correlation matrix of the questionnaire variables."
 
-cor_test(df_questionnaires, "vviq80", "suis60", bayesian = TRUE) %>% 
-  plot
-cor_test(df_questionnaires, "vviq80", "osiq_o75", bayesian = TRUE) %>% plot
-cor_test(df_questionnaires, "vviq80", "osiq_s75", bayesian = TRUE) %>% plot
-cor_test(df_questionnaires, "osiq_o75", "osiq_s75", bayesian = TRUE) %>% plot
+cor_questionnaires %>%
+  format %>% 
+  rename(
+    "Variable 1" = Parameter1,
+    "Variable 2" = Parameter2,
+    "$\\rho$" = rho,
+    "$BF_{10}$" = BF
+  ) %>% 
+  knitr::kable()
 ```
 
 
