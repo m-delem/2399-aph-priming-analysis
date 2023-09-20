@@ -6,7 +6,7 @@ editor_options:
   chunk_output_type: console
 ---
 
-Just down below is the setup code, including two essential steps: 1) installing the required packages for this data analysis, and 2) importing data into the dataframes used throughout. I left this (usually hidden) step there for reference in a view of transparency for the interested reader.
+This analysis was conducted in R language through the RStudio Integrated Development Environment. Just down below is the setup code, including two essential steps: 1) installing the required packages for this data analysis, and 2) importing data into the dataframes used throughout. I left this (usually hidden) step there for reference in a view of transparency for the interested reader.
 
 ```{r setup}
 
@@ -25,12 +25,13 @@ shelf(
   # Excel files management
   readxl,
   # --- data analysis packages:
-  broom,         # tidy modelling
   easystats,      # framework for data analysis functions
   brms,           # bayesian modeling
+  tidymodels,
+  bayesian,
   # MASS,           # Box-Cox transformation
   # cluster,        # self-explanatory (i.e. cluster analyses)
-  # mclust,         # mixture clustering
+  mclust,         # mixture clustering
   # factoextra,     # multivariate analysis visualization
   # FactoMineR,     # multivariate analysis
   # rstanarm,       # bayesian models
@@ -98,36 +99,35 @@ df_questionnaires <- read_excel("data/aphantasia_priming_tidy_data.xlsx",
 
 The four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - are meant to be used as predictors (independent variables) for the behavioural outcomes of the experiment (dependent variables, RTs and potentially accuracy). Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors and judge if they should be merged/omitted. The results of the Bayesian partial correlations between the four variables are displayed in @fig-cor_matrix and @tbl-cor_stats. Partial correlations have been chosen here to account for the (theoretically huge) covariance between visual imagery variables. It will result in more conservative estimations of the correlations, and a better understanding of the relations between visual and spatial imagery measures.
 
-```{r}
-#| label: fig-cor_matrix
-#| fig-cap: "Correlation matrix of the questionnaire variables. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
+```{r correlation}
 
 # --- Bayesian Pearson correlation between questionnaire scores ----------------
 cor_questionnaires <-
   df_questionnaires %>%
+  select("vviq80", "suis60","osiq_o75", "osiq_s75") %>% 
+  standardise %>% 
   correlation(
-    select = c("vviq80", "suis60","osiq_o75", "osiq_s75"),
-    # rename = c("VVIQ", "SUIS", "OSIQ-O", "OSIQ-S"),
     bayesian = TRUE,
     partial = TRUE,
     partial_bayesian = TRUE,
     bayesian_test = "bf"
     )
+```
+
+```{r correlation_matrix}
+#| label: fig-cor_matrix
+#| echo: false
+#| fig-cap: "Correlation matrix of the questionnaire variables. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
 
 # --- Correlation matrix -------------------------------------------------------
 cor_questionnaires %>%
-  mutate(Parameter1 = case_when(
-    Parameter1 == "vviq80" ~ "VVIQ",
-    Parameter1 == "suis60" ~ "SUIS",
-    Parameter1 == "osiq_o75" ~ "OSIQ-O",
-    Parameter1 == "osiq_s75" ~ "OSIQ-S"
-  )) %>% 
-  mutate(Parameter2 = case_when(
-    Parameter2 == "vviq80" ~ "VVIQ",
-    Parameter2 == "suis60" ~ "SUIS",
-    Parameter2 == "osiq_o75" ~ "OSIQ-O",
-    Parameter2 == "osiq_s75" ~ "OSIQ-S"
-  )) %>% 
+  mutate(across(c(Parameter1, Parameter2),
+    ~ case_when(
+    .x == "vviq80" ~ "VVIQ",
+    .x == "suis60" ~ "SUIS",
+    .x == "osiq_o75" ~ "OSIQ-O",
+    .x == "osiq_s75" ~ "OSIQ-S"))
+    ) %>% 
   summary(digits = 2) %>% 
   plot(
     text = list(size = 5),
@@ -147,14 +147,21 @@ cor_questionnaires %>%
     )
 ```
 
-
-```{r}
-#| eval: true
+```{r correlation_table}
 #| label: tbl-cor_stats
-#| tbl-cap: "Detailed correlation matrix of the questionnaire variables."
+#| echo: false
+#| tbl-cap: "Detailed correlation table of the questionnaire variables."
 
+# --- Correlation table --------------------------------------------------------
 cor_questionnaires %>%
   format %>% 
+  mutate(across(c(Parameter1, Parameter2),
+    ~ case_when(
+    .x == "vviq80" ~ "VVIQ",
+    .x == "suis60" ~ "SUIS",
+    .x == "osiq_o75" ~ "OSIQ-O",
+    .x == "osiq_s75" ~ "OSIQ-S"))
+    ) %>% 
   rename(
     "Variable 1" = Parameter1,
     "Variable 2" = Parameter2,
@@ -164,7 +171,157 @@ cor_questionnaires %>%
   knitr::kable()
 ```
 
+As we can see, while the three visual imagery variables are highly correlated, the association between these variable and spatial imagery (OSIQ-S) is inconsistent: VVIQ and OSIQ-S are positively correlated although with anecdotal evidence, SUIS and OSIQ-S have a moderately evidenced positive correlation, while OSIQ-Object and OSIQ-Spatial are negatively correlated. We'll run a Principal Component Analysis to evaluate the possibility of a feature reduction of visual imagery as a single variable.
 
+```{r pca}
+# --- Principal Component Analysis ---------------------------------------------
+pca <- 
+  principal_components(
+    df_questionnaires[,4:7],
+    n = "max",
+    sort = TRUE,
+    standardize = TRUE
+    ) 
+```
+
+```{r loadings}
+#| label: fig-loadings
+#| echo: false
+#| fig-cap: "Loadings of each variable on the three components extracted by a PCA."
+
+# --- Loadings -----------------------------------------------------------------
+pca %>% plot + 
+  scale_y_discrete(labels = c("OSIQ-S", "OSIQ-O", "VVIQ", "SUIS")) +
+  scale_fill_viridis(alpha = .6) +
+  labs(title = NULL) +
+  theme(text = element_text(size = 14))
+```
+
+```{r eigenvalues}
+#| label: tbl-eigenvalues
+#| echo: false
+#| tbl-cap: "Eigenvalues and variance explained by the three components extracted by a PCA."
+
+# --- Eigenvalues and variance -------------------------------------------------
+pca %>% 
+  summary %>% 
+  rename(
+    "Component 1" = PC1,
+    "Component 2" = PC2,
+    "Component 3" = PC3,
+  ) %>%
+  format(digits = 2) %>% 
+  display
+```
+
+As expected, the visual imagery variables are grouped in a single component with an Eigenvalue of 2.84, therefore accounting for 71% of the total variance of the data. The second component has an Eigenvalue of .97, accounts for 24% of the total variance, and is mostly loaded negatively on the OSIQ-S: this brings the total explained proportion of variance to 95%. Traditionally, the threshold used for selecting a principal component is an Eigenvalue of 1. Nevertheless, given the Eigenvalue of .97 and properties of this component, i.e. singling out the specificity of the spatial scale, this component will be kept for analysis.
+
+Standardized predicted values for each component will be computed and added to the data, renamed *Visual Imagery* (PC1, VVIQ + SUIS + OSIQ-O) and *Spatial Imagery* (PC2, OSIQ-S). In order to align the *Spatial Imagery* variable with the OSIQ-Spatial, the variable will be reversed (it is correlated negatively as it is, as shown by the -.96 loading on PC2).
+
+```{r osiq_s_correlations}
+#| eval: false
+#| include: false
+
+# --- The OSIQ-S case ---
+pca_components <- pca %>% predict
+
+spatial_pc1 <-
+  pca_components %>% 
+  bind_cols(df_questionnaires[,4:7]) %>% 
+  cor_test("PC1", "osiq_s75", bayesian = TRUE)%>% 
+  plot(
+    point = list(color = "black"),
+    smooth = list(color = "#56B4E8", linewidth = 2, fill = "lightgrey"),
+    labs = list(
+      x = "Principal Component 1",
+      y = "OSIQ-Spatial",
+      subtitle = expression(~rho~"= 0.25, 95% CI [0.10, 0.40], BF = 35.53")
+    )
+  )
+
+spatial_pc2 <-
+  pca_components %>% 
+  bind_cols(df_questionnaires[,4:7]) %>% 
+  mutate(PC2 = -PC2) %>%
+  cor_test("PC2", "osiq_s75", bayesian = TRUE) %>% 
+  plot(
+    point = list(color = "black"),
+    smooth = list(color = "#56B4E8", linewidth = 2, fill = "darkgrey"),
+    labs = list(
+      x = "Principal Component 2 (inverted)",
+      y = "OSIQ-Spatial",
+      subtitle = expression(~rho~"= 0.96, 95% CI [0.95, 0.97], BF = 6.90e+80")
+    )
+  )
+
+plots(spatial_pc1,spatial_pc2)
+```
+
+```{r components}
+pca_components <- pca %>% predict
+
+df_questionnaires_pca <- 
+  bind_cols(df_questionnaires, pca_components[,1:2]) %>% 
+  rename(
+    "visual_imagery" = PC1,
+    "spatial_imagery" = PC2
+  )
+df_questionnaires_pca[,8] %>% mclustBIC() %>% tidy
+df_questionnaires_pca[,8] %>% mclustBIC() %>% plot
+
+clustering <-
+  Mclust(
+    df_questionnaires_pca[,8],
+    G = 2,
+    modelNames = "V"
+    )
+
+clustering %>% tidy
+clustering %>% augment
+clustering %>% glance
+
+# --- adding the clustering ---
+df_questionnaires_pca_clustered <- 
+  bind_cols(df_questionnaires_pca, augment(clustering)[,2]) %>% 
+  rename(cluster = .class)
+
+# --- vviq visual imagery correlation
+df_questionnaires_pca_clustered %>% 
+  select(vviq80, visual_imagery, cluster) %>% 
+  ggplot(aes(x = vviq80, y = visual_imagery, group = cluster, color = cluster)) +
+  geom_point()
+
+# --- distribution of spatial imagery ---
+df_questionnaires_pca_clustered %>% 
+  select(vviq80, visual_imagery, spatial_imagery, cluster) %>%
+  mutate(aphantasia = ifelse(vviq80 >= 32, "no", "yes")) %>% 
+  # pivot_longer(cols = c(vviq80, visual_imagery, spatial_imagery)) %>% 
+  # filter(name == "spatial_imagery") %>% 
+  ggplot(aes(
+    x = spatial_imagery, 
+    group = aphantasia,
+    # group = cluster,
+    color = aphantasia,
+    # color = cluster,
+    fill = aphantasia,
+    # fill = cluster
+    )
+    ) +
+  geom_vline(xintercept = 0) +
+  geom_density(alpha = .4, adjust = .5) +
+  # geom_histogram(bins = 100, alpha = .4) +
+  scale_fill_okabeito() +
+  scale_color_okabeito()
+
+# --- correlation between spatial and VVIQ ---
+df_questionnaires_pca %>% 
+  mutate(
+    vviq80 = rescale(vviq80),
+    spatial_imagery = rescale(spatial_imagery)
+    ) %>%
+  cor_test("osiq_s75", "spatial_imagery") %>% plot
+
+```
 
 
 
