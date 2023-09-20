@@ -240,6 +240,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 <section id="exploratory-data-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="exploratory-data-analysis">Exploratory Data Analysis</h2>
+<section id="questionnaire-data-and-imagery" class="level3">
+<h3 class="anchored" data-anchor-id="questionnaire-data-and-imagery">Questionnaire data and imagery</h3>
 <p>The four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - are meant to be used as predictors (independent variables) for the behavioural outcomes of the experiment (dependent variables, RTs and potentially accuracy). Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors and judge if they should be merged/omitted. The results of the Bayesian partial correlations between the four variables are displayed in <a href="#fig-cor_matrix">Figure&nbsp;1</a> and <a href="#tbl-cor_stats">Table&nbsp;1</a>. Partial correlations have been chosen here to account for the (theoretically huge) covariance between visual imagery variables. It will result in more conservative estimations of the correlations, and a better understanding of the relations between visual and spatial imagery measures.</p>
 <div class="cell">
 <details>
@@ -441,6 +443,18 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </div>
+<p>The consequence of this analysis is that from this point onwards, for the future models to be fitted, two options are available:</p>
+<ul>
+<li><p>Bin the participants in two categories based on the VVIQ (cut-off at 32, Aphantasics/Phantasics).</p></li>
+<li><p>Use the visual imagery as a continuous variable.</p></li>
+</ul>
+<p>Although we could use the VVIQ both for categorizing and as a classification variable, for the sake of consistency, we are going to use the VVIQ only as a classification variable for defining aphantasia, and the <em>Visual Imagery</em> component from the PCA as the continuous variable measuring visual imagery. There two types of models are going to be fitted:</p>
+<ul>
+<li><p>Models using Aphantasia as a categorical variable.</p></li>
+<li><p>Models using <em>Visual Imagery</em> as a continuous variable.</p></li>
+</ul>
+<p>In both cases, we are going to account for the potential effect of spatial imagery by using the eponymous component computed ealier as a predictor in the models.</p>
+</section>
 </section>
 
 </main>

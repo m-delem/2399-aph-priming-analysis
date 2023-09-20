@@ -1,0 +1,15 @@
+---
+title: "To-do"
+---
+
+
+Two overall analyses: Explicit and Implicit
+
+What threshold for the outlier RTs? --> RT distributions, vertical lines at 5/3/1%, 2.5 sd, etc.
+
+Analysis of the percentage of errors or no?
+--> check the overall percentage of error
+--> plot the distribution of the error percentage per participant to see the outliers with high error rates
+
+They evaluated the correlation: Questionnaires ~ Congruency effect
+--> Congruency effect = (For each color) Mean RT congruent - Mean RT incongruent
