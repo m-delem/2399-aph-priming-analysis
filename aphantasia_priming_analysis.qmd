@@ -91,8 +91,26 @@ df_rotation <- read_excel("data/aphantasia_priming_tidy_data.xlsx",
                      sheet = "data_rotation")
 
 # Questionnaires
-df_questionnaires <- read_excel("data/aphantasia_priming_tidy_data.xlsx", 
-                     sheet = "data_questionnaires")
+df_questionnaires <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_questionnaires"
+    ) %>% 
+  mutate(aphantasia = ifelse(vviq80 >= 32, "no", "yes"))
+
+dfs <- list(df_asso, df_implicit, df_explicit, df_rotation)
+
+dfs_vviq <-
+  dfs %>% 
+  imap(~left_join(
+    .x, 
+    df_questionnaires %>% 
+      select(subjectid, vviq80, aphantasia)))
+
+df_asso_vviq     <- dfs_vviq[[1]]
+df_implicit_vviq <- dfs_vviq[[2]]
+df_explicit_vviq <- dfs_vviq[[3]]
+df_rotation_vviq <- dfs_vviq[[4]]
 ```
 
 ## Exploratory Data Analysis
@@ -214,112 +232,88 @@ pca %>%
   display
 ```
 
-As expected, the visual imagery variables are grouped in a single component with an Eigenvalue of 2.84, therefore accounting for 71% of the total variance of the data. The second component has an Eigenvalue of .97, accounts for 24% of the total variance, and is mostly loaded negatively on the OSIQ-S: this brings the total explained proportion of variance to 95%. Traditionally, the threshold used for selecting a principal component is an Eigenvalue of 1. Nevertheless, given the Eigenvalue of .97 and properties of this component, i.e. singling out the specificity of the spatial scale, this component will be kept for analysis.
+As expected, the visual imagery variables are grouped in a single component with an Eigenvalue of 2.84, therefore accounting for 71% of the total variance of the data. The second component has an Eigenvalue of .97, accounts for 24% of the total variance, and is mostly loaded negatively on the OSIQ-S: this brings the total explained proportion of variance to 95%. Traditionally, the threshold used for selecting a principal component is an Eigenvalue of 1. Nevertheless, given the Eigenvalue of .97 and the properties of this component, i.e. singling out the specificity of the spatial scale, this component will be kept for analysis.
 
-Standardized predicted values for each component will be computed and added to the data, renamed *Visual Imagery* (PC1, VVIQ + SUIS + OSIQ-O) and *Spatial Imagery* (PC2, OSIQ-S). In order to align the *Spatial Imagery* variable with the OSIQ-Spatial, the variable will be reversed (it is correlated negatively as it is, as shown by the -.96 loading on PC2).
-
-```{r osiq_s_correlations}
-#| eval: false
-#| include: false
-
-# --- The OSIQ-S case ---
-pca_components <- pca %>% predict
-
-spatial_pc1 <-
-  pca_components %>% 
-  bind_cols(df_questionnaires[,4:7]) %>% 
-  cor_test("PC1", "osiq_s75", bayesian = TRUE)%>% 
-  plot(
-    point = list(color = "black"),
-    smooth = list(color = "#56B4E8", linewidth = 2, fill = "lightgrey"),
-    labs = list(
-      x = "Principal Component 1",
-      y = "OSIQ-Spatial",
-      subtitle = expression(~rho~"= 0.25, 95% CI [0.10, 0.40], BF = 35.53")
-    )
-  )
-
-spatial_pc2 <-
-  pca_components %>% 
-  bind_cols(df_questionnaires[,4:7]) %>% 
-  mutate(PC2 = -PC2) %>%
-  cor_test("PC2", "osiq_s75", bayesian = TRUE) %>% 
-  plot(
-    point = list(color = "black"),
-    smooth = list(color = "#56B4E8", linewidth = 2, fill = "darkgrey"),
-    labs = list(
-      x = "Principal Component 2 (inverted)",
-      y = "OSIQ-Spatial",
-      subtitle = expression(~rho~"= 0.96, 95% CI [0.95, 0.97], BF = 6.90e+80")
-    )
-  )
-
-plots(spatial_pc1,spatial_pc2)
-```
+Standardized predicted values for each component will be computed and added to the data, renamed *Visual Imagery* (PC1, mostly VVIQ + SUIS + OSIQ-O with an influence of OSIQ-S) and *Spatial Imagery* (PC2, mostly OSIQ-S, with an influence of SUIS). In order to align the *Spatial Imagery* variable with the OSIQ-Spatial, the variable will be reversed (they are correlated negatively as it is, as shown by the -.96 loading on PC2).
 
 ```{r components}
 pca_components <- pca %>% predict
 
 df_questionnaires_pca <- 
   bind_cols(df_questionnaires, pca_components[,1:2]) %>% 
+  mutate(
+    PC1 = standardize(PC1),
+    PC2 = -standardize(PC2)
+    ) %>% 
   rename(
     "visual_imagery" = PC1,
     "spatial_imagery" = PC2
-  )
-df_questionnaires_pca[,8] %>% mclustBIC() %>% tidy
-df_questionnaires_pca[,8] %>% mclustBIC() %>% plot
-
-clustering <-
-  Mclust(
-    df_questionnaires_pca[,8],
-    G = 2,
-    modelNames = "V"
     )
+```
 
-clustering %>% tidy
-clustering %>% augment
-clustering %>% glance
+Now we can see that the main visual imagery variables, namely the (conventional) VVIQ and the *Visual Imagery* component created through PCA are completely decorrelated from the *Spatial Imagery* component, as shown in @fig-spatial_corr.
 
-# --- adding the clustering ---
-df_questionnaires_pca_clustered <- 
-  bind_cols(df_questionnaires_pca, augment(clustering)[,2]) %>% 
-  rename(cluster = .class)
+```{r components}
+#| label: fig-spatial_corr
+#| echo: false
+#| fig-cap: "Correlation between the main visual imagery variables and the spatial imagery component."
+#| fig-width: 10
+#| fig-height: 5
 
-# --- vviq visual imagery correlation
-df_questionnaires_pca_clustered %>% 
-  select(vviq80, visual_imagery, cluster) %>% 
-  ggplot(aes(x = vviq80, y = visual_imagery, group = cluster, color = cluster)) +
-  geom_point()
+# --- correlation between visual and spatial ---
+spatial_cor1 <- df_questionnaires_pca %>% 
+  mutate(
+    visual_imagery = rescale(visual_imagery),
+    spatial_imagery = rescale(spatial_imagery)
+    ) %>%
+  ggplot(aes(x = visual_imagery, y = spatial_imagery, color = aphantasia)) +
+  geom_point() +
+  scale_color_okabeito(name = "Aphantasia", labels = c("No", "Yes")) +
+  geom_smooth(
+    aes(x = visual_imagery, y = spatial_imagery), 
+    color = "black", 
+    method = "lm", 
+    stat = "smooth") +
+  stat_cor(
+    aes(x = visual_imagery, 
+        y = spatial_imagery), 
+    inherit.aes = FALSE, 
+    cor.coef.name = "r", 
+    label.x.npc = .5,
+    label.y.npc = .7) +
+  labs(x = "Visual Imagery",
+       y = "Spatial Imagery")
 
-# --- distribution of spatial imagery ---
-df_questionnaires_pca_clustered %>% 
-  select(vviq80, visual_imagery, spatial_imagery, cluster) %>%
-  mutate(aphantasia = ifelse(vviq80 >= 32, "no", "yes")) %>% 
-  # pivot_longer(cols = c(vviq80, visual_imagery, spatial_imagery)) %>% 
-  # filter(name == "spatial_imagery") %>% 
-  ggplot(aes(
-    x = spatial_imagery, 
-    group = aphantasia,
-    # group = cluster,
-    color = aphantasia,
-    # color = cluster,
-    fill = aphantasia,
-    # fill = cluster
-    )
-    ) +
-  geom_vline(xintercept = 0) +
-  geom_density(alpha = .4, adjust = .5) +
-  # geom_histogram(bins = 100, alpha = .4) +
-  scale_fill_okabeito() +
-  scale_color_okabeito()
-
-# --- correlation between spatial and VVIQ ---
-df_questionnaires_pca %>% 
+# --- correlation between vviq and spatial ---
+spatial_cor2 <- df_questionnaires_pca %>% 
   mutate(
     vviq80 = rescale(vviq80),
     spatial_imagery = rescale(spatial_imagery)
     ) %>%
-  cor_test("osiq_s75", "spatial_imagery") %>% plot
+  ggplot(aes(x = vviq80, y = spatial_imagery, color = aphantasia)) +
+  geom_point() +
+  scale_color_okabeito(name = "Aphantasia", labels = c("No", "Yes")) +
+  geom_smooth(
+    aes(x = vviq80, y = spatial_imagery), 
+    color = "black", 
+    method = "lm", 
+    stat = "smooth") +
+  stat_cor(
+    aes(x = vviq80, 
+        y = spatial_imagery), 
+    inherit.aes = FALSE, 
+    cor.coef.name = "r", 
+    label.x.npc = .5,
+    label.y.npc = .7) +
+  labs(x = "VVIQ",
+       y = "Spatial Imagery")
+
+ggarrange(
+  spatial_cor1,
+  spatial_cor2 + rremove("ylab"),
+  common.legend = TRUE,
+  legend = "bottom"
+)
 
 ```
 
