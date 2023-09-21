@@ -320,16 +320,25 @@ dfs <-
         # column to match with the correct participants
         subjectid, 
         # new variables to add
+        age,
+        sexe,
         vviq80, 
         visual_imagery, 
         spatial_imagery,
-        aphantasia)))
+        aphantasia), by = "subjectid") %>% 
+      rename("sex" = sexe) %>% 
+      # reordering the final dfs
+      select(
+        subjectid, 
+        age, sex, aphantasia,
+        vviq80, visual_imagery, spatial_imagery,
+        everything())
+    )
 
 df_asso     <- dfs[[1]]
 df_implicit <- dfs[[2]]
 df_explicit <- dfs[[3]]
 df_rotation <- dfs[[4]]
-
 ```
 
 ## Outcomes: accuracy and RTs?
@@ -468,13 +477,21 @@ We can see that the distributions are skewed yet very similar across groups: as 
 
 ### Response times
 
-The distribution of the response times are represented in fig-rt_distributions.
+The distribution of the response times in the explicit and implicit tasks are...
 
 ```{r rt_distributions}
-#| label: fig-rt_distributions
 #| echo: false
 
+df_explicit %>% 
+  summarise(
+    mean = mean(rt_explicit),
+    sd = sd(rt_explicit),
+    max = max(rt_explicit),
+    min = min(rt_explicit),
+    )
 
+df_explicit
+  
 ```
 
 
