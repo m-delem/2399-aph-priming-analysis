@@ -5,7 +5,6 @@ format: html
 editor_options: 
   chunk_output_type: console
 toc: true
-number-sections: true
 ---
 
 This analysis was conducted in R language through the RStudio Integrated Development Environment. Just down below is the setup code, including two essential steps: 1) installing the required packages for this data analysis, and 2) importing data into the dataframes used throughout. I left this (usually hidden) step there for reference in a view of transparency for the interested reader.
@@ -24,32 +23,16 @@ library(librarian)
 
 # now putting packages on our library's shelves:
 shelf(
-  # Excel files management
-  readxl,
-  # --- data analysis packages:
-  easystats,      # framework for data analysis functions
-  brms,           # bayesian modeling
-  tidymodels,
-  bayesian,
-  # MASS,           # Box-Cox transformation
-  # cluster,        # self-explanatory (i.e. cluster analyses)
+  readxl,         # Excel files management
+  easystats,      # collection of data analysis packages
+  tidymodels,     # collection of packages for a tidy modelling workflow
+  bayesian,       # bayesian modelling with brms and tidymodels
   mclust,         # mixture clustering
-  # factoextra,     # multivariate analysis visualization
-  # FactoMineR,     # multivariate analysis
-  # rstanarm,       # bayesian models
-  # BayesFactor,    # self-explanatory (i.e. Bayes Factors)
-  # --- data visualization/exploration packages:
-  ggpubr,         # layout and statistics display
-  # ggradar,        # radar charts
-  ggsci,          # scientific palettes
-  wesanderson,    # artistic palettes
-  viridis,        # colour-blind friendly palettes
-  tidygraph,
-  ggraph,
-  # --- tables ---
-  # qwraps2,        # mean_sd function
-  # the basics
-  tidyverse
+  ggpubr,         # ggplot tools
+  ggsci,          # ggplot palettes
+  wesanderson,    # ggplot palettes
+  viridis,        # ggplot colour-blind friendly palettes
+  tidyverse       # the essentials
 )
 
 # --- Global cosmetic theme ----------------------------------------------------
@@ -59,17 +42,6 @@ theme_set(
     # base_family = "serif",
   )
 )
-
-# creating colour-blind friendly coulour palettes
-# duo_pal <- c("#003d73", "#889be0")
-# trio_pal <- c("#f2bb7b", "#e57774", "#6c0009")
-# full_pal <- c("#f2bb7b", "#e57774", "#6c0009", "#003d73", "#889be0")
-
-# table formatting
-# options(qwraps2_markup = "")
-# options(
-#   knitr.kable.NA = '',
-#   knitr.table.format = "markdown")
 
 # --- Fixing a seed for reproducibility ----------------------------------------
 set.seed(14051998)
@@ -98,26 +70,18 @@ df_questionnaires <-
     "data/aphantasia_priming_tidy_data.xlsx",
     sheet = "data_questionnaires"
     ) %>% 
-  mutate(aphantasia = ifelse(vviq80 >= 32, "no", "yes"))
-
-dfs <- list(df_asso, df_implicit, df_explicit, df_rotation)
-
-dfs_vviq <-
-  dfs %>% 
-  imap(~left_join(
-    .x, 
-    df_questionnaires %>% 
-      select(subjectid, vviq80, aphantasia)))
-
-df_asso_vviq     <- dfs_vviq[[1]]
-df_implicit_vviq <- dfs_vviq[[2]]
-df_explicit_vviq <- dfs_vviq[[3]]
-df_rotation_vviq <- dfs_vviq[[4]]
+  # creating the a/phantasia groups
+  mutate(
+    aphantasia = ifelse(vviq80 < 32, "yes", "no"),
+    aphantasia = fct_relevel(aphantasia, "yes", "no")
+    )
 ```
 
-## Exploratory Data Analysis
+# Exploratory Data Analysis
 
-### Questionnaire data and imagery
+## Questionnaire data and imagery
+
+### Correlations
 
 The four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - are meant to be used as predictors (independent variables) for the behavioural outcomes of the experiment (dependent variables, RTs and potentially accuracy). Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors and judge if they should be merged/omitted. The results of the Bayesian partial correlations between the four variables are displayed in @fig-cor_matrix and @tbl-cor_stats. Partial correlations have been chosen here to account for the (theoretically huge) covariance between visual imagery variables. It will result in more conservative estimations of the correlations, and a better understanding of the relations between visual and spatial imagery measures.
 
@@ -193,7 +157,9 @@ cor_questionnaires %>%
   knitr::kable()
 ```
 
-As we can see, while the three visual imagery variables are highly correlated, the association between these variable and spatial imagery (OSIQ-S) is inconsistent: VVIQ and OSIQ-S are positively correlated although with anecdotal evidence, SUIS and OSIQ-S have a moderately evidenced positive correlation, while OSIQ-Object and OSIQ-Spatial are negatively correlated. We'll run a Principal Component Analysis to evaluate the possibility of a feature reduction of visual imagery as a single variable.
+As we can see, while the three visual imagery variables are highly correlated, the association between these visual and spatial imagery (OSIQ-S) is inconsistent: VVIQ and OSIQ-S are positively correlated although with anecdotal evidence, SUIS and OSIQ-S have a moderately evidenced positive correlation, while OSIQ-Object and OSIQ-Spatial are negatively correlated. We'll run a Principal Component Analysis to evaluate the possibility of a feature reduction of visual imagery as a single variable.
+
+### Principal Component Analysis
 
 ```{r pca}
 # --- Principal Component Analysis ---------------------------------------------
@@ -236,9 +202,9 @@ pca %>%
   display
 ```
 
-As expected, the visual imagery variables are grouped in a single component with an Eigenvalue of 2.84, therefore accounting for 71% of the total variance of the data. The second component has an Eigenvalue of .97, accounts for 24% of the total variance, and is mostly loaded negatively on the OSIQ-S: this brings the total explained proportion of variance to 95%. Traditionally, the threshold used for selecting a principal component is an Eigenvalue of 1. Nevertheless, given the Eigenvalue of .97 and the properties of this component, i.e. singling out the specificity of the spatial scale, this component will be kept for analysis.
+As expected, the visual imagery variables are grouped in a single component ("PC1" in @fig-loadings or "Component 1" in @tbl-eigenvalues) with an Eigenvalue of 2.84, therefore accounting for 71% of the total variance of the data. The second component (PC2 / Component 2) has an Eigenvalue of .97, accounts for 24% of the total variance, and is mostly loaded negatively on the OSIQ-S: this brings the total explained proportion of variance to 95%. Traditionally, the threshold used for selecting a principal component is an Eigenvalue of 1. Nevertheless, given the Eigenvalue of .97 and the properties of this component, i.e. singling out the specificity of the spatial scale, this component will be kept for analysis.
 
-Standardized predicted values for each component will be computed and added to the data, renamed *Visual Imagery* (PC1, mostly VVIQ + SUIS + OSIQ-O with an influence of OSIQ-S) and *Spatial Imagery* (PC2, mostly OSIQ-S, with an influence of SUIS). In order to align the *Spatial Imagery* variable with the OSIQ-Spatial, the variable will be reversed (they are correlated negatively as it is, as shown by the -.96 loading on PC2).
+Standardized predicted values for each component will be computed and added to the data, renamed ***Visual Imagery*** (PC1, mostly VVIQ + SUIS + OSIQ-O with an influence of OSIQ-S) and ***Spatial Imagery*** (PC2, mostly OSIQ-S, with an influence of SUIS). In order to align the Spatial Imagery variable with the OSIQ-Spatial, the variable will be reversed (they are correlated negatively as it is, as shown by the -.96 loading on PC2).
 
 ```{r pca_components}
 pca_components <- pca %>% predict
@@ -255,24 +221,28 @@ df_questionnaires_pca <-
     )
 ```
 
+### VVIQ, visual and spatial imagery
+
 Now we can see that the main visual imagery variables, namely the (conventional) VVIQ and the *Visual Imagery* component created through PCA are completely decorrelated from the *Spatial Imagery* component, as shown in @fig-spatial_corr.
 
 ```{r spatial_correlations}
 #| label: fig-spatial_corr
 #| echo: false
-#| fig-cap: "Correlation between the main visual imagery variables and the spatial imagery component."
-#| fig-width: 10
-#| fig-height: 5
+#| fig-cap: "Correlation between the main visual imagery variables and the spatial imagery one."
+#| fig-width: 9
+#| fig-height: 4.5
 
 # --- correlation between visual and spatial ---
-spatial_cor1 <- df_questionnaires_pca %>% 
+p_cor_spatial_vis <- 
+  df_questionnaires_pca %>% 
   mutate(
     visual_imagery = rescale(visual_imagery),
-    spatial_imagery = rescale(spatial_imagery)
+    spatial_imagery = rescale(spatial_imagery),
+    aphantasia = fct_relevel(aphantasia, "yes", "no")
     ) %>%
   ggplot(aes(x = visual_imagery, y = spatial_imagery, color = aphantasia)) +
   geom_point() +
-  scale_color_okabeito(name = "Aphantasia", labels = c("No", "Yes")) +
+  scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
   geom_smooth(
     aes(x = visual_imagery, y = spatial_imagery), 
     color = "black", 
@@ -289,14 +259,15 @@ spatial_cor1 <- df_questionnaires_pca %>%
        y = "Spatial Imagery")
 
 # --- correlation between vviq and spatial ---
-spatial_cor2 <- df_questionnaires_pca %>% 
+p_cor_spatial_vviq <- 
+  df_questionnaires_pca %>% 
   mutate(
     vviq80 = rescale(vviq80),
     spatial_imagery = rescale(spatial_imagery)
     ) %>%
   ggplot(aes(x = vviq80, y = spatial_imagery, color = aphantasia)) +
   geom_point() +
-  scale_color_okabeito(name = "Aphantasia", labels = c("No", "Yes")) +
+  scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
   geom_smooth(
     aes(x = vviq80, y = spatial_imagery), 
     color = "black", 
@@ -313,8 +284,8 @@ spatial_cor2 <- df_questionnaires_pca %>%
        y = "Spatial Imagery")
 
 ggarrange(
-  spatial_cor1,
-  spatial_cor2 + rremove("ylab"),
+  p_cor_spatial_vis,
+  p_cor_spatial_vviq + rremove("ylab"),
   common.legend = TRUE,
   legend = "bottom"
 )
@@ -329,11 +300,233 @@ The consequence of this analysis is that from this point onwards, for the future
 
 Although we could use the VVIQ both for categorizing and as a classification variable, for the sake of consistency, we are going to use the VVIQ only as a classification variable for defining aphantasia, and the *Visual Imagery* component from the PCA as the continuous variable measuring visual imagery. Therefore two types of models are going to be fitted:
 
-- Models using Aphantasia as a categorical variable.
+1. Models using **Aphantasia as a categorical variable.**
 
-- Models using *Visual Imagery* as a continuous variable.
+2. Models using **Visual Imagery as a continuous variable.**
 
-In both cases, we are going to account for the potential effect of spatial imagery by using the eponymous component computed ealier as a predictor in the models.
+In both cases, we are going to account for the potential effect of spatial imagery by using the eponymous component computed earlier as a predictor in the models.
+
+```{r df_updates}
+#| echo: false
+
+# updating all the dataframes with the imagery variables
+dfs <- 
+  list(df_asso, df_implicit, df_explicit, df_rotation) %>%
+  # adding the vviq and group column to every dataframe
+  imap(~left_join(
+    .x, 
+    df_questionnaires_pca %>% 
+      select(
+        # column to match with the correct participants
+        subjectid, 
+        # new variables to add
+        vviq80, 
+        visual_imagery, 
+        spatial_imagery,
+        aphantasia)))
+
+df_asso     <- dfs[[1]]
+df_implicit <- dfs[[2]]
+df_explicit <- dfs[[3]]
+df_rotation <- dfs[[4]]
+
+```
+
+## Outcomes: accuracy and RTs?
+
+Response time is an obvious outcome to model when it comes to decision tasks. The use of accuracy is more debatable, as the task was not specifically designed to be challenging. Traditionally, accuracy is mostly used to remove incorrect trials from RT modelling. We'll describe accuracy data to evaluate its relevance in this analysis. The distribution of the percentages of errors across the three tasks is displayed in @fig-distributions.
+
+```{r distributions}
+#| label: fig-distributions
+#| echo: false
+#| fig-cap: "Distribution of errors between groups in the three main tasks."
+#| fig-width: 9
+#| fig-height: 11
+
+# --- Number of errors - association task --------------------------------------
+p_errors_asso <-
+  df_asso %>%
+  select(subjectid, correct_association, aphantasia) %>% 
+  group_by(subjectid, aphantasia) %>% 
+  count(correct_association) %>% 
+  filter(correct_association == 1) %>% 
+  mutate(n = 100 - n) %>% 
+  ggplot(aes(
+    x = n, 
+    color = aphantasia,
+    fill = aphantasia
+    )) +
+  geom_bar(
+    aes(y = after_stat(prop)),
+    position = position_dodge(),
+    width = .8,
+    alpha = .4
+    ) +
+  scale_x_continuous(
+    name = "Percentage of errors",
+    breaks = breaks_pretty(n = 20)
+    ) +
+  scale_y_continuous(
+    name = "Proportion of the group",
+    breaks = breaks_pretty(n = 10)
+    ) +
+  coord_cartesian(
+    xlim = c(0.5, 24),
+    ylim = c(.01,.36)
+    ) +
+  labs(title = "Association task") +
+  scale_color_viridis_d(guide = NULL) +
+  scale_fill_viridis_d(name = "Aphantasia", labels = c("Yes", "No"), alpha = .6)
+
+# --- Number of errors - implicit task -----------------------------------------
+p_errors_implcit <-
+  df_implicit %>%
+  select(subjectid, correct_implicit, aphantasia) %>% 
+  group_by(subjectid, aphantasia) %>% 
+  count(correct_implicit) %>% 
+  filter(correct_implicit == 1) %>% 
+  mutate(n = (64 - n)/64 * 100) %>% 
+  ggplot(aes(
+    x = n, 
+    color = aphantasia,
+    fill = aphantasia
+    )) +
+  geom_bar(
+    aes(y = after_stat(prop)),
+    position = position_dodge(),
+    width = .6,
+    alpha = .5
+    ) +
+  scale_x_continuous(
+    name = "Percentage of errors",
+    breaks = breaks_pretty(n = 20)
+    ) +
+  scale_y_continuous(
+    name = "Proportion of the group",
+    breaks = breaks_pretty(n = 10)
+    ) +
+  coord_cartesian(
+    xlim = c(1, 40),
+    ylim = c(.01,.28)
+    ) +
+  labs(title = "Implicit task") +
+  scale_color_viridis_d(guide = NULL) +
+  scale_fill_viridis_d(name = "Aphantasia", labels = c("Yes", "No"), alpha = .6)
+
+# --- Number of errors - explicit task -----------------------------------------
+p_errors_explicit <-
+  df_explicit %>%
+  select(subjectid, correct_explicit, aphantasia) %>% 
+  group_by(subjectid, aphantasia) %>% 
+  count(correct_explicit) %>% 
+  filter(correct_explicit == 1) %>% 
+  mutate(n = (64 - n)/64 * 100) %>% 
+  ggplot(aes(
+    x = n, 
+    color = aphantasia,
+    fill = aphantasia
+    )) +
+  geom_bar(
+    aes(y = after_stat(prop)),
+    position = position_dodge(),
+    width = .6,
+    alpha = .5
+    ) +
+  scale_x_continuous(
+    name = "Percentage of errors",
+    breaks = breaks_pretty(n = 20)
+    ) +
+  scale_y_continuous(
+    name = "Proportion of the group",
+    breaks = breaks_pretty(n = 10)
+    ) +
+  coord_cartesian(
+    xlim = c(1, 46),
+    ylim = c(.01,.36)
+    ) +
+  labs(title = "Explicit task") +
+  scale_color_viridis_d(guide = NULL) +
+  scale_fill_viridis_d(name = "Aphantasia", labels = c("Yes", "No"), alpha = .6)
+
+ggarrange(
+  p_errors_asso + rremove("xlab") + rremove("ylab"),
+  p_errors_explicit + rremove("xlab") + rremove("ylab"),
+  p_errors_implcit + rremove("xlab") + rremove("ylab"),
+  ncol = 1,
+  common.legend = TRUE,
+  legend = "right"
+  ) %>% 
+  annotate_figure(
+    left = text_grob("Proportion of the group", size = 20, rot = 90),
+    bottom = text_grob("Percentage of errors", size = 20)
+    )
+```
+
+We can see that the distributions are skewed yet very similar across groups: as such, we are going to **use accuracy only to remove missed trials in the analysis of the RTs**. Nevertheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. This amounts to:
+
+- One participant with 24% error rate in the association task
+
+- Five participants with error rates ranging between 44 and 47% in the explicit task
+
+- Four participants with respectively 97, 38, 33 and 22% error rates in the implicit task (at best 7% above everyone else).
+
+The error rates of these ten participants are shown in @tbl-outliers.
+
+```{r outliers}
+#| label: tbl-outliers
+#| tbl-cap: "Error rates across tasks for the nine outliers in terms of accuracy."
+
+# "jlejeune", "bdispaux", "eleveque", "aleclaire", "aknezevic", "lbrunie", "agayou", "bluciani", "ldossantos", "dchimenton"
+df_tasks <- 
+  list(df_asso, df_explicit, df_implicit) %>% 
+  imap(
+    ~.x %>% 
+      select(subjectid, starts_with("correct"), aphantasia) %>%
+      group_by(subjectid) %>% 
+      count(pick(2)) %>% 
+      filter(pick(1) == 1) %>%
+      ungroup() %>% 
+      mutate(
+        n_tot = max(n),
+        prop = (n_tot - n) / n_tot * 100
+      ) %>% 
+      filter(subjectid %in% c(
+        "jlejeune", 
+        "bdispaux", 
+        "eleveque", 
+        "aleclaire", 
+        "aknezevic", 
+        "lbrunie", 
+        "agayou", 
+        "bluciani", 
+        "ldossantos", 
+        "dchimenton"
+        )) %>% 
+      mutate(across(subjectid, ~case_when(
+        .x == "jlejeune" ~ "Outlier J",
+        .x == "bdispaux" ~ "Outlier BD",
+        .x == "eleveque" ~ "Outlier E",
+        .x == "aleclaire" ~ "Outlier AL",
+        .x == "aknezevic" ~ "Outlier AK",
+        .x == "lbrunie" ~ "Outlier LB",
+        .x == "agayou" ~ "Outlier AG",
+        .x == "bluciani" ~ "Outlier BL",
+        .x == "ldossantos" ~ "Outlier LD",
+        .x == "dchimenton" ~ "Outlier D",
+        TRUE ~ .x
+      ))) %>% 
+      arrange(.by = "subjectid") %>% 
+      select(1, 5)
+    )
+
+df_tasks[[1]] <- df_tasks[[1]] %>% rename("Association errors (%)" = prop)
+df_tasks[[2]] <- df_tasks[[2]] %>% rename("Explicit errors (%)" = prop) %>% select(2)
+df_tasks[[3]] <- df_tasks[[3]] %>% rename("Implicit errors (%)" = prop) %>% select(2)
+
+bind_cols(df_tasks) %>% rename("Participant" = subjectid)%>% display
+```
+
+It appears that their high error rate in some tasks do not affect their performance in others.
 
 
 
@@ -343,6 +536,112 @@ In both cases, we are going to account for the potential effect of spatial image
 
 
 
+
+
+
+
+
+# Annexes
+
+## Rotation task
+
+Some analyses of the rotation task are summarised as visualizations in @fig-rotation.
+
+```{r rotation}
+#| label: fig-rotation
+#| echo: false
+#| fig-cap: "Analyses of the rotation task, including the distribution of errors between groups and correlations with the imagery variables."
+#| fig-width: 11
+#| fig-height: 7
+
+# --- Annex: analysis of the rotation task -------------------------------------
+
+# --- Number of errors - rotation task -----------------------------------------
+p_rotation_errors <- 
+  df_rotation %>%
+  select(subjectid, correct_rotation, aphantasia) %>% 
+  group_by(subjectid, aphantasia) %>% 
+  count(correct_rotation) %>% 
+  filter(correct_rotation == 1) %>% 
+  mutate(n = 20 - n) %>% 
+  ggplot(aes(
+    x = n, 
+    color = aphantasia,
+    fill = aphantasia
+    )) +
+  geom_bar(
+    aes(y = after_stat(prop)),
+    position = position_dodge(),
+    width = .8,
+    alpha = .4
+    ) +
+  geom_density(aes(y = after_stat(density), color = NULL), alpha = .2) +
+  scale_x_continuous(
+    name = "Number of errors",
+    breaks = breaks_pretty(n = 20)
+    ) +
+  scale_y_continuous(
+    name = "Proportion of the group",
+    breaks = breaks_pretty(n = 10)
+    ) +
+  coord_cartesian(
+    xlim = c(0, 14),
+    ylim = c(.01,.16)
+    ) +
+  labs(title = "Rotation task") +
+  scale_color_viridis_d(guide = NULL) +
+  scale_fill_viridis_d(name = "Aphantasia", labels = c("Yes", "No"), alpha = .6) +
+  theme(legend.position = "top")
+
+# --- Correlation between rotation correct and spatial imagery -----------------
+p_rotation_cor_spa <- 
+  df_rotation %>% 
+  select(subjectid, correct_rotation, spatial_imagery) %>% 
+  group_by(subjectid) %>% 
+  summarise(
+    correct_perc = sum(correct_rotation)/20,
+    mean_s = mean(spatial_imagery)
+  ) %>% 
+  standardize(correct_perc) %>% 
+  cor_test("mean_s", "correct_perc", bayesian = TRUE) %>% 
+  plot +
+  labs(x = "Spatial imagery", y = "Correct responses")
+
+# --- Correlation between rotation correct and visual imagery ------------------
+p_rotation_cor_vis <- 
+  df_rotation %>% 
+  select(subjectid, correct_rotation, visual_imagery) %>% 
+  group_by(subjectid) %>% 
+  summarise(
+    correct_perc = sum(correct_rotation)/20,
+    mean_v = mean(visual_imagery)
+  ) %>% 
+  standardize(correct_perc) %>% 
+  cor_test("mean_v", "correct_perc", bayesian = TRUE) %>% 
+  plot +
+  labs(x = "Visual imagery", y = "Correct responses")
+
+# --- Correlation between rotation correct and vviq ----------------------------
+p_rotation_cor_vviq <-
+  df_rotation %>% 
+  select(subjectid, correct_rotation, vviq80) %>% 
+  group_by(subjectid) %>% 
+  summarise(
+    correct_perc = sum(correct_rotation)/20,
+    vviq = mean(vviq80)
+  ) %>% 
+  standardize(select = c("vviq", "correct_perc")) %>% 
+  cor_test("vviq", "correct_perc", bayesian = TRUE) %>% 
+  plot +
+  labs(x = "VVIQ", y = "Correct responses")
+
+ggarrange(
+  p_rotation_errors, 
+  p_rotation_cor_vis, 
+  p_rotation_cor_vviq, 
+  p_rotation_cor_spa + rremove("ylab")
+  )
+```
 
 
 
