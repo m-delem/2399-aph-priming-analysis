@@ -29,21 +29,14 @@ shelf(
   bayesian,       # bayesian modelling with brms and tidymodels
   mclust,         # mixture clustering
   ggpubr,         # ggplot tools
-  ggsci,          # ggplot palettes
-  wesanderson,    # ggplot palettes
   viridis,        # ggplot colour-blind friendly palettes
   tidyverse       # the essentials
 )
 
-# --- Global cosmetic theme ----------------------------------------------------
-theme_set(
-  theme_bw(
-    base_size = 14,
-    # base_family = "serif",
-  )
-)
+# --- Global cosmetic theme ---
+theme_set(theme_bw(base_size = 14))
 
-# --- Fixing a seed for reproducibility ----------------------------------------
+# --- Fixing a seed for reproducibility ---
 set.seed(14051998)
 
 # --- Importing data -----------------------------------------------------------
@@ -87,7 +80,7 @@ The four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - are
 
 ```{r correlation}
 
-# --- Bayesian Pearson correlation between questionnaire scores ----------------
+# --- Bayesian Pearson correlation between questionnaire scores ---
 cor_questionnaires <-
   df_questionnaires %>%
   select("vviq80", "suis60","osiq_o75", "osiq_s75") %>% 
@@ -105,7 +98,7 @@ cor_questionnaires <-
 #| echo: false
 #| fig-cap: "Correlation matrix of the questionnaire variables. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
 
-# --- Correlation matrix -------------------------------------------------------
+# --- Correlation matrix ---
 cor_questionnaires %>%
   mutate(across(c(Parameter1, Parameter2),
     ~ case_when(
@@ -138,7 +131,7 @@ cor_questionnaires %>%
 #| echo: false
 #| tbl-cap: "Detailed correlation table of the questionnaire variables."
 
-# --- Correlation table --------------------------------------------------------
+# --- Correlation table ---
 cor_questionnaires %>%
   format %>% 
   mutate(across(c(Parameter1, Parameter2),
@@ -162,7 +155,7 @@ As we can see, while the three visual imagery variables are highly correlated, t
 ### Principal Component Analysis
 
 ```{r pca}
-# --- Principal Component Analysis ---------------------------------------------
+# --- Principal Component Analysis ---
 pca <- 
   principal_components(
     df_questionnaires[,4:7],
@@ -177,7 +170,7 @@ pca <-
 #| echo: false
 #| fig-cap: "Loadings of each variable on the three components extracted by a PCA."
 
-# --- Loadings -----------------------------------------------------------------
+# --- Loadings ---
 pca %>% plot + 
   scale_y_discrete(labels = c("OSIQ-S", "OSIQ-O", "VVIQ", "SUIS")) +
   scale_fill_viridis(alpha = .6) +
@@ -190,7 +183,7 @@ pca %>% plot +
 #| echo: false
 #| tbl-cap: "Eigenvalues and variance explained by the three components extracted by a PCA."
 
-# --- Eigenvalues and variance -------------------------------------------------
+# --- Eigenvalues and variance ---
 pca %>% 
   summary %>% 
   rename(
@@ -294,9 +287,9 @@ ggarrange(
 
 The consequence of this analysis is that from this point onwards, for the future models to be fitted, two options are available:
 
-- Bin the participants in two categories based on the VVIQ (cut-off at 32, Aphantasics/Phantasics).
+- Binning the participants in two categories based on the VVIQ (cut-off at 32, Aphantasics/Phantasics).
 
-- Use the visual imagery as a continuous variable.
+- Using the visual imagery as a continuous variable.
 
 Although we could use the VVIQ both for categorizing and as a classification variable, for the sake of consistency, we are going to use the VVIQ only as a classification variable for defining aphantasia, and the *Visual Imagery* component from the PCA as the continuous variable measuring visual imagery. Therefore two types of models are going to be fitted:
 
@@ -345,7 +338,7 @@ df_rotation <- dfs[[4]]
 
 ### Accuracy
 
-Response time is an obvious outcome to model when it comes to decision tasks. The use of accuracy is more debatable, as the task was not specifically designed to be challenging. Traditionally, accuracy is mostly used to remove incorrect trials from RT modelling. We'll describe accuracy data to evaluate its relevance in this analysis. The distribution of the percentages of errors across the three tasks is displayed in @fig-distributions.
+Response time is an obvious outcome to model when it comes to decision tasks. The use of accuracy is more debatable, as the tasks were not specifically designed to be challenging. Traditionally, accuracy is mostly used to remove incorrect trials from RT modelling. We'll describe accuracy data to evaluate its relevance in this analysis. The distribution of the percentages of errors across the three tasks is displayed in @fig-distributions.
 
 ```{r distributions}
 #| label: fig-distributions
@@ -371,7 +364,7 @@ p_errors_asso <-
     aes(y = after_stat(prop)),
     position = position_dodge(),
     width = .8,
-    alpha = .4
+    alpha = .5
     ) +
   scale_x_continuous(
     name = "Percentage of errors",
@@ -386,8 +379,8 @@ p_errors_asso <-
     ylim = c(.01,.36)
     ) +
   labs(title = "Association task") +
-  scale_color_viridis_d(guide = NULL) +
-  scale_fill_viridis_d(name = "Aphantasia", labels = c("Yes", "No"), alpha = .6)
+  scale_color_okabeito(guide = NULL) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
 
 # --- Number of errors - implicit task -----------------------------------------
 p_errors_implcit <-
@@ -406,7 +399,7 @@ p_errors_implcit <-
     aes(y = after_stat(prop)),
     position = position_dodge(),
     width = .6,
-    alpha = .5
+    alpha = .6
     ) +
   scale_x_continuous(
     name = "Percentage of errors",
@@ -421,8 +414,8 @@ p_errors_implcit <-
     ylim = c(.01,.28)
     ) +
   labs(title = "Implicit task") +
-  scale_color_viridis_d(guide = NULL) +
-  scale_fill_viridis_d(name = "Aphantasia", labels = c("Yes", "No"), alpha = .6)
+  scale_color_okabeito(guide = NULL) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
 
 # --- Number of errors - explicit task -----------------------------------------
 p_errors_explicit <-
@@ -441,7 +434,7 @@ p_errors_explicit <-
     aes(y = after_stat(prop)),
     position = position_dodge(),
     width = .6,
-    alpha = .5
+    alpha = .6
     ) +
   scale_x_continuous(
     name = "Percentage of errors",
@@ -456,9 +449,10 @@ p_errors_explicit <-
     ylim = c(.01,.36)
     ) +
   labs(title = "Explicit task") +
-  scale_color_viridis_d(guide = NULL) +
-  scale_fill_viridis_d(name = "Aphantasia", labels = c("Yes", "No"), alpha = .6)
+  scale_color_okabeito(guide = NULL) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
 
+# --- All distributions --------------------------------------------------------
 ggarrange(
   p_errors_asso + rremove("xlab") + rremove("ylab"),
   p_errors_explicit + rremove("xlab") + rremove("ylab"),
@@ -473,7 +467,7 @@ ggarrange(
     )
 ```
 
-We can see that the distributions are skewed yet very similar across groups: as such, we are going to **use accuracy only to remove missed trials in the analysis of the RTs**. Nevertheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. For each tasks separately, the results of participants with an error rate superior to 16% will be removed, prior to removing all the missed trials of the remaining participants and modelling RTs.
+We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nevertheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each tasks separately, the results of participants with an error rate superior to 16% will be removed, prior to removing all the missed trials of the remaining participants and modelling RTs.**
 
 ### Response times
 
