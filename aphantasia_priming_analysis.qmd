@@ -334,6 +334,8 @@ df_rotation <- dfs[[4]]
 
 ## Outcomes: accuracy and RTs?
 
+### Accuracy
+
 Response time is an obvious outcome to model when it comes to decision tasks. The use of accuracy is more debatable, as the task was not specifically designed to be challenging. Traditionally, accuracy is mostly used to remove incorrect trials from RT modelling. We'll describe accuracy data to evaluate its relevance in this analysis. The distribution of the percentages of errors across the three tasks is displayed in @fig-distributions.
 
 ```{r distributions}
@@ -462,71 +464,20 @@ ggarrange(
     )
 ```
 
-We can see that the distributions are skewed yet very similar across groups: as such, we are going to **use accuracy only to remove missed trials in the analysis of the RTs**. Nevertheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. This amounts to:
+We can see that the distributions are skewed yet very similar across groups: as such, we are going to **use accuracy only to remove missed trials in the analysis of the RTs**. Nevertheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. For each tasks separately, the results of participants with an error rate superior to 16% will be removed, prior to removing all the missed trials of the remaining participants and modelling RTs.
 
-- One participant with 24% error rate in the association task
+### Response times
 
-- Five participants with error rates ranging between 44 and 47% in the explicit task
+The distribution of the response times are represented in fig-rt_distributions.
 
-- Four participants with respectively 97, 38, 33 and 22% error rates in the implicit task (at best 7% above everyone else).
+```{r rt_distributions}
+#| label: fig-rt_distributions
+#| echo: false
 
-The error rates of these ten participants are shown in @tbl-outliers.
 
-```{r outliers}
-#| label: tbl-outliers
-#| tbl-cap: "Error rates across tasks for the nine outliers in terms of accuracy."
-
-# "jlejeune", "bdispaux", "eleveque", "aleclaire", "aknezevic", "lbrunie", "agayou", "bluciani", "ldossantos", "dchimenton"
-df_tasks <- 
-  list(df_asso, df_explicit, df_implicit) %>% 
-  imap(
-    ~.x %>% 
-      select(subjectid, starts_with("correct"), aphantasia) %>%
-      group_by(subjectid) %>% 
-      count(pick(2)) %>% 
-      filter(pick(1) == 1) %>%
-      ungroup() %>% 
-      mutate(
-        n_tot = max(n),
-        prop = (n_tot - n) / n_tot * 100
-      ) %>% 
-      filter(subjectid %in% c(
-        "jlejeune", 
-        "bdispaux", 
-        "eleveque", 
-        "aleclaire", 
-        "aknezevic", 
-        "lbrunie", 
-        "agayou", 
-        "bluciani", 
-        "ldossantos", 
-        "dchimenton"
-        )) %>% 
-      mutate(across(subjectid, ~case_when(
-        .x == "jlejeune" ~ "Outlier J",
-        .x == "bdispaux" ~ "Outlier BD",
-        .x == "eleveque" ~ "Outlier E",
-        .x == "aleclaire" ~ "Outlier AL",
-        .x == "aknezevic" ~ "Outlier AK",
-        .x == "lbrunie" ~ "Outlier LB",
-        .x == "agayou" ~ "Outlier AG",
-        .x == "bluciani" ~ "Outlier BL",
-        .x == "ldossantos" ~ "Outlier LD",
-        .x == "dchimenton" ~ "Outlier D",
-        TRUE ~ .x
-      ))) %>% 
-      arrange(.by = "subjectid") %>% 
-      select(1, 5)
-    )
-
-df_tasks[[1]] <- df_tasks[[1]] %>% rename("Association errors (%)" = prop)
-df_tasks[[2]] <- df_tasks[[2]] %>% rename("Explicit errors (%)" = prop) %>% select(2)
-df_tasks[[3]] <- df_tasks[[3]] %>% rename("Implicit errors (%)" = prop) %>% select(2)
-
-bind_cols(df_tasks) %>% rename("Participant" = subjectid)%>% display
 ```
 
-It appears that their high error rate in some tasks do not affect their performance in others.
+
 
 
 
