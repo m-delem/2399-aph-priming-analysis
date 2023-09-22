@@ -124,6 +124,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#response-times" id="toc-response-times" class="nav-link" data-scroll-target="#response-times">Response times</a></li>
   </ul></li>
   </ul></li>
+  <li><a href="#inferential-analyses" id="toc-inferential-analyses" class="nav-link" data-scroll-target="#inferential-analyses">Inferential Analyses</a></li>
   <li><a href="#annexes" id="toc-annexes" class="nav-link" data-scroll-target="#annexes">Annexes</a>
   <ul class="collapse">
   <li><a href="#rotation-task" id="toc-rotation-task" class="nav-link" data-scroll-target="#rotation-task">Rotation task</a></li>
@@ -467,7 +468,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </section>
 <section id="response-times" class="level3">
 <h3 class="anchored" data-anchor-id="response-times">Response times</h3>
-<p>As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms, along with error trials. This amounts to 5.3% of trials in both tasks. As specified earlier, the data for each task from outliers that have an error rate above to 16% will be removed as well (9 participants in the explicit task and 4 in the implicit task). There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in <a href="#fig-rt_outliers">Figure&nbsp;5</a>.</p>
+<p>As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms, along with error trials. This amounts to 5.3% of trials in both tasks. As specified earlier, the data for each task from outliers that have an error rate above to 16% will be removed as well (9 participants in the explicit task and 4 in the implicit task). There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in <a href="#fig-rt_outliers">Figure&nbsp;5</a>, along with their statistics in <a href="#tbl-rt_means">Table&nbsp;3</a>.</p>
 <div class="cell">
 
 </div>
@@ -482,42 +483,24 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 <div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>df_rt <span class="ot">&lt;-</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  df_explicit_rt <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="st">"Explicit task RT"</span> <span class="ot">=</span> rt_explicit), </span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  df_implicit_rt <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="st">"Implicit task RT"</span> <span class="ot">=</span> rt_implicit)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">imap</span>(</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="sc">~</span><span class="fu">select</span>(.x, <span class="fu">contains</span>(<span class="st">"RT"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">report</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(df_rt[[<span class="dv">1</span>]], df_rt[[<span class="dv">2</span>]]) <span class="sc">%&gt;%</span> display</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 <div class="cell-output-display">
+<div id="tbl-rt_means" class="anchored">
 <table class="table table-sm table-striped">
+<caption>Table&nbsp;3: Descriptive statistics of the average RTs across the sample in both tasks.</caption>
 <colgroup>
-<col style="width: 18%">
-<col style="width: 7%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
+<col style="width: 27%">
 <col style="width: 8%">
 <col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 9%">
 <col style="width: 10%">
-<col style="width: 10%">
+<col style="width: 12%">
+<col style="width: 12%">
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Variable</th>
 <th style="text-align: center;">n_Obs</th>
-<th style="text-align: center;">Mean</th>
-<th style="text-align: center;">SD</th>
 <th style="text-align: center;">Median</th>
 <th style="text-align: center;">MAD</th>
 <th style="text-align: center;">Min</th>
@@ -528,10 +511,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Explicit task RT</td>
+<td style="text-align: left;">Explicit task mean RTs</td>
 <td style="text-align: center;">8804</td>
-<td style="text-align: center;">780.85</td>
-<td style="text-align: center;">384.63</td>
 <td style="text-align: center;">663.00</td>
 <td style="text-align: center;">232.77</td>
 <td style="text-align: center;">302.00</td>
@@ -540,10 +521,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <td style="text-align: center;">5.41</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Implicit task RT</td>
+<td style="text-align: left;">Implicit task mean RTs</td>
 <td style="text-align: center;">9017</td>
-<td style="text-align: center;">667.40</td>
-<td style="text-align: center;">307.48</td>
 <td style="text-align: center;">578.00</td>
 <td style="text-align: center;">161.60</td>
 <td style="text-align: center;">301.00</td>
@@ -555,92 +534,66 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </table>
 </div>
 </div>
+</div>
+<p>For this more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). A common threshold used for outlier detection with MADs is <span class="math inline">\(median \ \pm \ 3 \cdot MAD\)</span> (Hampel filter, see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case, and all the participants with fast RT means stay above the <span class="math inline">\(median \ - \ 1.5 \cdot MAD\)</span>. As for the high threshold, the choice the <span class="math inline">\(median \ + \ 3 \cdot MAD\)</span> would set a highly conservative maximum (e.g.&nbsp;1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at <span class="math inline">\(median \ + \ 5 \cdot MAD\)</span> (i.e.&nbsp;1797 for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in <a href="#fig-rt_per_participant">Figure&nbsp;6</a>.</p>
 <div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- RT distribution per participant ---</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="sc">%&gt;%</span> </span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> rt_explicit, <span class="at">fill =</span> subjectid, <span class="at">color =</span> subjectid)) <span class="sc">+</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">alpha =</span> .<span class="dv">07</span>) <span class="sc">+</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">name =</span> <span class="st">"Response time"</span>, <span class="at">breaks =</span> <span class="fu">breaks_pretty</span>()) <span class="sc">+</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">name =</span> <span class="st">"Density"</span>) <span class="sc">+</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_cartesian</span>(</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">xlim =</span> <span class="fu">c</span>(<span class="dv">380</span>, <span class="dv">2850</span>)</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_d</span>(<span class="at">guide =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_d</span>(<span class="at">guide =</span> <span class="cn">NULL</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 <div class="cell-output-display">
-<p><img src="aphantasia_priming_analysis_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
+<div id="fig-rt_per_participant" class="quarto-figure quarto-figure-center anchored">
+<figure class="figure">
+<p><img src="aphantasia_priming_analysis_files/figure-html/fig-rt_per_participant-1.png" class="img-fluid figure-img" width="1056"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;6: Distribution of RTs in both tasks for each participant. Each colored line represents a single participant.</figcaption><p></p>
+</figure>
 </div>
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Mean RT stats ---</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="sc">%&gt;%</span> </span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(subjectid) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_rt =</span> <span class="fu">mean</span>(rt_explicit)) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(mean_rt) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># filter(mean_rt &gt; 1377)</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  report <span class="sc">%&gt;%</span> as.data.frame</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>Variable | n_Obs |   Mean |     SD | Median |    MAD |    Min |     Max | Skewness | Kurtosis | percentage_Missing
-------------------------------------------------------------------------------------------------------------------
-mean_rt  |   142 | 782.07 | 258.10 | 744.13 | 187.32 | 388.33 | 2057.33 |     1.74 |     4.39 |               0.00</code></pre>
-</div>
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Mean RT explicit histo ---</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="sc">%&gt;%</span> </span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(subjectid) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_rt =</span> <span class="fu">mean</span>(rt_explicit)) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> mean_rt)) <span class="sc">+</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"aquamarine2"</span>, </span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"aquamarine4"</span>, </span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha =</span> .<span class="dv">3</span>,</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">bins =</span> <span class="dv">70</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># adjust = .4</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="fu">breaks_pretty</span>(<span class="dv">10</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="aphantasia_priming_analysis_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid" width="672"></p>
-</div>
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Mean RT implicit histo ---</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>df_implicit_rt <span class="sc">%&gt;%</span> </span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(subjectid) <span class="sc">%&gt;%</span> </span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_rt =</span> <span class="fu">mean</span>(rt_implicit)) <span class="sc">%&gt;%</span> </span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> mean_rt)) <span class="sc">+</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"coral"</span>, </span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">"coral4"</span>, </span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha =</span> .<span class="dv">3</span>,</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">bins =</span> <span class="dv">70</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># adjust = .4</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">+</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="fu">breaks_pretty</span>(<span class="dv">10</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output-display">
-<p><img src="aphantasia_priming_analysis_files/figure-html/unnamed-chunk-1-3.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 </section>
 </section>
+</section>
+<section id="inferential-analyses" class="level1">
+<h1>Inferential Analyses</h1>
+<p>Our analyses aim to evaluate the predictive abilities of several variables on one outcome, the <strong>response times</strong> in the tasks. Our potential predictors are:</p>
+<ul>
+<li><p><strong>Group</strong> membership, with two levels: aphantasia/phantasia</p></li>
+<li><p>Alternatively, <strong>Visual imagery</strong>, a standardized continuous variable</p></li>
+<li><p><strong>Spatial imagery</strong>, a standardized continuous variable</p></li>
+<li><p><strong>Congruence</strong> conditions, with two levels: congruent and incongruent</p></li>
+<li><p><strong>Color</strong> conditions, with two levels: colored and uncolored.</p></li>
+</ul>
+<p>Two potential confounding variables could also be evaluated :</p>
+<ul>
+<li><p><strong>Sex</strong>, with two levels: F and H</p></li>
+<li><p><strong>Age</strong>, a continuous variable ranging from 18 to 65 (M = 34.1, SD = 10.21)</p></li>
+</ul>
+<p>Two sub-levels of the responses can also be evaluated:</p>
+<ul>
+<li><p>the dependency between response times for <strong>each participant</strong> caused by repeated measures</p></li>
+<li><p>the dependency between response times for <strong>each orientation</strong> caused by the repetition of stimuli</p></li>
+</ul>
+<p>This structure will be modelled using Bayesian Multilevel Models (also called hierarchical models), allowing us to add the sub-levels of the hierarchy of predictors we described above in the model. Multilevel models can also be specified with skew-normal distributions, therefore bypassing the need to transform the skewed RT data.</p>
+<p>For a participant <span class="math inline">\(i\)</span> with a given Group, age, spatial imagery and a specific orientation, in the Congruency condition <span class="math inline">\(j\)</span> and the color condition <span class="math inline">\(k\)</span>, The maximal model of the resulting <span class="math inline">\(RT_{ijk}\)</span> based on the <strong><em>Group</em></strong> and including all the predictors can be specified as such (in a simplified form omitting the skew parameters and interactions for clarity):</p>
+<p><span class="math display">\[
+\begin{aligned}
+RT_{ijk} = \alpha + \alpha_{subject[i]} + \alpha_{orientation[i]} + \beta_{1} \times Group_{i} + \beta_{2} \times Spatial \ Imagery_{i}+ \beta_{3} \times Congruence_{j} + \beta_{4} \times Color_{k} + \beta_{5} \times Age_{i}
+\end{aligned}
+\]</span></p>
+<p>Where the <span class="math inline">\(\alpha\)</span> values are random intercepts per subject and orientation, considered as prior distributions in a Bayesian framework. Likewise, the maximal model based on <strong><em>Visual Imagery</em></strong> as a continuous predictor can be specified as such:</p>
+<p><span class="math display">\[
+\begin{aligned}
+RT_{ijk} = \alpha + \alpha_{subject[i]} + \alpha_{orientation[i]} + \beta_{1} \times Visual \ Imagery_{i} + \beta_{2} \times Spatial \ Imagery_{i}+ \beta_{3} \times Congruence_{j} + \beta_{4} \times Color_{k} + \beta_{5} \times Age_{i}
+\end{aligned}
+\]</span></p>
 </section>
 <section id="annexes" class="level1">
 <h1>Annexes</h1>
 <section id="rotation-task" class="level2">
 <h2 class="anchored" data-anchor-id="rotation-task">Rotation task</h2>
-<p>Some analyses of the rotation task are summarised as visualizations in <a href="#fig-rotation">Figure&nbsp;6</a>.</p>
+<p>Some quick analyses of the rotation task are summarised as visualizations in <a href="#fig-rotation">Figure&nbsp;7</a>.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-rotation" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-rotation-1.png" class="img-fluid figure-img" width="1056"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;6: Analyses of the rotation task, including the distribution of errors between groups and correlations with the imagery variables.</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;7: Analyses of the rotation task, including the distribution of errors between groups and correlations with the imagery variables.</figcaption><p></p>
 </figure>
 </div>
 </div>

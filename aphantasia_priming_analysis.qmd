@@ -471,9 +471,7 @@ We can see that the distributions are skewed yet very similar across groups and 
 
 ### Response times
 
-As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms, along with error trials. This amounts to 5.3% of trials in both tasks. As specified earlier, the data for each task from outliers that have an error rate above to 16% will be removed as well (9 participants in the explicit task and 4 in the implicit task). There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in @fig-rt_outliers, along with their statistics in tbl-rt_means. 
-
-For this more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). A common threshold used for outlier detection with MADs is $median$ $\pm$ 3 $\cdot$ $MAD$ (Hampel filter, see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case, and all the participants with fast RT means stay above the *median - 1.5* $\cdot$ $MAD$. As for the high threshold, the choice the *median + 3* $\cdot$ $MAD$ would set a highly conservative maximum (e.g. 1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at *median + 5* $\cdot$ $MAD$ (i.e. 1797 for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this data preprocessing.
+As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms, along with error trials. This amounts to 5.3% of trials in both tasks. As specified earlier, the data for each task from outliers that have an error rate above to 16% will be removed as well (9 participants in the explicit task and 4 in the implicit task). There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in @fig-rt_outliers, along with their statistics in @tbl-rt_means. 
 
 ```{r acc_outliers}
 #| echo: false
@@ -514,7 +512,8 @@ df_explicit_rt <-
         "llhermitte", 
         "jnaruse", 
         "fc"))
-    )
+    ) %>% 
+  select(-c(response, correct_explicit))
 
 df_implicit_rt <- 
   df_implicit %>% 
@@ -527,7 +526,8 @@ df_implicit_rt <-
         "eleveque", 
         "aleclaire", 
         "dchimenton"))
-      )
+      ) %>% 
+  select(-c(response, correct_implicit))
 ```
 
 ```{r rt_outliers}
@@ -535,7 +535,7 @@ df_implicit_rt <-
 #| label: fig-rt_outliers
 #| fig-cap: "Distribution of the mean RTs of participants in the explicit and implicit tasks."
 #| fig-width: 9
-#| fig-height: 4.5
+#| fig-height: 4
 
 df_stats_rt_explicit <-
   df_explicit_rt %>% 
@@ -590,6 +590,7 @@ ggarrange(p_rt_explicit, p_rt_implicit)
 ```{r rt_means_table}
 #| echo: false
 #| label: tbl-rt_means
+#| tbl-cap: "Descriptive statistics of the average RTs across the sample in both tasks."
 
 df_rt <-
   list(
@@ -606,62 +607,184 @@ df_rt <-
 bind_rows(df_rt[[1]], df_rt[[2]]) %>% display
 ```
 
-```{r}
-# --- RT distribution per participant ---
-df_explicit_rt %>% 
+For this more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). A common threshold used for outlier detection with MADs is $median \ \pm \ 3 \cdot MAD$ (Hampel filter, see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case, and all the participants with fast RT means stay above the $median \ - \ 1.5 \cdot MAD$. As for the high threshold, the choice the $median \ + \ 3 \cdot MAD$ would set a highly conservative maximum (e.g. 1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at $median \ + \ 5 \cdot MAD$ (i.e. 1797 for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in @fig-rt_per_participant.
+
+```{r rt_per_participant}
+#| echo: false
+#| label: fig-rt_per_participant
+#| fig-cap: "Distribution of RTs in both tasks for each participant. Each colored line represents a single participant."
+#| fig-width: 11
+#| fig-height: 4
+
+# --- second tidying ---
+df_explicit_rt <-
+  df_explicit_rt %>% 
+  filter(rt_explicit < 1797)
+
+df_implicit_rt <-
+  df_implicit_rt %>% 
+  filter(rt_implicit < 1386)
+
+# --- checking individual stats again ---
+df_stats_rt_explicit <-
+  df_explicit_rt %>% 
+  group_by(subjectid) %>% 
+  summarise(
+    mean = mean(rt_explicit),
+    mad = mad(rt_explicit),
+    min = min(rt_explicit),
+    max = max(rt_explicit),
+    obs = length(rt_explicit)
+  )
+
+df_stats_rt_implicit <-
+  df_implicit_rt %>% 
+  group_by(subjectid) %>% 
+  summarise(
+    mean = mean(rt_implicit),
+    mad = mad(rt_implicit),
+    min = min(rt_implicit),
+    max = max(rt_implicit),
+    obs = length(rt_implicit)
+  )
+
+# --- removing the last outlier ---
+df_explicit_rt <- df_explicit_rt %>% filter(subjectid != "dchimenton")
+
+# --- RT distributions per participant ---
+p_rt_subject_explicit <- 
+  df_explicit_rt %>% 
   ggplot(aes(x = rt_explicit, fill = subjectid, color = subjectid)) +
   geom_density(alpha = .07) +
-  scale_x_continuous(name = "Response time", breaks = breaks_pretty()) +
+  scale_x_continuous(name = "Explicit task RT", breaks = breaks_pretty()) +
   scale_y_continuous(name = "Density") +
   coord_cartesian(
-    xlim = c(380, 2850)
+    xlim = c(380, 1700),
+    ylim = c(0.0005, .01)
   ) +
   scale_fill_viridis_d(guide = NULL) +
   scale_color_viridis_d(guide = NULL)
 
-# --- Mean RT stats ---
-df_explicit_rt %>% 
-  group_by(subjectid) %>% 
-  summarise(mean_rt = mean(rt_explicit)) %>% 
-  select(mean_rt) %>% 
-  # filter(mean_rt > 1377)
-  report %>% as.data.frame
+p_rt_subject_implicit <-
+  df_implicit_rt %>% 
+  ggplot(aes(x = rt_implicit, fill = subjectid, color = subjectid)) +
+  geom_density(alpha = .07) +
+  scale_x_continuous(name = "Implicit task RT", breaks = breaks_pretty()) +
+  scale_y_continuous(name = NULL) +
+  theme(axis.text.y = element_blank()) +
+  coord_cartesian(
+    xlim = c(350, 1320),
+    ylim = c(0.0005, .01)
+  ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL)
 
-# --- Mean RT explicit histo ---
-df_explicit_rt %>% 
-  group_by(subjectid) %>% 
-  summarise(mean_rt = mean(rt_explicit)) %>% 
-  ggplot(aes(x = mean_rt)) +
-  geom_histogram(
-    fill = "aquamarine2", 
-    color = "aquamarine4", 
-    alpha = .3,
-    bins = 70
-    # adjust = .4
-    ) +
-  scale_y_continuous(breaks = breaks_pretty(10))
-
-# --- Mean RT implicit histo ---
-df_implicit_rt %>% 
-  group_by(subjectid) %>% 
-  summarise(mean_rt = mean(rt_implicit)) %>% 
-  ggplot(aes(x = mean_rt)) +
-  geom_histogram(
-    fill = "coral", 
-    color = "coral4", 
-    alpha = .3,
-    bins = 70
-    # adjust = .4
-    ) +
-  scale_y_continuous(breaks = breaks_pretty(10))
+ggarrange(p_rt_subject_explicit, p_rt_subject_implicit)
 ```
 
+# Inferential Analyses
 
+## Model description (Multilevel modelling)
 
+Our analyses aim to evaluate the predictive abilities of several variables on one outcome, the **response times** in the tasks. Our potential predictors are:
 
+- **Group** membership, with two levels: aphantasia/phantasia
 
+- Alternatively, **Visual imagery**, a standardized continuous variable
 
+- **Spatial imagery**, a standardized continuous variable
 
+- **Congruence** conditions, with two levels: congruent and incongruent
+
+- **Color** conditions, with two levels: colored and uncolored.
+
+Two potential confounding variables could also be evaluated : 
+
+- **Sex**, with two levels: F and H
+
+- **Age**, a continuous variable ranging from 18 to 65 (M = `r mean(df_questionnaires$age) %>% round(digits = 2)`, SD = `r sd(df_questionnaires$age) %>% round(digits = 2)`)
+
+Two sub-levels of the responses can also be evaluated:
+
+- the dependency between response times for **each participant** caused by repeated measures
+
+- the dependency between response times for **each orientation** caused by the repetition of stimuli
+
+This structure will be modelled using Bayesian Multilevel Models (also called hierarchical models), allowing us to add the sub-levels of the hierarchy of predictors we described above in the model. Multilevel models can also be specified with skew-normal distributions, therefore bypassing the need to transform the skewed RT data.
+
+For a participant $i$ with a given Group, age, spatial imagery and a specific orientation, in the Congruency condition $j$ and the Color condition $k$, The maximal model of the resulting $RT_{ijk}$ based on the ***Group*** and including all the predictors can be specified as such (in a simplified form omitting the skew parameters and interactions for clarity):
+
+$$
+\begin{aligned}
+RT_{ijk} = \alpha + \alpha_{subject[i]} + \alpha_{orientation[i]} + \beta_{1} \times Group_{i} + \beta_{2} \times Spatial \ Imagery_{i}+ \beta_{3} \times Congruence_{j} + \beta_{4} \times Color_{k} + \beta_{5} \times Age_{i}
+\end{aligned}
+$$
+
+Where the $\alpha$ values are random intercepts per subject and orientation, considered as prior distributions in a Bayesian framework. Likewise, the maximal model based on ***Visual Imagery*** as a continuous predictor can be specified as such:
+
+$$
+\begin{aligned}
+RT_{ijk} = \alpha + \alpha_{subject[i]} + \alpha_{orientation[i]} + \beta_{1} \times Visual \ Imagery_{i} + \beta_{2} \times Spatial \ Imagery_{i}+ \beta_{3} \times Congruence_{j} + \beta_{4} \times Color_{k} + \beta_{5} \times Age_{i}
+\end{aligned}
+$$
+## Fitting the model
+
+```{r}
+
+# --- Setup --------------------------------------------------------------------
+
+# --- preprocessing recipe for explicit data ---
+rt_recipe_explicit <- 
+  df_explicit_rt %>%
+  select(-vviq80) %>% 
+  recipe %>%
+  update_role(rt_explicit, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, sex,
+    aphantasia, visual_imagery, spatial_imagery,
+    color, congruence, orientation,
+    new_role = "predictor"
+    ) %>%
+  add_role(subjectid, orientation, new_role = "group") %>%
+  step_normalize(age)
+
+# --- preprocessing recipe for implicit data ---
+rt_recipe_implicit <- 
+  df_explicit_rt %>%
+  select(-vviq80) %>% 
+  recipe %>%
+  update_role(rt_explicit, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, sex,
+    aphantasia, visual_imagery, spatial_imagery,
+    color, congruence, orientation,
+    new_role = "predictor"
+    ) %>%
+  add_role(subjectid, orientation, new_role = "group") %>%
+  step_normalize(age)
+
+# --- setting the type of bayesian models to be fitted ---
+rt_model <-
+  bayesian (
+    family = skew_normal()
+  ) %>%
+  set_engine("brms") %>% 
+  set_mode("regression")
+
+# --- Fitting the models -------------------------------------------------------
+
+# Explicit task
+
+# --- fit 1: fixed effects and subject intercept ---
+rt_ex_fit1 <-
+  workflow () %>% 
+  add_recipe(rt_recipe_explicit) %>%
+  add_model(
+    spec = rt_model,
+    formula = rt_explicit ~ aphantasia + congruence + color + (1|subjectid)
+  ) %>% 
+  fit(data = df_explicit_rt)
+```
 
 
 
@@ -675,7 +798,7 @@ df_implicit_rt %>%
 
 ## Rotation task
 
-Some analyses of the rotation task are summarised as visualizations in @fig-rotation.
+Some quick analyses of the rotation task are summarised as visualizations in @fig-rotation.
 
 ```{r rotation}
 #| label: fig-rotation
@@ -719,8 +842,8 @@ p_rotation_errors <-
     ylim = c(.01,.16)
     ) +
   labs(title = "Rotation task") +
-  scale_color_viridis_d(guide = NULL) +
-  scale_fill_viridis_d(name = "Aphantasia", labels = c("Yes", "No"), alpha = .6) +
+  scale_color_okabeito(guide = NULL) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
   theme(legend.position = "top")
 
 # --- Correlation between rotation correct and spatial imagery -----------------
