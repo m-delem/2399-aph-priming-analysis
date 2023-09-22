@@ -289,9 +289,9 @@ The consequence of this analysis is that from this point onwards, for the future
 
 - Binning the participants in two categories based on the VVIQ (cut-off at 32, Aphantasics/Phantasics).
 
-- Using the visual imagery as a continuous variable.
+- Using the visual imagery variable as a continuous predictor.
 
-Although we could use the VVIQ both for categorizing and as a classification variable, for the sake of consistency, we are going to use the VVIQ only as a classification variable for defining aphantasia, and the *Visual Imagery* component from the PCA as the continuous variable measuring visual imagery. Therefore two types of models are going to be fitted:
+Although we could use the VVIQ both for categorizing and as a continuous variable, for the sake of consistency, we are going to use the VVIQ only as a classification variable for defining aphantasia, and the *Visual Imagery* component from the PCA as the continuous variable measuring visual imagery. Therefore two types of models are going to be fitted:
 
 1. Models using **Aphantasia as a categorical variable.**
 
@@ -338,7 +338,7 @@ df_rotation <- dfs[[4]]
 
 ### Accuracy
 
-Response time is an obvious outcome to model when it comes to decision tasks. The use of accuracy is more debatable, as the tasks were not specifically designed to be challenging. Traditionally, accuracy is mostly used to remove incorrect trials from RT modelling. We'll describe accuracy data to evaluate its relevance in this analysis. The distribution of the percentages of errors across the three tasks is displayed in @fig-distributions.
+While response time is an obvious outcome to model when it comes to decision tasks, the use of accuracy is more debatable, as the tasks were not specifically designed to be challenging. Traditionally, accuracy is mostly used to remove incorrect trials from RT modelling. We'll describe accuracy data to evaluate its relevance in this analysis. The distribution of the percentages of errors across the three tasks is displayed in @fig-distributions.
 
 ```{r distributions}
 #| label: fig-distributions
@@ -471,39 +471,142 @@ We can see that the distributions are skewed yet very similar across groups and 
 
 ### Response times
 
-As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms, along with error trials. This amounts to 5.3% of trials in both tasks. The descriptive statistics of the response times for the remaining trials in both tasks are shown in @tbl-rt_stats.
+As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms, along with error trials. This amounts to 5.3% of trials in both tasks. As specified earlier, the data for each task from outliers that have an error rate above to 16% will be removed as well (9 participants in the explicit task and 4 in the implicit task). There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in @fig-rt_outliers, along with their statistics in tbl-rt_means. 
 
-```{r rt_stats}
+For this more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). A common threshold used for outlier detection with MADs is $median$ $\pm$ 3 $\cdot$ $MAD$ (Hampel filter, see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case, and all the participants with fast RT means stay above the *median - 1.5* $\cdot$ $MAD$. As for the high threshold, the choice the *median + 3* $\cdot$ $MAD$ would set a highly conservative maximum (e.g. 1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at *median + 5* $\cdot$ $MAD$ (i.e. 1797 for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this data preprocessing.
+
+```{r acc_outliers}
 #| echo: false
-#| label: tbl-rt_stats
-#| tbl-cap: "Descriptive statistics of all the response times in the explicit and implicit tasks."
 
-# --- RT report tables ---
+# --- Accuracy outliers analysis ---
+df_outliers <- 
+  list(df_explicit, df_implicit) %>%
+  imap(
+    ~.x %>% 
+      select(subjectid, starts_with("correct"), aphantasia) %>%
+      group_by(subjectid) %>% 
+      count(pick(2)) %>% 
+      filter(pick(1) == 1) %>%
+      ungroup() %>% 
+      mutate(
+        n_tot = max(n),
+        prop = (n_tot - n) / n_tot * 100
+      ) %>%
+      arrange(desc(prop)) %>% 
+      select(1, 5)
+    )
+# 9 accuracy outliers in the explicit task, 4 in the implicit one
 
-df_explicit_rt <- 
+# --- Tidied RT dataframes -----------------------------------------------------
+df_explicit_rt <-
   df_explicit %>% 
-  filter(rt_explicit > 300 & rt_explicit < 3000 & correct_explicit == 1)
+  filter(
+    rt_explicit > 300 & 
+      rt_explicit < 3000 & 
+      correct_explicit == 1 &
+      !(subjectid %in% c(
+        "ldossantos", 
+        "aknezevic", 
+        "agayou", 
+        "bluciani", 
+        "lbrunie", 
+        "cmarcenytheault", 
+        "llhermitte", 
+        "jnaruse", 
+        "fc"))
+    )
 
 df_implicit_rt <- 
   df_implicit %>% 
-  filter(rt_implicit > 300 & rt_implicit < 3000 & correct_implicit == 1)
+  filter(
+    rt_implicit > 300 & 
+      rt_implicit < 3000 & 
+      correct_implicit == 1 &
+      !(subjectid %in% c(
+        "bdispaux", 
+        "eleveque", 
+        "aleclaire", 
+        "dchimenton"))
+      )
+```
 
-df_rt <- list(
-  df_explicit_rt %>% rename("Explicit task RT" = rt_explicit), 
-  df_implicit_rt %>% rename("Implicit task RT" = rt_implicit)
+```{r rt_outliers}
+#| echo: false
+#| label: fig-rt_outliers
+#| fig-cap: "Distribution of the mean RTs of participants in the explicit and implicit tasks."
+#| fig-width: 9
+#| fig-height: 4.5
+
+df_stats_rt_explicit <-
+  df_explicit_rt %>% 
+  group_by(subjectid) %>% 
+  summarise(
+    mean = mean(rt_explicit),
+    mad = mad(rt_explicit),
+    min = min(rt_explicit),
+    max = max(rt_explicit)
+  )
+
+df_stats_rt_implicit <-
+  df_implicit_rt %>% 
+  group_by(subjectid) %>% 
+  summarise(
+    mean = mean(rt_implicit),
+    mad = mad(rt_implicit),
+    min = min(rt_implicit),
+    max = max(rt_implicit)
+  )
+
+# --- RT outliers analysis ---
+p_rt_explicit <-
+  df_stats_rt_explicit %>%
+  ggplot(aes(x = mean)) +
+  geom_histogram(
+    fill = "aquamarine2", 
+    color = "aquamarine4", 
+    alpha = .3,
+    bins = 70
+    # adjust = .4
+    ) +
+  labs(x = "Explicit task mean RT", y = "Number of participants") +
+  scale_y_continuous(breaks = seq(0, 13, by = 1))
+
+p_rt_implicit <-
+  df_stats_rt_implicit %>%
+  ggplot(aes(x = mean)) +
+  geom_histogram(
+    fill = "coral2", 
+    color = "coral4", 
+    alpha = .3,
+    bins = 70
+    # adjust = .4
+    ) +
+  labs(x = "Implicit task mean RT", y = NULL) +
+  scale_y_continuous(breaks = seq(0, 9, by = 1))
+
+ggarrange(p_rt_explicit, p_rt_implicit)
+```
+
+```{r rt_means_table}
+#| echo: false
+#| label: tbl-rt_means
+
+df_rt <-
+  list(
+  df_explicit_rt %>% rename("Explicit task mean RTs" = rt_explicit), 
+  df_implicit_rt %>% rename("Implicit task mean RTs" = rt_implicit)
   ) %>% 
   imap(
     ~select(.x, contains("RT")) %>%
       report() %>% 
       as.data.frame() %>% 
-      select(1:10)
+      select(1, 2, 5:10)
     )
 
 bind_rows(df_rt[[1]], df_rt[[2]]) %>% display
 ```
 
 ```{r}
-
 # --- RT distribution per participant ---
 df_explicit_rt %>% 
   ggplot(aes(x = rt_explicit, fill = subjectid, color = subjectid)) +
