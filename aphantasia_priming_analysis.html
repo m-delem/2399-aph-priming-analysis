@@ -124,7 +124,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#response-times" id="toc-response-times" class="nav-link" data-scroll-target="#response-times">Response times</a></li>
   </ul></li>
   </ul></li>
-  <li><a href="#inferential-analyses" id="toc-inferential-analyses" class="nav-link" data-scroll-target="#inferential-analyses">Inferential Analyses</a></li>
+  <li><a href="#inferential-analyses" id="toc-inferential-analyses" class="nav-link" data-scroll-target="#inferential-analyses">Inferential Analyses</a>
+  <ul class="collapse">
+  <li><a href="#model-description-multilevel-modelling" id="toc-model-description-multilevel-modelling" class="nav-link" data-scroll-target="#model-description-multilevel-modelling">Model description (Multilevel modelling)</a></li>
+  <li><a href="#fitting-the-models" id="toc-fitting-the-models" class="nav-link" data-scroll-target="#fitting-the-models">Fitting the models</a></li>
+  </ul></li>
   <li><a href="#annexes" id="toc-annexes" class="nav-link" data-scroll-target="#annexes">Annexes</a>
   <ul class="collapse">
   <li><a href="#rotation-task" id="toc-rotation-task" class="nav-link" data-scroll-target="#rotation-task">Rotation task</a></li>
@@ -177,47 +181,48 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  easystats,      <span class="co"># collection of data analysis packages</span></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  tidymodels,     <span class="co"># collection of packages for a tidy modelling workflow</span></span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  bayesian,       <span class="co"># bayesian modelling with brms and tidymodels</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  mclust,         <span class="co"># mixture clustering</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  ggpubr,         <span class="co"># ggplot tools</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  viridis,        <span class="co"># ggplot colour-blind friendly palettes</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  tidyverse       <span class="co"># the essentials</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Global cosmetic theme ---</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>(<span class="at">base_size =</span> <span class="dv">14</span>))</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Fixing a seed for reproducibility ---</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">14051998</span>)</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Importing data -----------------------------------------------------------</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Association task</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>df_asso <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_asso"</span>)</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Implicit task</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>df_implicit <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_implicit"</span>)</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Explicit task</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>df_explicit <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_explicit"</span>)</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Rotation task</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>df_rotation <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_rotation"</span>)</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Questionnaires</span></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>df_questionnaires <span class="ot">&lt;-</span> </span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel</span>(</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    <span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>,</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="st">"data_questionnaires"</span></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>  <span class="co"># creating the a/phantasia groups</span></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    <span class="at">aphantasia =</span> <span class="fu">ifelse</span>(vviq80 <span class="sc">&lt;</span> <span class="dv">32</span>, <span class="st">"yes"</span>, <span class="st">"no"</span>),</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    <span class="at">aphantasia =</span> <span class="fu">fct_relevel</span>(aphantasia, <span class="st">"yes"</span>, <span class="st">"no"</span>)</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  multilevelmod,  <span class="co"># multilevel modelling with lmer</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  mclust,         <span class="co"># mixture clustering</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  ggpubr,         <span class="co"># ggplot tools</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  viridis,        <span class="co"># ggplot colour-blind friendly palettes</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  tidyverse       <span class="co"># the essentials</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Global cosmetic theme ---</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>(<span class="at">base_size =</span> <span class="dv">14</span>))</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Fixing a seed for reproducibility ---</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">14051998</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Importing data -----------------------------------------------------------</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Association task</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>df_asso <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_asso"</span>)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Implicit task</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>df_implicit <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_implicit"</span>)</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="co"># Explicit task</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>df_explicit <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_explicit"</span>)</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Rotation task</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>df_rotation <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_rotation"</span>)</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="co"># Questionnaires</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>df_questionnaires <span class="ot">&lt;-</span> </span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel</span>(</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    <span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>,</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="st">"data_questionnaires"</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>  <span class="co"># creating the a/phantasia groups</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    <span class="at">aphantasia =</span> <span class="fu">ifelse</span>(vviq80 <span class="sc">&lt;</span> <span class="dv">32</span>, <span class="st">"yes"</span>, <span class="st">"no"</span>),</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">aphantasia =</span> <span class="fu">fct_relevel</span>(aphantasia, <span class="st">"yes"</span>, <span class="st">"no"</span>)</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="exploratory-data-analysis" class="level1">
@@ -535,7 +540,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </div>
-<p>For this more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). A common threshold used for outlier detection with MADs is <span class="math inline">\(median \ \pm \ 3 \cdot MAD\)</span> (Hampel filter, see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case, and all the participants with fast RT means stay above the <span class="math inline">\(median \ - \ 1.5 \cdot MAD\)</span>. As for the high threshold, the choice the <span class="math inline">\(median \ + \ 3 \cdot MAD\)</span> would set a highly conservative maximum (e.g.&nbsp;1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at <span class="math inline">\(median \ + \ 5 \cdot MAD\)</span> (i.e.&nbsp;1797 for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in <a href="#fig-rt_per_participant">Figure&nbsp;6</a>.</p>
+<p>For this more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). Common thresholds used for outlier detection with MADs are <span class="math inline">\(median \ \pm \ 3 \cdot MAD\)</span> (Hampel filter; see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case, as all the participants with fast RT means stay above the <span class="math inline">\(median \ - \ 1.5 \cdot MAD\)</span>. As for the high threshold, the choice the <span class="math inline">\(median \ + \ 3 \cdot MAD\)</span> would set a highly conservative maximum (e.g.&nbsp;1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at <span class="math inline">\(median \ + \ 5 \cdot MAD\)</span> (i.e.&nbsp;1797ms for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in <a href="#fig-rt_per_participant">Figure&nbsp;6</a>.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-rt_per_participant" class="quarto-figure quarto-figure-center anchored">
@@ -551,6 +556,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </section>
 <section id="inferential-analyses" class="level1">
 <h1>Inferential Analyses</h1>
+<section id="model-description-multilevel-modelling" class="level2">
+<h2 class="anchored" data-anchor-id="model-description-multilevel-modelling">Model description (Multilevel modelling)</h2>
 <p>Our analyses aim to evaluate the predictive abilities of several variables on one outcome, the <strong>response times</strong> in the tasks. Our potential predictors are:</p>
 <ul>
 <li><p><strong>Group</strong> membership, with two levels: aphantasia/phantasia</p></li>
@@ -558,10 +565,6 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><p><strong>Spatial imagery</strong>, a standardized continuous variable</p></li>
 <li><p><strong>Congruence</strong> conditions, with two levels: congruent and incongruent</p></li>
 <li><p><strong>Color</strong> conditions, with two levels: colored and uncolored.</p></li>
-</ul>
-<p>Two potential confounding variables could also be evaluated :</p>
-<ul>
-<li><p><strong>Sex</strong>, with two levels: F and H</p></li>
 <li><p><strong>Age</strong>, a continuous variable ranging from 18 to 65 (M = 34.1, SD = 10.21)</p></li>
 </ul>
 <p>Two sub-levels of the responses can also be evaluated:</p>
@@ -569,19 +572,24 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li><p>the dependency between response times for <strong>each participant</strong> caused by repeated measures</p></li>
 <li><p>the dependency between response times for <strong>each orientation</strong> caused by the repetition of stimuli</p></li>
 </ul>
-<p>This structure will be modelled using Bayesian Multilevel Models (also called hierarchical models), allowing us to add the sub-levels of the hierarchy of predictors we described above in the model. Multilevel models can also be specified with skew-normal distributions, therefore bypassing the need to transform the skewed RT data.</p>
-<p>For a participant <span class="math inline">\(i\)</span> with a given Group, age, spatial imagery and a specific orientation, in the Congruency condition <span class="math inline">\(j\)</span> and the color condition <span class="math inline">\(k\)</span>, The maximal model of the resulting <span class="math inline">\(RT_{ijk}\)</span> based on the <strong><em>Group</em></strong> and including all the predictors can be specified as such (in a simplified form omitting the skew parameters and interactions for clarity):</p>
+<p>This structure will be modelled using Multilevel Models (also called hierarchical or mixed models), allowing us to add the sub-levels of the hierarchy of predictors we described above in the model. RT data will be transformed using a Box-Cox transformation to bring the distributions closer to normality and improve the quality of the models.</p>
+<p>For a participant <span class="math inline">\(i\)</span> with a given Group, age, spatial imagery and a specific orientation, in the Congruency condition <span class="math inline">\(j\)</span> and the Color condition <span class="math inline">\(k\)</span>, The maximal model of the resulting <span class="math inline">\(RT_{ijk}\)</span> based on the <strong><em>Group</em></strong> and including all the predictors can be specified as such (in a simplified form omitting the interaction parameters for clarity):</p>
 <p><span class="math display">\[
 \begin{aligned}
 RT_{ijk} = \alpha + \alpha_{subject[i]} + \alpha_{orientation[i]} + \beta_{1} \times Group_{i} + \beta_{2} \times Spatial \ Imagery_{i}+ \beta_{3} \times Congruence_{j} + \beta_{4} \times Color_{k} + \beta_{5} \times Age_{i}
 \end{aligned}
 \]</span></p>
-<p>Where the <span class="math inline">\(\alpha\)</span> values are random intercepts per subject and orientation, considered as prior distributions in a Bayesian framework. Likewise, the maximal model based on <strong><em>Visual Imagery</em></strong> as a continuous predictor can be specified as such:</p>
+<p>Likewise, the maximal model based on <strong><em>Visual Imagery</em></strong> as a continuous predictor can be specified as such:</p>
 <p><span class="math display">\[
 \begin{aligned}
 RT_{ijk} = \alpha + \alpha_{subject[i]} + \alpha_{orientation[i]} + \beta_{1} \times Visual \ Imagery_{i} + \beta_{2} \times Spatial \ Imagery_{i}+ \beta_{3} \times Congruence_{j} + \beta_{4} \times Color_{k} + \beta_{5} \times Age_{i}
 \end{aligned}
 \]</span></p>
+</section>
+<section id="fitting-the-models" class="level2">
+<h2 class="anchored" data-anchor-id="fitting-the-models">Fitting the models</h2>
+<p>The mixed models will be fitted using <code>tidymodels</code> workflows.</p>
+</section>
 </section>
 <section id="annexes" class="level1">
 <h1>Annexes</h1>
