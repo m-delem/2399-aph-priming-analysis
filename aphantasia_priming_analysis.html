@@ -432,35 +432,70 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<p>We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to <strong>use accuracy only to remove missed trials in the analysis of the RTs</strong>. Nevertheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. For each tasks separately, the results of participants with an error rate superior to 16% will be removed, prior to removing all the missed trials of the remaining participants and modelling RTs.</p>
+<p>We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nevertheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. <strong>For each task separately, the results of participants with an error rate superior to 16% will be removed, prior to removing all the missed trials of the remaining participants for modelling RTs.</strong></p>
 </section>
 <section id="response-times" class="level3">
 <h3 class="anchored" data-anchor-id="response-times">Response times</h3>
-<p>The distribution of the response times in the explicit and implicit tasks are…</p>
+<p>The descriptive statistics of the response times in the explicit and implicit tasks are shown in <a href="#tbl-rts">Table&nbsp;3</a>.</p>
 <div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 4
-   mean    sd   max   min
-  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
-1  835.  658. 18092    37</code></pre>
+<div class="cell-output-display">
+<div id="tbl-rts" class="anchored">
+<table class="table table-sm table-striped small">
+<caption>Table&nbsp;3: Descriptive statistics of the response times in the explicit and implicit tasks.</caption>
+<colgroup>
+<col style="width: 18%">
+<col style="width: 7%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Variable</th>
+<th style="text-align: center;">n_Obs</th>
+<th style="text-align: center;">Mean</th>
+<th style="text-align: center;">SD</th>
+<th style="text-align: center;">Median</th>
+<th style="text-align: center;">MAD</th>
+<th style="text-align: center;">Min</th>
+<th style="text-align: center;">Max</th>
+<th style="text-align: center;">Skewness</th>
+<th style="text-align: center;">Kurtosis</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Explicit task RT</td>
+<td style="text-align: center;">9664</td>
+<td style="text-align: center;">835.41</td>
+<td style="text-align: center;">657.64</td>
+<td style="text-align: center;">669.00</td>
+<td style="text-align: center;">247.59</td>
+<td style="text-align: center;">37.00</td>
+<td style="text-align: center;">18092.00</td>
+<td style="text-align: center;">8.84</td>
+<td style="text-align: center;">148.18</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Implicit task RT</td>
+<td style="text-align: center;">9664</td>
+<td style="text-align: center;">681.98</td>
+<td style="text-align: center;">426.49</td>
+<td style="text-align: center;">579.00</td>
+<td style="text-align: center;">166.05</td>
+<td style="text-align: center;">150.00</td>
+<td style="text-align: center;">17266.00</td>
+<td style="text-align: center;">11.43</td>
+<td style="text-align: center;">311.26</td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 9,664 × 13
-   subjectid   age sex   aphantasia vviq80 visual_imagery spatial_imagery color 
-   &lt;chr&gt;     &lt;dbl&gt; &lt;chr&gt; &lt;fct&gt;       &lt;dbl&gt; &lt;dw_trnsf&gt;     &lt;dw_trnsf&gt;      &lt;chr&gt; 
- 1 aandre       21 f     yes          16.5 -0.8775255     -0.504299       uncol…
- 2 aandre       21 f     yes          16.5 -0.8775255     -0.504299       uncol…
- 3 aandre       21 f     yes          16.5 -0.8775255     -0.504299       colou…
- 4 aandre       21 f     yes          16.5 -0.8775255     -0.504299       colou…
- 5 aandre       21 f     yes          16.5 -0.8775255     -0.504299       colou…
- 6 aandre       21 f     yes          16.5 -0.8775255     -0.504299       uncol…
- 7 aandre       21 f     yes          16.5 -0.8775255     -0.504299       colou…
- 8 aandre       21 f     yes          16.5 -0.8775255     -0.504299       uncol…
- 9 aandre       21 f     yes          16.5 -0.8775255     -0.504299       colou…
-10 aandre       21 f     yes          16.5 -0.8775255     -0.504299       uncol…
-# ℹ 9,654 more rows
-# ℹ 5 more variables: congruence &lt;chr&gt;, orientation &lt;chr&gt;, response &lt;chr&gt;,
-#   correct_explicit &lt;dbl&gt;, rt_explicit &lt;dbl&gt;</code></pre>
 </div>
 </div>
 </section>

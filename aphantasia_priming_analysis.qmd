@@ -467,25 +467,75 @@ ggarrange(
     )
 ```
 
-We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nevertheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each tasks separately, the results of participants with an error rate superior to 16% will be removed, prior to removing all the missed trials of the remaining participants and modelling RTs.**
+We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nevertheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each task separately, the results of participants with an error rate superior to 16% will be removed, prior to removing all the missed trials of the remaining participants for modelling RTs.**
 
 ### Response times
 
-The distribution of the response times in the explicit and implicit tasks are...
+Out of the box, response times below 300ms and above 3000ms will be removed as they could represent false alarms in regards to standard RTs, along with error trials. This amounts to 5.3% of trials in both tasks. The descriptive statistics of the response times for the remaining trials in both tasks are shown in @tbl-rt_stats.
 
-```{r rt_distributions}
+```{r rt_stats}
 #| echo: false
+#| label: tbl-rt_stats
+#| tbl-cap: "Descriptive statistics of all the response times in the explicit and implicit tasks."
 
-df_explicit %>% 
-  summarise(
-    mean = mean(rt_explicit),
-    sd = sd(rt_explicit),
-    max = max(rt_explicit),
-    min = min(rt_explicit),
+# --- RT report tables ---
+
+df_explicit_rt <- 
+  df_explicit %>% 
+  filter(rt_explicit > 300 & rt_explicit < 3000 & correct_explicit == 1)
+
+df_implicit_rt <- 
+  df_implicit %>% 
+  filter(rt_implicit > 300 & rt_implicit < 3000 & correct_implicit == 1)
+
+df_rt <- list(
+  df_explicit_rt %>% rename("Explicit task RT" = rt_explicit), 
+  df_implicit_rt %>% rename("Implicit task RT" = rt_implicit)
+  ) %>% 
+  imap(
+    ~select(.x, contains("RT")) %>%
+      report() %>% 
+      as.data.frame() %>% 
+      select(1:10)
     )
 
-df_explicit
-  
+bind_rows(df_rt[[1]], df_rt[[2]]) %>% display
+```
+
+```{r}
+
+# --- RT distribution per participant ---
+df_explicit_rt %>% 
+  ggplot(aes(x = rt_explicit, fill = subjectid, color = subjectid)) +
+  geom_density(alpha = .07) +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty()) +
+  scale_y_continuous(name = "Density") +
+  coord_cartesian(
+    xlim = c(380, 2850)
+  ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL)
+
+# --- Mean RT distribution ---
+df_explicit_rt %>% 
+  group_by(subjectid) %>% 
+  summarise(mean_rt = mean(rt_explicit)) %>% 
+  select(mean_rt) %>% 
+  filter(mean_rt > 1377)
+  report %>% as.data.frame
+
+df_explicit_rt %>% 
+  group_by(subjectid) %>% 
+  summarise(mean_rt = mean(rt_explicit)) %>% 
+  ggplot(aes(x = mean_rt)) +
+  geom_histogram(
+    fill = "aquamarine2", 
+    color = "aquamarine4", 
+    alpha = .3,
+    bins = 50
+    # adjust = .4
+    ) +
+  scale_y_continuous(breaks = breaks_pretty(10))
 ```
 
 
