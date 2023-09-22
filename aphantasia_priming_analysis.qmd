@@ -471,7 +471,7 @@ We can see that the distributions are skewed yet very similar across groups and 
 
 ### Response times
 
-Out of the box, response times below 300ms and above 3000ms will be removed as they could represent false alarms in regards to standard RTs, along with error trials. This amounts to 5.3% of trials in both tasks. The descriptive statistics of the response times for the remaining trials in both tasks are shown in @tbl-rt_stats.
+As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms, along with error trials. This amounts to 5.3% of trials in both tasks. The descriptive statistics of the response times for the remaining trials in both tasks are shown in @tbl-rt_stats.
 
 ```{r rt_stats}
 #| echo: false
@@ -516,14 +516,15 @@ df_explicit_rt %>%
   scale_fill_viridis_d(guide = NULL) +
   scale_color_viridis_d(guide = NULL)
 
-# --- Mean RT distribution ---
+# --- Mean RT stats ---
 df_explicit_rt %>% 
   group_by(subjectid) %>% 
   summarise(mean_rt = mean(rt_explicit)) %>% 
   select(mean_rt) %>% 
-  filter(mean_rt > 1377)
+  # filter(mean_rt > 1377)
   report %>% as.data.frame
 
+# --- Mean RT explicit histo ---
 df_explicit_rt %>% 
   group_by(subjectid) %>% 
   summarise(mean_rt = mean(rt_explicit)) %>% 
@@ -532,7 +533,21 @@ df_explicit_rt %>%
     fill = "aquamarine2", 
     color = "aquamarine4", 
     alpha = .3,
-    bins = 50
+    bins = 70
+    # adjust = .4
+    ) +
+  scale_y_continuous(breaks = breaks_pretty(10))
+
+# --- Mean RT implicit histo ---
+df_implicit_rt %>% 
+  group_by(subjectid) %>% 
+  summarise(mean_rt = mean(rt_implicit)) %>% 
+  ggplot(aes(x = mean_rt)) +
+  geom_histogram(
+    fill = "coral", 
+    color = "coral4", 
+    alpha = .3,
+    bins = 70
     # adjust = .4
     ) +
   scale_y_continuous(breaks = breaks_pretty(10))
