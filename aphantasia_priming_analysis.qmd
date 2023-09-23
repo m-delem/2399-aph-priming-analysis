@@ -732,7 +732,7 @@ $$
 
 ## Fitting the models
 
-The mixed models will be fitted using `tidymodels` workflows. RT data will be standardized before modelling, therefore the standardized coefficients reported will scale on *standard deviations of the RT variable*.
+The mixed models will be fitted using `tidymodels` workflows. RT data will be standardized before modelling, therefore the standardized coefficients reported will scale on *standard deviations of the RT variable*. Let's try displaying some parameters in @tbl-model_test_table.
 
 ```{r modelling}
 #| echo: false
@@ -1061,6 +1061,13 @@ fit_rt_all_parameters <-
     )
 ```
 
+```{r model_test_table}
+#| echo: false
+#| label: tbl-model_test_table
+#| tbl-cap: "Comparative performances of the fitted models."
+
+fit_rt_all_performances$explicit_grouped %>% display
+```
 
 
 
@@ -1072,7 +1079,7 @@ fit_rt_all_parameters <-
 
 ## Rotation task
 
-Some quick analyses of the rotation task are summarised as visualizations in @fig-rotation.
+Some quick analyses of the rotation task are summarized as visualizations in @fig-rotation.
 
 ```{r rotation}
 #| label: fig-rotation
