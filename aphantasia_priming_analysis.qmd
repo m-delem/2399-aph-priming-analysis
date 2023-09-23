@@ -305,7 +305,12 @@ In both cases, we are going to account for the potential effect of spatial image
 
 # updating all the dataframes with the imagery variables
 dfs <- 
-  list(df_asso, df_implicit, df_explicit, df_rotation) %>%
+  list(
+    association_task = df_asso, 
+    implicit_task = df_implicit, 
+    explicit_task = df_explicit, 
+    rotation_task = df_rotation
+    ) %>%
   # adding the vviq and group column to every dataframe
   imap(~left_join(
     .x, 
@@ -329,10 +334,10 @@ dfs <-
         everything())
     )
 
-df_asso     <- dfs[[1]]
-df_implicit <- dfs[[2]]
-df_explicit <- dfs[[3]]
-df_rotation <- dfs[[4]]
+df_asso     <- dfs$association_task
+df_implicit <- dfs$implicit_task
+df_explicit <- dfs$explicit_task
+df_rotation <- dfs$rotation_task
 ```
 
 ## Outcomes: accuracy and RTs?
@@ -727,13 +732,18 @@ $$
 
 ## Fitting the models
 
-The mixed models will be fitted using `tidymodels` workflows.
+The mixed models will be fitted using `tidymodels` workflows. RT data will be standardized before modelling, therefore the standardized coefficients reported will scale on *standard deviations of the RT variable*.
 
-```{r model_specs}
+```{r modelling}
 #| echo: false
+
+# The mixed models will be fitted using `tidymodels` workflows and methods.
 
 # --- Setup --------------------------------------------------------------------
 
+# --- standardize the outcome variable ---
+df_explicit_rt <- df_explicit_rt %>% standardize(rt_explicit)
+df_implicit_rt <- df_implicit_rt %>% standardize(rt_implicit)
 # --- preprocessing recipe for explicit data ---
 rt_recipe_explicit <- 
   df_explicit_rt %>%
@@ -747,8 +757,8 @@ rt_recipe_explicit <-
     new_role = "predictor"
     ) %>%
   add_role(subjectid, orientation, new_role = "group") %>%
-  step_normalize(age) %>% 
-  step_BoxCox(rt_explicit)
+  step_BoxCox(rt_explicit) %>% 
+  step_normalize(age, rt_explicit)
 
 # --- preprocessing recipe for implicit data ---
 rt_recipe_implicit <- 
@@ -763,8 +773,12 @@ rt_recipe_implicit <-
     new_role = "predictor"
     ) %>%
   add_role(subjectid, orientation, new_role = "group") %>%
-  step_normalize(age) %>% 
-  step_BoxCox(rt_implicit)
+  step_BoxCox(rt_implicit) %>% 
+  step_normalize(age, rt_implicit) 
+
+# --- workflows ---
+rt_workflow_explicit <- workflow() %>% add_recipe(rt_recipe_explicit)
+rt_workflow_implicit <- workflow() %>% add_recipe(rt_recipe_implicit)
 
 # --- type of bayesian models to be fitted ---
 # rt_model_bayes <-
@@ -782,237 +796,238 @@ rt_model_lmer <-
 # --- Specifying the models ----------------------------------------------------
 # A forward procedure is going to be used to assess the quality of the models, as there is a huge potential amount of predictors.
 
-# ---------------------------------------------------------- Group analyses ----
+# ----------------------------------------------------------- Group analyses ---
  
 # ------------------------------------------------------------ Explicit task ---
 
 # model 1: intercepts only
 rt_ex_modg1 <-
-  workflow() %>%
-  add_recipe(rt_recipe_explicit) %>% 
-  add_model(
-    spec = rt_model_lmer,
-    formula = rt_explicit ~ 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ (1|subjectid)
     )
 
-# model 2: principal main effects
+# model 2: main fixed effects
 rt_ex_modg2 <-
-  rt_ex_modg1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_explicit ~ 
-      aphantasia + congruence + color + 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ aphantasia + congruence + color + (1|subjectid)
     )
 
-# model 3: spatial and age effects
+# model 3: group congruence interaction
 rt_ex_modg3 <-
-  rt_ex_modg1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_explicit ~ 
-      aphantasia * congruence + color + 
-      # spatial_imagery + age +
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ aphantasia * congruence + color + (1|subjectid)
     )
 
-# model 4: two and three way interactions
+# model 4: congruence color interaction
 rt_ex_modg4 <-
-  rt_ex_modg1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_explicit ~ 
-      aphantasia * congruence * color + 
-      # spatial_imagery + age + 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ aphantasia + congruence * color + (1|subjectid)
+    )
+
+# model 5: group color interaction
+rt_ex_modg5 <-
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ aphantasia + congruence + color + aphantasia:color + (1|subjectid)
+    )
+
+# model 6: three way interactions
+rt_ex_modg6 <-
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ aphantasia * congruence * color + (1|subjectid)
     )
 
 # ------------------------------------------------------------ Implicit task ---
 
 # model 1: intercepts only
 rt_im_modg1 <-
-  workflow() %>%
-  add_recipe(rt_recipe_implicit) %>% 
-  add_model(
-    spec = rt_model_lmer,
-    formula = rt_implicit ~ 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ (1|subjectid)
     )
 
-# model 2: principal main effects
+# model 2: main fixed effects
 rt_im_modg2 <-
-  rt_im_modg1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_implicit ~ 
-      aphantasia + congruence + color + 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ aphantasia + congruence + color + (1|subjectid)
     )
 
-# model 3: spatial and age effects
+# model 3: group congruence interaction
 rt_im_modg3 <-
-  rt_im_modg1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_implicit ~ 
-      aphantasia * congruence + color + 
-      # spatial_imagery + age +
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ aphantasia * congruence + color + (1|subjectid)
     )
 
-# model 4: two and three way interactions
+# model 4: congruence color interaction
 rt_im_modg4 <-
-  rt_im_modg1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_implicit ~ 
-      aphantasia * congruence * color + 
-      # spatial_imagery + age + 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ aphantasia + congruence * color + (1|subjectid)
     )
 
-# -------------------------------------------------- Continuous VI analyses ----
- 
+# model 5: group color interaction
+rt_im_modg5 <-
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ aphantasia + congruence + color + 
+      aphantasia:color + (1|subjectid)
+    )
+
+# model 6: three way interactions
+rt_im_modg6 <-
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ aphantasia * congruence * color + (1|subjectid)
+    )
+
+# --------------------------------------------------- Continuous VI analyses ---
+
 # ------------------------------------------------------------ Explicit task ---
 
 # model 1: intercepts only
 rt_ex_modcvi1 <-
-  workflow() %>%
-  add_recipe(rt_recipe_explicit) %>% 
-  add_model(
-    spec = rt_model_lmer,
-    formula = rt_explicit ~ 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ (1|subjectid)
     )
 
-# model 2: principal main effects
+# model 2: main fixed effects
 rt_ex_modcvi2 <-
-  rt_ex_modcvi1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_explicit ~ 
-      visual_imagery + congruence + color + 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ visual_imagery + congruence + color + (1|subjectid)
     )
 
-# model 3: spatial and age effects
+# model 3: group congruence interaction
 rt_ex_modcvi3 <-
-  rt_ex_modcvi1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_explicit ~ 
-      visual_imagery * congruence + color + 
-      # spatial_imagery + age +
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ visual_imagery * congruence + color + (1|subjectid)
     )
 
-# model 4: two and three way interactions
+# model 4: congruence color interaction
 rt_ex_modcvi4 <-
-  rt_ex_modcvi1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_explicit ~ 
-      visual_imagery * congruence * color + 
-      # spatial_imagery + age + 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ visual_imagery + congruence * color + (1|subjectid)
+    )
+
+# model 5: group color interaction
+rt_ex_modcvi5 <-
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ visual_imagery + congruence + color + aphantasia:color + (1|subjectid)
+    )
+
+# model 6: three way interactions
+rt_ex_modcvi6 <-
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ visual_imagery * congruence * color + (1|subjectid)
     )
 
 # ------------------------------------------------------------ Implicit task ---
 
 # model 1: intercepts only
 rt_im_modcvi1 <-
-  workflow() %>%
-  add_recipe(rt_recipe_implicit) %>% 
-  add_model(
-    spec = rt_model_lmer,
-    formula = rt_implicit ~ 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ (1|subjectid)
     )
 
-# model 2: principal main effects
+# model 2: main fixed effects
 rt_im_modcvi2 <-
-  rt_im_modcvi1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_implicit ~ 
-      visual_imagery + congruence + color + 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ visual_imagery + congruence + color + (1|subjectid)
     )
 
-# model 3: spatial and age effects
+# model 3: group congruence interaction
 rt_im_modcvi3 <-
-  rt_im_modcvi1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_implicit ~ 
-      visual_imagery * congruence + color + 
-      # spatial_imagery + age +
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ visual_imagery * congruence + color + (1|subjectid)
     )
 
-# model 4: two and three way interactions
+# model 4: congruence color interaction
 rt_im_modcvi4 <-
-  rt_im_modcvi1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_implicit ~ 
-      visual_imagery * congruence * color + 
-      # spatial_imagery + age + 
-      (1|subjectid) #+ (1|orientation)
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ visual_imagery + congruence * color + (1|subjectid)
     )
-```
 
-```{r model_fitting}
-# --- Fitting all models ---
+# model 5: group color interaction
+rt_im_modcvi5 <-
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ visual_imagery + congruence + color + aphantasia:color + (1|subjectid)
+    )
 
+# model 6: three way interactions
+rt_im_modcvi6 <-
+  rt_workflow_implicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_implicit ~ visual_imagery * congruence * color + (1|subjectid)
+    )
+
+# --- Fitting all models -------------------------------------------------------
+
+# explicit task with groups
 fit_rt_ex_gmods <-
   list(
     explicit_g_intercept = rt_ex_modg1, 
     explicit_g_fixed = rt_ex_modg2, 
-    explicit_g_2_way = rt_ex_modg3, 
-    explicit_g_3_way = rt_ex_modg4
+    explicit_g_2_way_gxcn = rt_ex_modg3, 
+    explicit_g_2_way_cnxcl = rt_ex_modg4, 
+    explicit_g_2_way_gxcl = rt_ex_modg5, 
+    explicit_g_3_way = rt_ex_modg6
     ) %>% 
-  imap(~ fit(.x, df_explicit_rt) %>% extract_fit_engine())
+  imap(~ .x %>% fit(data = df_explicit_rt) %>% extract_fit_engine())
 
+# implicit task with groups
 fit_rt_im_gmods <-
   list(
     implicit_g_intercept = rt_im_modg1, 
     implicit_g_fixed = rt_im_modg2, 
-    implicit_g_2_way = rt_im_modg3, 
-    implicit_g_3_way = rt_im_modg4
+    implicit_g_2_way_gxcn = rt_im_modg3, 
+    implicit_g_2_way_cnxcl = rt_im_modg4, 
+    implicit_g_2_way_gxcl = rt_im_modg5, 
+    implicit_g_3_way = rt_im_modg6
     ) %>% 
-  imap(~ fit(.x, df_implicit_rt) %>% extract_fit_engine())
+  imap(~ .x %>% fit(data = df_implicit_rt) %>% extract_fit_engine())
 
+# explicit task with continuous imagery variable
 fit_rt_ex_cvimods <-
   list(
-   explicit_cvi_intercept = rt_ex_modcvi1, 
-   explicit_cvi_fixed = rt_ex_modcvi2, 
-   explicit_cvi_2_way = rt_ex_modcvi3, 
-   explicit_cvi_3_way = rt_ex_modcvi4
+    explicit_cvi_intercept = rt_ex_modcvi1, 
+    explicit_cvi_fixed = rt_ex_modcvi2, 
+    explicit_cvi_2_way_gxcn = rt_ex_modcvi3, 
+    explicit_cvi_2_way_cnxcl = rt_ex_modcvi4, 
+    explicit_cvi_2_way_gxcl = rt_ex_modcvi5, 
+    explicit_cvi_3_way = rt_ex_modcvi6
    ) %>% 
-  imap(~ fit(.x, df_explicit_rt) %>% extract_fit_engine())
+  imap(~ .x %>% fit(data = df_explicit_rt) %>% extract_fit_engine())
 
+# implicit task with continuous imagery variable
 fit_rt_im_cvimods <-
   list(
     implicit_cvi_intercept = rt_im_modcvi1, 
     implicit_cvi_fixed = rt_im_modcvi2, 
-    implicit_cvi_2_way = rt_im_modcvi3, 
-    implicit_cvi_3_way = rt_im_modcvi4
+    implicit_cvi_2_way_gxcn = rt_im_modcvi3, 
+    implicit_cvi_2_way_cnxcl = rt_im_modcvi4, 
+    implicit_cvi_2_way_gxcl = rt_im_modcvi5, 
+    implicit_cvi_3_way = rt_im_modcvi6
     ) %>% 
-  imap(~ fit(.x, df_implicit_rt) %>% extract_fit_engine())
-```
+  imap(~ .x %>% fit(data = df_implicit_rt) %>% extract_fit_engine())
 
-```{r model_performance}
-
-# Summarizing the models
-# fit_rt_ex_cvimods[[1]] %>% report_text %>% summary
-# fit_rt_ex_cvimods[[1]] %>% report_table %>% summary
-# fit_rt_ex_cvimods[[1]] %>% report_parameters %>% summary
-# fit_rt_ex_cvimods[[1]] %>% check_model()  # assumptions check
-
-# --- Performance of the models ---
-
+# nested list of all the lists of models
 fit_rt_all_mods <-
   list(
     explicit_grouped = fit_rt_ex_gmods,
@@ -1021,33 +1036,29 @@ fit_rt_all_mods <-
     implicit_cvi = fit_rt_im_cvimods
     )
 
-fit_rt_all_mods %>% 
+# --- Performance of the models ------------------------------------------------
+
+fit_rt_all_performances <- 
+  fit_rt_all_mods %>% 
   imap(
-    ~ compare_performance(.x)
-    # ~ bayesfactor_models(.x)
-      # report %>% 
-      # summary
+    ~ .x %>% 
+      compare_performance %>% 
+      select(1, 4:7) #%>%
+      # display
     )
 
+# --- Reporting parameter estimations ------------------------------------------
 
-fit_rt_ex_gmods %>% compare_performance          # bad
-fit_rt_ex_gmods %>% bayesfactor_models %>% report %>% summary # better
-
-# model 2: age out
-rt_ex_modg2 <-
-  rt_ex_modg1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_explicit ~ aaphantasia * congruence * color * spatial_imagery + (1|subjectid) + (1|orientation))
-
-# model 3: age out
-rt_ex_modg2 <-
-  rt_ex_modg1 %>%
-  update_model(
-    spec = rt_model_lmer,
-    formula = rt_explicit ~ aaphantasia * congruence * color * spatial_imagery + (1|subjectid) + (1|orientation))
-
-# --- Results ---
+fit_rt_all_parameters <-
+  fit_rt_all_mods %>% 
+  imap(
+    ~ .x %>%
+      imap(
+        ~ .x %>% 
+          model_parameters(effects = "fixed") #%>%
+          # display
+        )
+    )
 ```
 
 
