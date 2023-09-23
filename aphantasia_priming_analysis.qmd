@@ -734,16 +734,15 @@ $$
 
 The mixed models will be fitted using `tidymodels` workflows. RT data will be standardized before modelling, therefore the standardized coefficients reported will scale on *standard deviations of the RT variable*. Let's try displaying some parameters in @tbl-model_test_table.
 
-```{r modelling}
+```{r model_recipes_workflows_and_engines}
 #| echo: false
 
-# The mixed models will be fitted using `tidymodels` workflows and methods.
-
-# --- Setup --------------------------------------------------------------------
+# --- Setup ---
 
 # --- standardize the outcome variable ---
-df_explicit_rt <- df_explicit_rt %>% standardize(rt_explicit)
-df_implicit_rt <- df_implicit_rt %>% standardize(rt_implicit)
+# df_explicit_rt <- df_explicit_rt %>% standardize(rt_explicit)
+# df_implicit_rt <- df_implicit_rt %>% standardize(rt_implicit)
+
 # --- preprocessing recipe for explicit data ---
 rt_recipe_explicit <- 
   df_explicit_rt %>%
@@ -788,61 +787,76 @@ rt_workflow_implicit <- workflow() %>% add_recipe(rt_recipe_implicit)
 #   set_engine("brms") %>% 
 #   set_mode("regression")
 
-# ---type of mixed models to be fitted ---
+# --- mixed models to be fitted ---
 rt_model_lmer <-
   linear_reg() %>% 
   set_engine("lmer")
+```
 
-# --- Specifying the models ----------------------------------------------------
-# A forward procedure is going to be used to assess the quality of the models, as there is a huge potential amount of predictors.
+```{r specifying_group_models}
+#| echo: false
 
-# ----------------------------------------------------------- Group analyses ---
- 
-# ------------------------------------------------------------ Explicit task ---
+# --- Specifying group models ---
+
+# ----------------------------------------------------------- Explicit task ----
 
 # model 1: intercepts only
-rt_ex_modg1 <-
+explicit_g_intercept <-
   rt_workflow_explicit %>% add_model(
     rt_model_lmer,
     formula = rt_explicit ~ (1|subjectid)
     )
 
 # model 2: main fixed effects
-rt_ex_modg2 <-
+explicit_g_fixed <-
   rt_workflow_explicit %>% add_model(
     rt_model_lmer,
     formula = rt_explicit ~ aphantasia + congruence + color + (1|subjectid)
     )
 
 # model 3: group congruence interaction
-rt_ex_modg3 <-
+explicit_g_2_way_gxcn <-
   rt_workflow_explicit %>% add_model(
     rt_model_lmer,
     formula = rt_explicit ~ aphantasia * congruence + color + (1|subjectid)
     )
 
 # model 4: congruence color interaction
-rt_ex_modg4 <-
+explicit_g_2_way_cnxcl <-
   rt_workflow_explicit %>% add_model(
     rt_model_lmer,
     formula = rt_explicit ~ aphantasia + congruence * color + (1|subjectid)
     )
 
 # model 5: group color interaction
-rt_ex_modg5 <-
+explicit_g_2_way_gxcl <-
   rt_workflow_explicit %>% add_model(
     rt_model_lmer,
     formula = rt_explicit ~ aphantasia + congruence + color + aphantasia:color + (1|subjectid)
     )
 
 # model 6: three way interactions
-rt_ex_modg6 <-
+explicit_g_3_way <-
   rt_workflow_explicit %>% add_model(
     rt_model_lmer,
     formula = rt_explicit ~ aphantasia * congruence * color + (1|subjectid)
     )
 
-# ------------------------------------------------------------ Implicit task ---
+# model 7: reduced model without color
+explicit_g_2_way_nocolor <-
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ aphantasia * congruence + (1|subjectid)
+    )
+  
+# model 8: congruence slope by subject
+explicit_g_2_way_nocolor_slope <-
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ aphantasia * congruence + (congruence|subjectid)
+    )
+
+# ----------------------------------------------------------- Implicit task ----
 
 # model 1: intercepts only
 rt_im_modg1 <-
@@ -886,10 +900,14 @@ rt_im_modg6 <-
     rt_model_lmer,
     formula = rt_implicit ~ aphantasia * congruence * color + (1|subjectid)
     )
+```
 
-# --------------------------------------------------- Continuous VI analyses ---
+```{r specifying_continuous_models}
+#| echo: false
 
-# ------------------------------------------------------------ Explicit task ---
+# --- Specifying continuous models ---
+
+# ----------------------------------------------------------- Explicit task ----
 
 # model 1: intercepts only
 rt_ex_modcvi1 <-
@@ -933,7 +951,21 @@ rt_ex_modcvi6 <-
     formula = rt_explicit ~ visual_imagery * congruence * color + (1|subjectid)
     )
 
-# ------------------------------------------------------------ Implicit task ---
+# model 7: no color
+rt_ex_modcvi7 <-
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ visual_imagery * congruence + (1|subjectid)
+    )
+
+# model 8: slope by visual imagery
+rt_ex_modcvi8 <-
+  rt_workflow_explicit %>% add_model(
+    rt_model_lmer,
+    formula = rt_explicit ~ visual_imagery * congruence + (1 + visual_imagery|subjectid)
+    )
+
+# ----------------------------------------------------------- Implicit task ----
 
 # model 1: intercepts only
 rt_im_modcvi1 <-
@@ -976,22 +1008,30 @@ rt_im_modcvi6 <-
     rt_model_lmer,
     formula = rt_implicit ~ visual_imagery * congruence * color + (1|subjectid)
     )
+```
 
-# --- Fitting all models -------------------------------------------------------
+```{r fitting_models}
+#| echo: false
 
-# explicit task with groups
+# --- Fitting all models ---
+
+# --- Group models ---
+
+# explicit task
 fit_rt_ex_gmods <-
   list(
-    explicit_g_intercept = rt_ex_modg1, 
-    explicit_g_fixed = rt_ex_modg2, 
-    explicit_g_2_way_gxcn = rt_ex_modg3, 
-    explicit_g_2_way_cnxcl = rt_ex_modg4, 
-    explicit_g_2_way_gxcl = rt_ex_modg5, 
-    explicit_g_3_way = rt_ex_modg6
+    explicit_g_intercept = explicit_g_intercept, 
+    explicit_g_fixed = explicit_g_fixed, 
+    explicit_g_2_way_gxcn = explicit_g_2_way_gxcn, 
+    explicit_g_2_way_cnxcl = explicit_g_2_way_cnxcl, 
+    explicit_g_2_way_gxcl = explicit_g_2_way_gxcl, 
+    explicit_g_3_way = explicit_g_3_way,
+    explicit_g_2_way_nocolor =  explicit_g_2_way_nocolor,
+    explicit_g_2_way_nocolor_slope = explicit_g_2_way_nocolor_slope
     ) %>% 
   imap(~ .x %>% fit(data = df_explicit_rt) %>% extract_fit_engine())
 
-# implicit task with groups
+# implicit task
 fit_rt_im_gmods <-
   list(
     implicit_g_intercept = rt_im_modg1, 
@@ -1003,7 +1043,9 @@ fit_rt_im_gmods <-
     ) %>% 
   imap(~ .x %>% fit(data = df_implicit_rt) %>% extract_fit_engine())
 
-# explicit task with continuous imagery variable
+# --- Continuous models ---
+
+# explicit task
 fit_rt_ex_cvimods <-
   list(
     explicit_cvi_intercept = rt_ex_modcvi1, 
@@ -1011,11 +1053,13 @@ fit_rt_ex_cvimods <-
     explicit_cvi_2_way_gxcn = rt_ex_modcvi3, 
     explicit_cvi_2_way_cnxcl = rt_ex_modcvi4, 
     explicit_cvi_2_way_gxcl = rt_ex_modcvi5, 
-    explicit_cvi_3_way = rt_ex_modcvi6
+    explicit_cvi_3_way = rt_ex_modcvi6,
+    explicit_cvi_2way_nocolor = rt_ex_modcvi7,
+    explicit_cvi_2_way_nocolor_slope = rt_ex_modcvi8
    ) %>% 
   imap(~ .x %>% fit(data = df_explicit_rt) %>% extract_fit_engine())
 
-# implicit task with continuous imagery variable
+# implicit task
 fit_rt_im_cvimods <-
   list(
     implicit_cvi_intercept = rt_im_modcvi1, 
@@ -1027,7 +1071,7 @@ fit_rt_im_cvimods <-
     ) %>% 
   imap(~ .x %>% fit(data = df_implicit_rt) %>% extract_fit_engine())
 
-# nested list of all the lists of models
+# nested list of all the lists of models ----
 fit_rt_all_mods <-
   list(
     explicit_grouped = fit_rt_ex_gmods,
@@ -1067,6 +1111,15 @@ fit_rt_all_parameters <-
 #| tbl-cap: "Comparative performances of the fitted models."
 
 fit_rt_all_performances$explicit_grouped %>% display
+
+fit_rt_all_mods$explicit_cvi$explicit_cvi_2_way_gxcn %>% report_model
+
+fit_rt_all_mods$explicit_cvi$explicit_cvi_2_way_nocolor_slope %>% 
+  estimate_relation(
+    include_random = TRUE
+    ) %>%
+  plot +
+  theme(legend.position = "none")
 ```
 
 
