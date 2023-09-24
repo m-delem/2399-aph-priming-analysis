@@ -30,6 +30,7 @@ shelf(
   multilevelmod,  # multilevel modelling with lmer
   mclust,         # mixture clustering
   ggpubr,         # ggplot tools
+  ggbeeswarm,     # ggplot tools
   viridis,        # ggplot colour-blind friendly palettes
   tidyverse       # the essentials
 )
@@ -701,54 +702,98 @@ p_rt_subject_implicit <-
   scale_fill_viridis_d(guide = NULL) +
   scale_color_viridis_d(guide = NULL)
 
-ggarrange(p_rt_subject_explicit, p_rt_subject_implicit)
+p_tasks_rt_per_subject <-
+  ggarrange(p_rt_subject_explicit, p_rt_subject_implicit)
+rm(p_rt_subject_explicit, p_rt_subject_implicit)
+p_tasks_rt_per_subject
 ```
 
 # Inferential Analyses
 
 ## Model description (Multilevel modelling)
 
+### Predictors and outcome
+
 Our analyses aim to evaluate the predictive abilities of several variables on one outcome, the **response times** in the tasks. Our potential predictors are:
 
 - **Group** membership, with two levels: aphantasia/phantasia
-
-- Alternatively, **Visual imagery**, a standardized continuous variable
-
-- **Spatial imagery**, a standardized continuous variable
 
 - **Congruence** conditions, with two levels: congruent and incongruent
 
 - **Color** conditions, with two levels: colored and uncolored.
 
-- **Age**, a continuous variable ranging from 18 to 65 (M = `r mean(df_questionnaires$age) %>% round(digits = 2)`, SD = `r sd(df_questionnaires$age) %>% round(digits = 2)`)
-
-Two sub-levels of the responses can also be evaluated:
+Sub-levels of the responses ("random effects") can also be accounted for:
 
 - the dependency between response times for **each participant** caused by repeated measures
 
-- the dependency between response times for **each orientation** caused by the repetition of stimuli
+- the varying effects of **Congruence** for each participant
 
-This structure will be modelled using Multilevel Models (also called hierarchical or mixed models), allowing us to add the sub-levels of the hierarchy of predictors we described above in the model. RT data will be transformed using a Box-Cox transformation to bring the distributions closer to normality and improve the quality of the models.
+- the varying effects of **Color** for each participant.
 
-For a participant $i$ with a given Group, age, spatial imagery and a specific orientation, in the Congruency condition $j$ and the Color condition $k$, The maximal model of the resulting $RT_{ijk}$ based on the ***Group*** and including all the predictors can be specified as such (in a simplified form omitting the interaction parameters for clarity):
+This structure will be modeled using Multilevel Models (also called hierarchical or mixed models), allowing us to add the sub-levels of the hierarchy within participant measures we described above in the model. RT data will be transformed using a Box-Cox transformation to bring the distributions closer to normality and improve the quality of the models.
+
+For a subject $i$ with a given *Group*/visual imagery, in the *Congruence* condition $j$ and the *Color* condition $k$, The maximal model of the resulting response time $RT_{ijk}$ including all the predictors can be specified as such:
 
 $$
 \begin{aligned}
-RT_{ijk} = \alpha + \alpha_{subject[i]} + \alpha_{orientation[i]} + \beta_{1} \times Group_{i} + \beta_{2} \times Spatial \ Imagery_{i}+ \beta_{3} \times Congruence_{j} + \beta_{4} \times Color_{k} + \beta_{5} \times Age_{i}
+RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\beta_{2} + \beta_{2_{subject[i]}}) \cdot Congruence_{j} \times (\beta_{3} + \beta_{3_{subject[i]}}) \cdot Color_{k}
+\end{aligned}
+$$
+Where $\alpha$ is the global intercept, $\alpha_{subject[i]}$ is a random intercept by subject accounting for the inherent randomness tied to participants, and $\beta_{1/2/3}$ are the parameters representing the effect of each predictor. The "$\times$" signs represent the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope $\beta_{j/k_{subject[i]}}$ by subject can be added to the Congruence and Color parameters to account for this variance.
+
+### Potential models
+
+RT data will be standardized before modelling, therefore the standardized coefficients reported will scale on *standard deviations of the RT variable*. This allows to interpret these parameters (regression coefficients) roughly with the same guidelines as usual indices, e.g., Cohen's *d*. Several models will be fitted in turn: we are not going to fit reduced models excluding some main effects, as we would like to model all of them in any case to produce inferences (as opposed to raw predictions of future data). We'll specify the following: 
+
+1. The minimal model, accounting only for the random effect of subjects, will serve as a comparison baseline: 
+
+$$
+\begin{aligned}
+RT_{ijk} = \alpha + \alpha_{subject[i]}
 \end{aligned}
 $$
 
-Likewise, the maximal model based on ***Visual Imagery*** as a continuous predictor can be specified as such:
+2. A model accounting for the fixed effects only:
 
 $$
 \begin{aligned}
-RT_{ijk} = \alpha + \alpha_{subject[i]} + \alpha_{orientation[i]} + \beta_{1} \times Visual \ Imagery_{i} + \beta_{2} \times Spatial \ Imagery_{i}+ \beta_{3} \times Congruence_{j} + \beta_{4} \times Color_{k} + \beta_{5} \times Age_{i}
+RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} + \beta_{2} \cdot Congruence_{j} + \beta_{3} \cdot Color_{k}
+\end{aligned}
+$$
+
+3. A model with all interactions:
+
+$$
+\begin{aligned}
+RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times \beta_{2} \cdot Congruence_{j} \times \beta_{3} \cdot Color_{k}
+\end{aligned}
+$$
+
+4. A model with a slope by subject on Congruence:
+
+$$
+\begin{aligned}
+RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\beta_{2} + \beta_{2_{subject[i]}}) \cdot Congruence_{j} \times \beta_{3} \cdot Color_{k}
+\end{aligned}
+$$
+
+5. A model with a slope by subject on Color:
+
+$$
+\begin{aligned}
+RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times \beta_{2} \cdot Congruence_{j} \times (\beta_{3} + \beta_{3_{subject[i]}})  \cdot Color_{k}
+\end{aligned}
+$$
+
+6. The maximal model:
+
+$$
+\begin{aligned}
+RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\beta_{2} + \beta_{2_{subject[i]}}) \cdot Congruence_{j} \times (\beta_{3} + \beta_{3_{subject[i]}})  \cdot Color_{k}
 \end{aligned}
 $$
 
 ## Fitting the models
-
-The mixed models will be fitted using `tidymodels` workflows. RT data will be standardized before modelling, therefore the standardized coefficients reported will scale on *standard deviations of the RT variable*. Let's try displaying some parameters in @tbl-model_test_table.
 
 ```{r model_recipes_workflows_and_engines}
 #| echo: false
@@ -756,47 +801,58 @@ The mixed models will be fitted using `tidymodels` workflows. RT data will be st
 # --- Setup ---
 
 # --- standardize the outcome variable ---
+# (commented since we might not do it beforehand)
 # df_explicit_rt <- df_explicit_rt %>% standardize(rt_explicit)
 # df_implicit_rt <- df_implicit_rt %>% standardize(rt_implicit)
 
 # --- preprocessing recipe for explicit data ---
-rt_recipe_explicit <- 
+recipe_explicit <- 
   df_explicit_rt %>%
-  select(-vviq80) %>% 
-  recipe() %>%
-  update_role(rt_explicit, new_role = "outcome") %>%
+  recipe %>%
   update_role(
-    subjectid, age, sex,
+    rt_explicit, 
+    new_role = "outcome"
+    ) %>%
+  update_role(
+    subjectid, age,
     aphantasia, visual_imagery, spatial_imagery,
-    color, congruence, orientation,
+    color, congruence,
     new_role = "predictor"
     ) %>%
-  add_role(subjectid, orientation, new_role = "group") %>%
+  add_role(
+    subjectid, 
+    new_role = "group"
+    ) %>%
   step_BoxCox(rt_explicit) %>% 
-  step_normalize(age, rt_explicit)
+  step_normalize(rt_explicit, age)
 
 # --- preprocessing recipe for implicit data ---
-rt_recipe_implicit <- 
+recipe_implicit <- 
   df_implicit_rt %>%
-  select(-vviq80) %>% 
   recipe %>%
-  update_role(rt_implicit, new_role = "outcome") %>%
   update_role(
-    subjectid, age, sex,
+    rt_implicit, 
+    new_role = "outcome"
+    ) %>%
+  update_role(
+    subjectid, age,
     aphantasia, visual_imagery, spatial_imagery,
-    color, congruence, orientation,
+    color, congruence,
     new_role = "predictor"
     ) %>%
-  add_role(subjectid, orientation, new_role = "group") %>%
+  add_role(
+    subjectid,
+    new_role = "group"
+    ) %>%
   step_BoxCox(rt_implicit) %>% 
-  step_normalize(age, rt_implicit) 
+  step_normalize(rt_implicit, age) 
 
 # --- workflows ---
-rt_workflow_explicit <- workflow() %>% add_recipe(rt_recipe_explicit)
-rt_workflow_implicit <- workflow() %>% add_recipe(rt_recipe_implicit)
+workflow_explicit <- workflow() %>% add_recipe(recipe_explicit)
+workflow_implicit <- workflow() %>% add_recipe(recipe_implicit)
 
 # --- type of bayesian models to be fitted ---
-# rt_model_bayes <-
+# mod_bayesian <-
 #   bayesian (
 #     family = skew_normal()
 #   ) %>%
@@ -804,339 +860,783 @@ rt_workflow_implicit <- workflow() %>% add_recipe(rt_recipe_implicit)
 #   set_mode("regression")
 
 # --- mixed models to be fitted ---
-rt_model_lmer <-
+mod_0_lmer <-
   linear_reg() %>% 
   set_engine("lmer")
 ```
 
-```{r specifying_group_models}
+```{r model_specifications}
 #| echo: false
 
-# --- Specifying group models ---
+# --- Specifying all models ---
 
-# ----------------------------------------------------------- Explicit task ----
+# --- Explicit task ---
 
 # model 1: intercepts only
-explicit_g_intercept <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
+mod_explicit_1 <-
+  workflow_explicit %>% add_model(
+    mod_0_lmer,
     formula = rt_explicit ~ (1|subjectid)
     )
 
-# model 2: main fixed effects
-explicit_g_fixed <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
+# model 2: fixed effects
+mod_explicit_2 <-
+  workflow_explicit %>% add_model(
+    mod_0_lmer,
     formula = rt_explicit ~ aphantasia + congruence + color + (1|subjectid)
-    )
+  )
 
-# model 3: group congruence interaction
-explicit_g_2_way_gxcn <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ aphantasia * congruence + color + (1|subjectid)
-    )
-
-# model 4: congruence color interaction
-explicit_g_2_way_cnxcl <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ aphantasia + congruence * color + (1|subjectid)
-    )
-
-# model 5: group color interaction
-explicit_g_2_way_gxcl <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ aphantasia + congruence + color + aphantasia:color + (1|subjectid)
-    )
-
-# model 6: three way interactions
-explicit_g_3_way <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
+# model 3: interactions
+mod_explicit_3 <- 
+  workflow_explicit %>% add_model(
+    mod_0_lmer,
     formula = rt_explicit ~ aphantasia * congruence * color + (1|subjectid)
-    )
+  )
 
-# model 7: reduced model without color
-explicit_g_2_way_nocolor <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ aphantasia * congruence + (1|subjectid)
-    )
-  
-# model 8: congruence slope by subject
-explicit_g_2_way_nocolor_slope <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ aphantasia * congruence + (congruence|subjectid)
-    )
+# model 4: slope by subject on congruence
+mod_explicit_4 <-
+  workflow_explicit %>% add_model(
+    mod_0_lmer,
+    formula = rt_explicit ~ aphantasia * congruence * color + (1 + congruence|subjectid)
+  )
 
-# ----------------------------------------------------------- Implicit task ----
+# model 5: slope by subject on color
+mod_explicit_5 <-
+  workflow_explicit %>% add_model(
+    mod_0_lmer,
+    formula = rt_explicit ~ aphantasia * congruence * color + (1 + color|subjectid)
+  )
+
+# model 6: maximal model
+mod_explicit_6 <-
+  workflow_explicit %>% add_model(
+    mod_0_lmer,
+    formula = rt_explicit ~ aphantasia * congruence * color + 
+      (1 + congruence|subjectid) + (1 + color|subjectid)
+  )
+
+# --- Implicit task ---
 
 # model 1: intercepts only
-rt_im_modg1 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
+mod_implicit_1 <-
+  workflow_implicit %>% add_model(
+    mod_0_lmer,
     formula = rt_implicit ~ (1|subjectid)
     )
 
-# model 2: main fixed effects
-rt_im_modg2 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
+# model 2: group effect
+mod_implicit_2 <-
+  workflow_implicit %>% add_model(
+    mod_0_lmer,
     formula = rt_implicit ~ aphantasia + congruence + color + (1|subjectid)
-    )
+  )
 
-# model 3: group congruence interaction
-rt_im_modg3 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_implicit ~ aphantasia * congruence + color + (1|subjectid)
-    )
-
-# model 4: congruence color interaction
-rt_im_modg4 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_implicit ~ aphantasia + congruence * color + (1|subjectid)
-    )
-
-# model 5: group color interaction
-rt_im_modg5 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_implicit ~ aphantasia + congruence + color + 
-      aphantasia:color + (1|subjectid)
-    )
-
-# model 6: three way interactions
-rt_im_modg6 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
+# model 3: congruence effect
+mod_implicit_3 <- 
+  workflow_implicit %>% add_model(
+    mod_0_lmer,
     formula = rt_implicit ~ aphantasia * congruence * color + (1|subjectid)
-    )
+  )
+
+# model 4: color effect
+mod_implicit_4 <-
+  workflow_implicit %>% add_model(
+    mod_0_lmer,
+    formula = rt_implicit ~ aphantasia * congruence * color + (1 + congruence|subjectid)
+  )
+
+# model 5: slope by subject on color
+mod_implicit_5 <-
+  workflow_implicit %>% add_model(
+    mod_0_lmer,
+    formula = rt_implicit ~ aphantasia * congruence * color + (1 + color|subjectid)
+  )
+
+# model 6: maximal model
+mod_implicit_6 <-
+  workflow_implicit %>% add_model(
+    mod_0_lmer,
+    formula = rt_implicit ~ aphantasia * congruence * color + 
+      (1 + congruence|subjectid) + (1 + color|subjectid)
+  )
 ```
 
-```{r specifying_continuous_models}
-#| echo: false
-
-# --- Specifying continuous models ---
-
-# ----------------------------------------------------------- Explicit task ----
-
-# model 1: intercepts only
-rt_ex_modcvi1 <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ (1|subjectid)
-    )
-
-# model 2: main fixed effects
-rt_ex_modcvi2 <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ visual_imagery + congruence + color + (1|subjectid)
-    )
-
-# model 3: group congruence interaction
-rt_ex_modcvi3 <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ visual_imagery * congruence + color + (1|subjectid)
-    )
-
-# model 4: congruence color interaction
-rt_ex_modcvi4 <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ visual_imagery + congruence * color + (1|subjectid)
-    )
-
-# model 5: group color interaction
-rt_ex_modcvi5 <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ visual_imagery + congruence + color + aphantasia:color + (1|subjectid)
-    )
-
-# model 6: three way interactions
-rt_ex_modcvi6 <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ visual_imagery * congruence * color + (1|subjectid)
-    )
-
-# model 7: no color
-rt_ex_modcvi7 <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ visual_imagery * congruence + (1|subjectid)
-    )
-
-# model 8: slope by visual imagery
-rt_ex_modcvi8 <-
-  rt_workflow_explicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_explicit ~ visual_imagery * congruence + (1 + visual_imagery|subjectid)
-    )
-
-# ----------------------------------------------------------- Implicit task ----
-
-# model 1: intercepts only
-rt_im_modcvi1 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_implicit ~ (1|subjectid)
-    )
-
-# model 2: main fixed effects
-rt_im_modcvi2 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_implicit ~ visual_imagery + congruence + color + (1|subjectid)
-    )
-
-# model 3: group congruence interaction
-rt_im_modcvi3 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_implicit ~ visual_imagery * congruence + color + (1|subjectid)
-    )
-
-# model 4: congruence color interaction
-rt_im_modcvi4 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_implicit ~ visual_imagery + congruence * color + (1|subjectid)
-    )
-
-# model 5: group color interaction
-rt_im_modcvi5 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_implicit ~ visual_imagery + congruence + color + aphantasia:color + (1|subjectid)
-    )
-
-# model 6: three way interactions
-rt_im_modcvi6 <-
-  rt_workflow_implicit %>% add_model(
-    rt_model_lmer,
-    formula = rt_implicit ~ visual_imagery * congruence * color + (1|subjectid)
-    )
-```
-
-```{r fitting_models}
+```{r model_fitting}
 #| echo: false
 
 # --- Fitting all models ---
 
-# --- Group models ---
-
-# explicit task
-fit_rt_ex_gmods <-
+# --- Explicit task ---
+fit_explicit_mods <-
   list(
-    explicit_g_intercept = explicit_g_intercept, 
-    explicit_g_fixed = explicit_g_fixed, 
-    explicit_g_2_way_gxcn = explicit_g_2_way_gxcn, 
-    explicit_g_2_way_cnxcl = explicit_g_2_way_cnxcl, 
-    explicit_g_2_way_gxcl = explicit_g_2_way_gxcl, 
-    explicit_g_3_way = explicit_g_3_way,
-    explicit_g_2_way_nocolor =  explicit_g_2_way_nocolor,
-    explicit_g_2_way_nocolor_slope = explicit_g_2_way_nocolor_slope
+    mod_explicit_1 = mod_explicit_1, 
+    mod_explicit_2 = mod_explicit_2, 
+    mod_explicit_3 = mod_explicit_3,
+    mod_explicit_4 = mod_explicit_4,
+    mod_explicit_5 = mod_explicit_5#,
+    # mod_explicit_6 = mod_explicit_6
     ) %>% 
   imap(~ .x %>% fit(data = df_explicit_rt) %>% extract_fit_engine())
 
-# implicit task
-fit_rt_im_gmods <-
+# --- Implicit task ---
+fit_implicit_mods <-
   list(
-    implicit_g_intercept = rt_im_modg1, 
-    implicit_g_fixed = rt_im_modg2, 
-    implicit_g_2_way_gxcn = rt_im_modg3, 
-    implicit_g_2_way_cnxcl = rt_im_modg4, 
-    implicit_g_2_way_gxcl = rt_im_modg5, 
-    implicit_g_3_way = rt_im_modg6
-    ) %>% 
-  imap(~ .x %>% fit(data = df_implicit_rt) %>% extract_fit_engine())
-
-# --- Continuous models ---
-
-# explicit task
-fit_rt_ex_cvimods <-
-  list(
-    explicit_cvi_intercept = rt_ex_modcvi1, 
-    explicit_cvi_fixed = rt_ex_modcvi2, 
-    explicit_cvi_2_way_gxcn = rt_ex_modcvi3, 
-    explicit_cvi_2_way_cnxcl = rt_ex_modcvi4, 
-    explicit_cvi_2_way_gxcl = rt_ex_modcvi5, 
-    explicit_cvi_3_way = rt_ex_modcvi6,
-    explicit_cvi_2way_nocolor = rt_ex_modcvi7,
-    explicit_cvi_2_way_nocolor_slope = rt_ex_modcvi8
-   ) %>% 
-  imap(~ .x %>% fit(data = df_explicit_rt) %>% extract_fit_engine())
-
-# implicit task
-fit_rt_im_cvimods <-
-  list(
-    implicit_cvi_intercept = rt_im_modcvi1, 
-    implicit_cvi_fixed = rt_im_modcvi2, 
-    implicit_cvi_2_way_gxcn = rt_im_modcvi3, 
-    implicit_cvi_2_way_cnxcl = rt_im_modcvi4, 
-    implicit_cvi_2_way_gxcl = rt_im_modcvi5, 
-    implicit_cvi_3_way = rt_im_modcvi6
-    ) %>% 
+    mod_implicit_1 = mod_implicit_1,
+    mod_implicit_2 = mod_implicit_2,
+    mod_implicit_3 = mod_implicit_3,
+    mod_implicit_4 = mod_implicit_4,
+    mod_implicit_5 = mod_implicit_5#,
+    # mod_implicit_6 = mod_implicit_6
+    ) %>%
   imap(~ .x %>% fit(data = df_implicit_rt) %>% extract_fit_engine())
 
 # nested list of all the lists of models ----
-fit_rt_all_mods <-
+all_models_fitted <-
   list(
-    explicit_grouped = fit_rt_ex_gmods,
-    implicit_grouped = fit_rt_im_gmods,
-    explicit_cvi = fit_rt_ex_cvimods,
-    implicit_cvi = fit_rt_im_cvimods
+    explicit_mods = fit_explicit_mods,
+    implicit_mods = fit_implicit_mods
     )
+```
 
-# --- Performance of the models ------------------------------------------------
+All of these models have been fitted for both tasks and their predictive performances compared using the AIC, AICc (Akaike corrected Information Criterion) and BIC (Bayesian Information Criterion). The maximal model did not converge, so only the five first models were evaluated. The results of these analyses are displayed in @tbl-model_perfs.
 
-fit_rt_all_performances <- 
-  fit_rt_all_mods %>% 
+```{r model_performances}
+#| echo: false
+#| label: tbl-model_perfs
+#| tbl-cap: "Performances of the fitted models for both tasks."
+#| tbl-subcap: 
+#|   - "Explicit task models."
+#|   - "Implicit task models."
+#| layout-ncol: 1
+
+# --- Performance of the models ---
+all_models_performances <- 
+  all_models_fitted %>% 
   imap(
     ~ .x %>% 
-      compare_performance %>% 
-      select(1, 4:7) #%>%
-      # display
+      compare_performance(metrics = c("AIC", "AICc", "BIC")) %>% 
+      select(-Model) %>%
+      display
     )
 
-# --- Reporting parameter estimations ------------------------------------------
+all_models_performances[["explicit_mods"]]
 
-fit_rt_all_parameters <-
-  fit_rt_all_mods %>% 
+all_models_performances[["implicit_mods"]]
+```
+
+The fourth model including a slope by subject on Congruence is the most supported for the **explicit task**, while the third model including only an intercept by subject has the best performance for the **implicit task**. The parameters of these two models will be analysed in the following.
+
+```{r model_parameters}
+#| echo: false
+
+# --- Parameter estimations ---
+all_models_parameters <-
+  all_models_fitted %>% 
   imap(
     ~ .x %>%
       imap(
         ~ .x %>% 
-          model_parameters(effects = "fixed") #%>%
-          # display
+          model_parameters(effects = "fixed") %>%
+          display
         )
     )
 ```
 
-```{r model_test_table}
+## Explicit task
+
+The parameters of the best model for the **explicit task** are displayed in @tbl-model_explicit_4_params. The significant parameters in the explicit task are the color and the interaction between the group and the congruence condition. The **main effect of Color** indicate that participants responded quicker in the colored condition, although this effect has no interaction with the other variables. The **interaction between Group and Congruence** reveals that non-aphantasics responded slower in the uncongruent condition. This effect is represented in @fig-model_explicit_4_plots.
+
+```{r model_explicit_4_params}
 #| echo: false
-#| label: tbl-model_test_table
-#| tbl-cap: "Comparative performances of the fitted models."
+#| label: tbl-model_explicit_4_params
+#| tbl-cap: "Explicit task - Parameters of the optimal model including a random intercept and slope by subject on Congruence."
 
-fit_rt_all_performances$explicit_grouped %>% display
-
-fit_rt_all_mods$explicit_cvi$explicit_cvi_2_way_gxcn %>% report_model
-
-fit_rt_all_mods$explicit_cvi$explicit_cvi_2_way_nocolor_slope %>% 
-  estimate_relation(
-    include_random = TRUE
-    ) %>%
-  plot +
-  theme(legend.position = "none")
+all_models_parameters[["explicit_mods"]][["mod_explicit_4"]]
 ```
+
+```{r model_explicit_4_plots}
+#| echo: false
+#| label: fig-model_explicit_4_plots
+#| fig-cap: "Visualization of the Congruence and Group variables in the optimal model for the explicit task. The bottom plot is a 'zoomed' version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the 'violins' represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations."
+#| fig-width: 8
+#| fig-height: 11
+
+# ---- Model Explicit 4 ----
+
+# model 4 marginal means predictions
+preds_mod_4_fixed <- 
+  all_models_fitted[[1]][[4]] %>% 
+  estimate_means(at = c("aphantasia", "congruence"))
+
+# setting dodge width for all the geoms
+dw <- .75
+
+# ------------------------------------- Full plot ----
+p_mod_4_full <-
+  recipe_explicit %>% 
+  prep() %>% 
+  bake(df_explicit_rt) %>%
+  ggplot(aes(
+    x = congruence,
+    y = rt_explicit,
+    fill = aphantasia,
+    color = aphantasia
+    )
+  ) +
+  
+  # group violin distributions with quantiles
+  geom_violin(
+    alpha = .2,
+    trim = FALSE,
+    adjust = .6,
+    scale = "count",
+    draw_quantiles = c(.25,.5,.75),
+    position = position_dodge(width = dw),
+    linewidth = .6
+    ) +
+  
+  # participant points
+  geom_beeswarm(
+    cex = .5,
+    dodge.width = dw,
+    alpha = 0.25,
+    size = .5
+  ) +
+
+  # linear modelling of the differences
+  geom_line(
+    data = preds_mod_4_fixed,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+   
+  # predicted means of the model
+  geom_pointrange2(
+    data = preds_mod_4_fixed,
+    aes(
+      x = congruence,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = .5,
+    linewidth = .5,
+    show.legend = FALSE
+  ) +
+  
+  # intercept at 0
+  geom_hline(yintercept = 0, linewidth = .05, linetype = 2, alpha = .5) +
+  
+  # color_palettes and options
+  labs(x = NULL, y = NULL) +
+  # scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_y_continuous(breaks = breaks_pretty(10)) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+    )
+
+# ----------------------------------- Zoomed plot ----
+p_mod_4_interaction_zoom <-
+  recipe_explicit %>% 
+  prep() %>% 
+  bake(df_explicit_rt) %>%
+  ggplot(aes(
+    x = congruence,
+    y = rt_explicit,
+    fill = aphantasia,
+    color = aphantasia
+    )
+  ) +
+  
+  # group violin distributions with quantiles
+  geom_violin(
+    alpha = .2,
+    trim = FALSE,
+    adjust = .6,
+    scale = "count",
+    draw_quantiles = c(.25,.5,.75),
+    position = position_dodge(width = dw),
+    linewidth = .6
+    ) +
+  
+  # participant points
+  geom_beeswarm(
+    cex = .5,
+    dodge.width = dw,
+    alpha = 0.25,
+    size = .5
+  ) +
+
+  # linear modelling of the differences
+  geom_line(
+    data = preds_mod_4_fixed,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+   
+  # predicted means of the model
+  geom_pointrange2(
+    data = preds_mod_4_fixed,
+    aes(
+      x = congruence,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  
+  # intercept at 0
+  geom_hline(yintercept = 0, linetype = 2) +
+  
+  # zoom on a shorter y range
+  coord_cartesian(ylim = c(-.3,.3)) +
+  
+  # color_palettes and options
+  labs(x = NULL, y = NULL) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_text(size = 18)
+    )
+
+# ---------------------------------- Combined plot ----
+p_mod_4_both <-
+  ggarrange(
+    p_mod_4_full,
+    p_mod_4_interaction_zoom,
+    common.legend = TRUE,
+    ncol = 1
+  ) %>% 
+  annotate_figure(
+    left = text_grob("Response time (standardized)", size = 18, rot = 90),
+    bottom = text_grob("Condition", size = 20)
+    )
+
+p_mod_4_both
+```
+
+## Implicit task
+
+The parameters of the best model for the **implicit task** are displayed in @tbl-model_implicit_3_params. The significant parameters are the **Group**, the **interaction between Group and Congruence** and the **interaction between Group and Color**. These parameters indicate that: 1) aphantasics responded slower, 2) the uncongruent condition had non-aphantasics becoming slower, and 3) non-aphantasics also responded slower in the uncolored condition. This main effect and the interactions are represented in @fig-model_implicit_3_plots_congruence for the $Group \times Congruence$ interaction, and @fig-model_implicit_3_plots_color for the $Group \times Color$ interaction. 
+
+```{r model_implicit_3_params}
+#| echo: false
+#| label: tbl-model_implicit_3_params
+#| tbl-cap: "Implicit task  - Parameters of the optimal model including a random intercept by subject."
+
+all_models_parameters[["implicit_mods"]][["mod_implicit_3"]]
+```
+
+```{r model_implicit_3_plots_congruence}
+#| echo: false
+#| label: fig-model_implicit_3_plots_congruence
+#| fig-cap: "Visualization of the Congruence and Group variables in the optimal model for the implicit task. The bottom plot is a 'zoomed' version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the 'violins' represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations." 
+#| fig-width: 8
+#| fig-height: 11
+
+# ---- Model Implicit 3 Congruence view ----
+
+# model 3 marginal means predictions
+preds_mod_3_fixed_congruence <- 
+  all_models_fitted[[2]][[3]] %>% 
+  estimate_means(at = c("aphantasia", "congruence"))
+
+# setting dodge width for all the geoms
+dw <-.75
+
+# ------------------------------------- Full plot ----
+p_mod_3_congruence_full <-
+  recipe_implicit %>% 
+  prep() %>% 
+  bake(df_implicit_rt) %>%
+  ggplot(aes(
+    x = congruence,
+    y = rt_implicit,
+    fill = aphantasia,
+    color = aphantasia
+    )
+  ) +
+  
+  # group violin distributions with quantiles
+  geom_violin(
+    alpha = .2,
+    trim = FALSE,
+    adjust = .6,
+    scale = "count",
+    draw_quantiles = c(.25,.5,.75),
+    position = position_dodge(width = dw),
+    linewidth = .6
+    ) +
+  
+  # participant points
+  geom_beeswarm(
+    cex = .5,
+    dodge.width = dw,
+    alpha = 0.25,
+    size = .5
+  ) +
+
+  # linear modelling of the differences
+  geom_line(
+    data = preds_mod_3_fixed_congruence,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+   
+  # predicted means of the model
+  geom_pointrange2(
+    data = preds_mod_3_fixed_congruence,
+    aes(
+      x = congruence,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = .5,
+    linewidth = .5,
+    show.legend = FALSE
+  ) +
+  
+  # intercept at 0
+  geom_hline(yintercept = 0, linewidth = .05, linetype = 2, alpha = .5) +
+  
+  # color_palettes and options
+  labs(x = NULL, y = NULL) +
+  # scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_y_continuous(breaks = breaks_pretty(10)) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+    )
+
+# ----------------------------------- Zoomed plot ----
+p_mod_3_congruence_interaction_zoom <-
+  recipe_implicit %>% 
+  prep() %>% 
+  bake(df_implicit_rt) %>%
+  ggplot(aes(
+    x = congruence,
+    y = rt_implicit,
+    fill = aphantasia,
+    color = aphantasia
+    )
+  ) +
+  
+  # group violin distributions with quantiles
+  geom_violin(
+    alpha = .2,
+    trim = FALSE,
+    adjust = .6,
+    scale = "count",
+    draw_quantiles = c(.25,.5,.75),
+    position = position_dodge(width = dw),
+    linewidth = .6
+    ) +
+  
+  # participant points
+  geom_beeswarm(
+    cex = .5,
+    dodge.width = dw,
+    alpha = 0.25,
+    size = .5
+  ) +
+
+  # linear modelling of the differences
+  geom_line(
+    data = preds_mod_3_fixed_congruence,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+   
+  # predicted means of the model
+  geom_pointrange2(
+    data = preds_mod_3_fixed_congruence,
+    aes(
+      x = congruence,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  
+  # intercept at 0
+  geom_hline(yintercept = 0, linetype = 2) +
+  
+  # zoom on a shorter y range
+  coord_cartesian(ylim = c(-.3,.3)) +
+  
+  # color_palettes and options
+  labs(x = NULL, y = NULL) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_text(size = 18)
+    )
+
+# ---------------------------------- Combined plot ----
+p_mod_3_congruence_both <-
+  ggarrange(
+    p_mod_3_congruence_full,
+    p_mod_3_congruence_interaction_zoom,
+    common.legend = TRUE,
+    ncol = 1
+  ) %>% 
+  annotate_figure(
+    left = text_grob("Response time (standardized)", size = 18, rot = 90),
+    bottom = text_grob("Condition", size = 20)
+    )
+
+p_mod_3_congruence_both
+```
+
+```{r model_implicit_3_plots_color}
+#| echo: false
+#| label: fig-model_implicit_3_plots_color
+#| fig-cap: "Visualization of the Color and Group variables in the optimal model for the implicit task. The bottom plot is a 'zoomed' version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the 'violins' represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations." 
+#| fig-width: 8
+#| fig-height: 11
+
+# ---- Model Implicit 3 Color view ----
+
+# model 3 marginal means predictions
+preds_mod_3_fixed_color <- 
+  all_models_fitted[[2]][[3]] %>% 
+  estimate_means(at = c("aphantasia", "color"))
+
+# setting dodge width for all the geoms
+dw <-.75
+
+# ------------------------------------- Full plot ----
+p_mod_3_color_full <-
+  recipe_implicit %>% 
+  prep() %>% 
+  bake(df_implicit_rt) %>%
+  ggplot(aes(
+    x = color,
+    y = rt_implicit,
+    fill = aphantasia,
+    color = aphantasia
+    )
+  ) +
+  
+  # group violin distributions with quantiles
+  geom_violin(
+    alpha = .2,
+    trim = FALSE,
+    adjust = .6,
+    scale = "count",
+    draw_quantiles = c(.25,.5,.75),
+    position = position_dodge(width = dw),
+    linewidth = .6
+    ) +
+  
+  # participant points
+  geom_beeswarm(
+    cex = .5,
+    dodge.width = dw,
+    alpha = 0.25,
+    size = .5
+  ) +
+
+  # linear modelling of the differences
+  geom_line(
+    data = preds_mod_3_fixed_color,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+   
+  # predicted means of the model
+  geom_pointrange2(
+    data = preds_mod_3_fixed_color,
+    aes(
+      x = color,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = .5,
+    linewidth = .5,
+    show.legend = FALSE
+  ) +
+  
+  # intercept at 0
+  geom_hline(yintercept = 0, linewidth = .05, linetype = 2, alpha = .5) +
+  
+  # color_palettes and options
+  labs(x = NULL, y = NULL) +
+  # scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_y_continuous(breaks = breaks_pretty(10)) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+    )
+
+# ----------------------------------- Zoomed plot ----
+p_mod_3_color_interaction_zoom <-
+  recipe_implicit %>% 
+  prep() %>% 
+  bake(df_implicit_rt) %>%
+  ggplot(aes(
+    x = color,
+    y = rt_implicit,
+    fill = aphantasia,
+    color = aphantasia
+    )
+  ) +
+  
+  # group violin distributions with quantiles
+  geom_violin(
+    alpha = .2,
+    trim = FALSE,
+    adjust = .6,
+    scale = "count",
+    draw_quantiles = c(.25,.5,.75),
+    position = position_dodge(width = dw),
+    linewidth = .6
+    ) +
+  
+  # participant points
+  geom_beeswarm(
+    cex = .5,
+    dodge.width = dw,
+    alpha = 0.25,
+    size = .5
+  ) +
+
+  # linear modelling of the differences
+  geom_line(
+    data = preds_mod_3_fixed_color,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+   
+  # predicted means of the model
+  geom_pointrange2(
+    data = preds_mod_3_fixed_color,
+    aes(
+      x = color,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  
+  # intercept at 0
+  geom_hline(yintercept = 0, linetype = 2) +
+  
+  # zoom on a shorter y range
+  coord_cartesian(ylim = c(-.3,.3)) +
+  
+  # color_palettes and options
+  labs(x = NULL, y = NULL) +
+  scale_x_discrete(labels = c("Colored", "Uncolored")) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_text(size = 18)
+    )
+
+# ---------------------------------- Combined plot ----
+p_mod_3_color_both <-
+  ggarrange(
+    p_mod_3_color_full,
+    p_mod_3_color_interaction_zoom,
+    common.legend = TRUE,
+    ncol = 1
+  ) %>% 
+  annotate_figure(
+    left = text_grob("Response time (standardized)", size = 18, rot = 90),
+    bottom = text_grob("Condition", size = 20)
+    )
+
+p_mod_3_color_both
+```
+
+
 
 
 
@@ -1245,6 +1745,48 @@ ggarrange(
   p_rotation_cor_spa + rremove("ylab")
   )
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
