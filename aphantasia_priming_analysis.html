@@ -136,6 +136,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#explicit-task-results" id="toc-explicit-task-results" class="nav-link" data-scroll-target="#explicit-task-results">Explicit task results</a></li>
   <li><a href="#implicit-task-results" id="toc-implicit-task-results" class="nav-link" data-scroll-target="#implicit-task-results">Implicit task results</a></li>
   </ul></li>
+  <li><a href="#further-correlational-exploration" id="toc-further-correlational-exploration" class="nav-link" data-scroll-target="#further-correlational-exploration">Further correlational exploration</a></li>
   <li><a href="#annexes" id="toc-annexes" class="nav-link" data-scroll-target="#annexes">Annexes</a>
   <ul class="collapse">
   <li><a href="#rotation-task" id="toc-rotation-task" class="nav-link" data-scroll-target="#rotation-task">Rotation task</a></li>
@@ -170,19 +171,39 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <section id="preliminary-set-up" class="level3">
 <h3 class="anchored" data-anchor-id="preliminary-set-up">Preliminary Set-up</h3>
-<!-- ::: {.callout-tip collapse="true"} -->
-<section id="datasets-and-code-availability" class="level4">
-<h4 class="anchored" data-anchor-id="datasets-and-code-availability">Datasets and code availability</h4>
+<div class="callout-tip callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Datasets and code availability
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-1" class="callout-1-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
 <p>The folder containing this HTML file also has a “<code>data/</code>” folder, wherein can be found the main Excel file from which the datasets analysed here are sourced, i.e.&nbsp;“<code>aphantasia_priming_tidy_data.xlsx</code>”. It has several sheets:</p>
 <ul>
 <li><p><code>data_asso</code>/<code>_implicit</code>/<code>_explicit</code>/<code>_rotation</code>/<code>_questionnaires</code> are raw datasheets retrieved from old Excels and cleaned up</p></li>
 <li><p><code>data_processed_explicit</code>/<code>_implicit</code> are the datasets of the two main tasks after being processed here and in their final state after <a href="#sec-eda">exploratory analysis</a>, and before the <a href="#sec-inferential">inferential analyses conducted afterwards</a>.</p></li>
 </ul>
-<p>The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the <code>aphantasia_priming_analysis.qmd</code> file, for which the best reading software are coding Integrated Development Environments (IDE) like <a href="https://posit.co/download/rstudio-desktop/">RStudio</a> or <a href="https://code.visualstudio.com/">Visual Studio Code</a>. The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism. <!-- ::: --></p>
-<!-- :::{.callout-note collapse="true"} -->
-</section>
-<section id="software-and-setup" class="level4">
-<h4 class="anchored" data-anchor-id="software-and-setup">Software and setup</h4>
+<p>The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the <code>aphantasia_priming_analysis.qmd</code> file, for which the best reading software are coding Integrated Development Environments (IDE) like <a href="https://posit.co/download/rstudio-desktop/">RStudio</a> or <a href="https://code.visualstudio.com/">Visual Studio Code</a>. The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.</p>
+</div>
+</div>
+</div>
+<div class="callout-note callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Software and setup
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
 <p>This analysis was conducted in R language on <a href="https://posit.co/download/rstudio-desktop/">RStudio</a>. This analysis report was written with <a href="https://quarto.org/">Quarto</a>. Just down below is the set-up code, including two essential steps:</p>
 <ol type="1">
 <li><p>Installing the required packages for this data analysis</p></li>
@@ -255,8 +276,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<!-- ::: -->
-</section>
+</div>
+</div>
+</div>
 </section>
 <section id="sec-eda" class="level1">
 <h1>Exploratory Data Analysis</h1>
@@ -1002,7 +1024,10 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 </section>
 <section id="implicit-task-results" class="level2">
 <h2 class="anchored" data-anchor-id="implicit-task-results">Implicit task results</h2>
-<p>The parameters of the best model for the <strong>implicit task</strong> are displayed in <a href="#tbl-model_implicit_3_params">Table&nbsp;6</a>. The significant parameters are the <strong>Group</strong>, the <strong>interaction between Group and Congruence</strong> and the <strong>interaction between Group and Color</strong>. These parameters indicate that: 1) aphantasics responded slower, 2) the uncongruent condition had non-aphantasics becoming slower, and 3) non-aphantasics also responded slower in the uncolored condition. This main effect and the interactions are represented in <a href="#fig-model_implicit_3_plots_congruence">Figure&nbsp;8</a> for the <span class="math inline">\(Group \times Congruence\)</span> interaction, and <a href="#fig-model_implicit_3_plots_color">Figure&nbsp;9</a> for the <span class="math inline">\(Group \times Color\)</span> interaction.</p>
+<div class="cell">
+
+</div>
+<p>The parameters of the best model for the <strong>implicit task</strong> are displayed in <a href="#tbl-model_implicit_3_params">Table&nbsp;6</a>. The only significant parameter is the <strong>interaction between Group and Congruence</strong>. These parameters indicate that: 1) aphantasics responded slower, 2) the uncongruent condition had non-aphantasics becoming slower, and 3) non-aphantasics also responded slower in the uncolored condition. This main effect and the interactions are represented in <a href="#fig-model_implicit_3_plots_congruence">Figure&nbsp;8</a> for the <span class="math inline">\(Group \times Congruence\)</span> interaction, and <a href="#fig-model_implicit_3_plots_color">Figure&nbsp;9</a> for the <span class="math inline">\(Group \times Color\)</span> interaction.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="tbl-model_implicit_3_params" class="anchored">
@@ -1117,6 +1142,22 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 </div>
 </div>
 </section>
+</section>
+<section id="further-correlational-exploration" class="level1">
+<h1>Further correlational exploration</h1>
+<div class="callout-important callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>I struggled to understand the variables used for clustering in the actual state of the manuscript. The algorithms need continuous variables, and I only found 3: <em>Visual imagery</em> (VVIQ), <em>Congruence effect</em> (a transformed RT difference variable) in the <em>Explicit</em> and <em>Implicit</em> tasks. I would add a fourth one, the Spatial component of the PCA, in the exploratory process. However there is a mention of adding <em>Color</em> as a clustering variable in the process: how was this possible? The question comes from the fact that Color is a sub-structure of the task, therefore adding Color would mean adding <em>four</em> variables instead of two (Colored or Uncolored in Explicit or Implicit), along with</p>
+</div>
+</div>
 </section>
 <section id="annexes" class="level1">
 <h1>Annexes</h1>

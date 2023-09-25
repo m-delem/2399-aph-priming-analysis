@@ -9,9 +9,9 @@ toc: true
 
 ### Preliminary Set-up
 
-<!-- ::: {.callout-tip collapse="true"} -->
-#### Datasets and code availability
+::: {.callout-tip collapse="true"}
 
+#### Datasets and code availability
 The folder containing this HTML file also has a "`data/`" folder, wherein can be found the main Excel file from which the datasets analysed here are sourced, i.e. "`aphantasia_priming_tidy_data.xlsx`". It has several sheets:
 
 - `data_asso`/`_implicit`/`_explicit`/`_rotation`/`_questionnaires` are raw datasheets retrieved from old Excels and cleaned up
@@ -19,9 +19,10 @@ The folder containing this HTML file also has a "`data/`" folder, wherein can be
 - `data_processed_explicit`/`_implicit` are the datasets of the two main tasks after being processed here and in their final state after [exploratory analysis](#sec-eda), and before the [inferential analyses conducted afterwards](#sec-inferential).
 
 The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the `aphantasia_priming_analysis.qmd` file, for which the best reading software are coding Integrated Development Environments (IDE) like [RStudio](https://posit.co/download/rstudio-desktop/) or [Visual Studio Code](https://code.visualstudio.com/). The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.
-<!-- ::: -->
+:::
 
-<!-- :::{.callout-note collapse="true"} -->
+:::{.callout-note collapse="true"}
+
 #### Software and setup
 
 This analysis was conducted in R language on [RStudio](https://posit.co/download/rstudio-desktop/). This analysis report was written with [Quarto](https://quarto.org/). Just down below is the set-up code, including two essential steps: 
@@ -98,7 +99,8 @@ df_questionnaires <-
     aphantasia = fct_relevel(aphantasia, "yes", "no")
     )
 ```
-<!-- ::: -->
+:::
+
 
 # Exploratory Data Analysis {#sec-eda}
 
@@ -1556,7 +1558,17 @@ p_mod_4
 
 ## Implicit task results
 
-The parameters of the best model for the **implicit task** are displayed in @tbl-model_implicit_3_params. The significant parameters are the **Group**, the **interaction between Group and Congruence** and the **interaction between Group and Color**. These parameters indicate that: 1) aphantasics responded slower, 2) the uncongruent condition had non-aphantasics becoming slower, and 3) non-aphantasics also responded slower in the uncolored condition. This main effect and the interactions are represented in @fig-model_implicit_3_plots_congruence for the $Group \times Congruence$ interaction, and @fig-model_implicit_3_plots_color for the $Group \times Color$ interaction. 
+```{r model_implicit_3_contrasts}
+#| echo: false
+
+# model 3 contrasts between aphantasia and congruence levels
+c_4_gcn <-
+  all_models_fitted[[1]][[4]] %>% 
+  estimate_contrasts(contrast = c("aphantasia", "congruence")) %>% 
+  mutate(across(where(is.numeric), ~ round(.x, digits = 2)))
+```
+
+The parameters of the best model for the **implicit task** are displayed in @tbl-model_implicit_3_params. The only significant parameter is the **interaction between Group and Congruence**. These parameters indicate that: 1) aphantasics responded slower, 2) the uncongruent condition had non-aphantasics becoming slower, and 3) non-aphantasics also responded slower in the uncolored condition. This main effect and the interactions are represented in @fig-model_implicit_3_plots_congruence for the $Group \times Congruence$ interaction, and @fig-model_implicit_3_plots_color for the $Group \times Color$ interaction. 
 
 ```{r model_implicit_3_params}
 #| echo: false
@@ -1948,10 +1960,12 @@ p_mod_3_color_both
 
 
 
+# Further correlational exploration
 
+:::{.callout-important}
 
-
-
+I struggled to understand the variables used for clustering in the actual state of the manuscript. The algorithms need continuous variables, and I only found 3: *Visual imagery* (VVIQ), *Congruence effect* (a transformed RT difference variable) in the *Explicit* and *Implicit* tasks. I would add a fourth one, the Spatial component of the PCA, in the exploratory process. However there is a mention of adding *Color* as a clustering variable in the process: how was this possible? The question comes from the fact that Color is a sub-structure of the task, therefore adding Color would mean adding *four* variables instead of two (Colored or Uncolored in Explicit or Implicit), along with 
+:::
 
 
 # Annexes
