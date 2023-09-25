@@ -48,6 +48,7 @@ library(librarian)
 
 # now putting packages on our library's shelves:
 shelf(
+  rstatix,        # ggplot stat tools
   readxl,         # Excel files management
   openxlsx,       # Excel files management
   easystats,      # collection of data analysis packages
@@ -1079,14 +1080,16 @@ all_models_parameters[["explicit_mods"]][["mod_explicit_4"]]
 #| echo: false
 #| label: fig-model_explicit_4_plots
 #| fig-cap: "Visualization of the predictions of the optimal model for the explicit task. The bottom plots are 'zoomed' versions of the top ones on shorter (standard) RT ranges for clearer views of the model. The horizontal colored lines in the 'violins' (colored shapes outlining the distribution of responses) represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model whereas the black bars represent the credible intervals of these estimations. **Left:** The *Congruence* plots represent the estimates of the model at each Congruence condition and Group, highlighting the significant interaction between the two variables. **Right**: The *Color* plots represent the estimates at each Color condition and Group, highlighting the main effect of Color and non-significance of the interaction with the Group factor."
-#| fig-width: 12
-#| fig-height: 8
+#| fig-width: 14
+#| fig-height: 10
 
 # setting dodge width for all the geoms
 dw <- .75
-# and stat text size
-st <- 4
-
+# stat text size
+st <- 7
+# legend and axis text size
+txt <- 22
+  
 # ---- Model Explicit 4 Group and Congruence plots ----
 
 # model 4 marginal means predictions
@@ -1200,8 +1203,8 @@ p_mod_4_g_cng_full <-
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
     axis.text.x = element_blank(),
-    legend.title = element_text(size = 18),
-    legend.text = element_text(size = 16)
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = 18)
     )
 
 # ----------------------------------- Zoomed G x Cng plot ----
@@ -1293,10 +1296,10 @@ p_mod_4_g_cng_zoom <-
   theme(
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
-    axis.text.x = element_text(size = 16),
-    legend.text = element_text(size = 16),
+    axis.text.x = element_text(size = txt),
+    legend.text = element_text(size = 18),
     # axis.title.x = element_text(size = 18, vjust = -.5),
-    legend.title = element_text(size = 18)
+    legend.title = element_text(size = txt)
     )
 
 
@@ -1406,8 +1409,8 @@ p_mod_4_g_col_full <-
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
     axis.text.x = element_blank(),
-    legend.title = element_text(size = 18),
-    legend.text = element_text(size = 16)
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = 18)
     )
 
 # ----------------------------------- Zoomed G x Col plot ----
@@ -1510,10 +1513,10 @@ p_mod_4_g_col_zoom <-
   theme(
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
-    axis.text.x = element_text(size = 16),
-    legend.text = element_text(size = 16),
+    axis.text.x = element_text(size = txt),
+    legend.text = element_text(size = 18),
     # axis.title.x = element_text(size = 18, vjust = -.5),
-    legend.title = element_text(size = 18)
+    legend.title = element_text(size = txt)
     )
 
 # . ----
@@ -1527,14 +1530,14 @@ p_mod_4 <-
     labels = c("Congruence", "Color"),
     label.x = c(-.1,.75),
     vjust = -.1,
-    font.label = list(size = 24),
+    font.label = list(size = 26),
     common.legend = TRUE,
     legend = "top",
     ncol = 2,
     nrow = 2
   ) %>% 
   annotate_figure(
-    left = text_grob("Response time (standardized)", size = 18, rot = 90)
+    left = text_grob("Response time (standardized)", size = txt, rot = 90)
     )
 
 p_mod_4
