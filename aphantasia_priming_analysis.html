@@ -133,8 +133,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   <li><a href="#potential-models" id="toc-potential-models" class="nav-link" data-scroll-target="#potential-models">Potential models</a></li>
   </ul></li>
   <li><a href="#fitting-the-models" id="toc-fitting-the-models" class="nav-link" data-scroll-target="#fitting-the-models">Fitting the models</a></li>
-  <li><a href="#explicit-task" id="toc-explicit-task" class="nav-link" data-scroll-target="#explicit-task">Explicit task</a></li>
-  <li><a href="#implicit-task" id="toc-implicit-task" class="nav-link" data-scroll-target="#implicit-task">Implicit task</a></li>
+  <li><a href="#explicit-task-results" id="toc-explicit-task-results" class="nav-link" data-scroll-target="#explicit-task-results">Explicit task results</a></li>
+  <li><a href="#implicit-task-results" id="toc-implicit-task-results" class="nav-link" data-scroll-target="#implicit-task-results">Implicit task results</a></li>
   </ul></li>
   <li><a href="#annexes" id="toc-annexes" class="nav-link" data-scroll-target="#annexes">Annexes</a>
   <ul class="collapse">
@@ -558,7 +558,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </section>
 <section id="response-times" class="level3">
 <h3 class="anchored" data-anchor-id="response-times">Response times</h3>
-<p>As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms. The removal of accuracy outliers, incorrect trials and extreme RTs amounted to 5.3% of trials in both tasks. There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in <a href="#fig-rt_means">Figure&nbsp;5</a>, along with their statistics in <a href="#tbl-rt_means">Table&nbsp;3</a>.</p>
+<p>As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms. The removal of accuracy outliers, incorrect trials and extreme RTs amounted to 5.3% of trials in both tasks. There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in <a href="#fig-rt_means">Figure&nbsp;5</a>, along with the overall RT statistics in <a href="#tbl-rt_means">Table&nbsp;3</a>.</p>
 <div class="cell">
 <details>
 <summary>Removing extreme RTs</summary>
@@ -636,7 +636,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </div>
-<p>For this more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). Common thresholds used for outlier detection with MADs are <span class="math inline">\(median \ \pm \ 3 \cdot MAD\)</span> (Hampel filter; see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case, as all the participants with fast RT means stay above the <span class="math inline">\(median \ - \ 1.5 \cdot MAD\)</span>. As for the high threshold, the choice the <span class="math inline">\(median \ + \ 3 \cdot MAD\)</span> would set a highly conservative maximum (e.g.&nbsp;1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at <span class="math inline">\(median \ + \ 5 \cdot MAD\)</span> (i.e.&nbsp;1797ms for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in <a href="#fig-rt_per_participant">Figure&nbsp;6</a>.</p>
+<p>For a more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). Common thresholds used for outlier detection in Gaussian distributions with MADs are <span class="math inline">\(median \ \pm \ 3 \cdot MAD\)</span> (Hampel filter; see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case of a skewed distribution, as all the participants with fast RT means stay above the <span class="math inline">\(median \ - \ 1.5 \cdot MAD\)</span>. As for the high threshold, the choice the <span class="math inline">\(median \ + \ 3 \cdot MAD\)</span> would set a highly conservative maximum (e.g.&nbsp;1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at <span class="math inline">\(median \ + \ 5 \cdot MAD\)</span> (i.e.&nbsp;1797ms for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in <a href="#fig-rt_per_participant">Figure&nbsp;6</a>.</p>
 <div class="cell">
 <details>
 <summary>Removing individual outlier trials</summary>
@@ -679,7 +679,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div id="fig-rt_per_participant" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-rt_per_participant-1.png" class="img-fluid figure-img" width="1056"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;6: Distribution of RTs in both tasks for each participant. Each colored line represents a single participant.</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;6: Resulting distribution of RTs in both tasks for each participant. Each colored line represents a single participant.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -693,7 +693,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <h2 class="anchored" data-anchor-id="model-description-multilevel-modelling">Model description (Multilevel modelling)</h2>
 <section id="predictors-and-outcome" class="level3">
 <h3 class="anchored" data-anchor-id="predictors-and-outcome">Predictors and outcome</h3>
-<p>Our analyses aim to evaluate the predictive abilities of several variables on one outcome, the <strong>response times</strong> in the tasks. Our potential predictors are:</p>
+<p>Our analyses aim to evaluate the predictive abilities of several variables on one outcome, the <strong>Response times</strong> of the participants in the tasks. Our potential predictors are:</p>
 <ul>
 <li><p><strong>Group</strong> membership, with two levels: aphantasia/phantasia</p></li>
 <li><p><strong>Congruence</strong> conditions, with two levels: congruent and incongruent</p></li>
@@ -701,11 +701,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </ul>
 <p>Sub-levels of the responses (“random effects”) can also be accounted for:</p>
 <ul>
-<li><p>the dependency between response times for <strong>each participant</strong> caused by repeated measures</p></li>
-<li><p>the varying effects of <strong>Congruence</strong> for each participant</p></li>
-<li><p>the varying effects of <strong>Color</strong> for each participant.</p></li>
+<li><p>the dependency between response times for <strong>each participant</strong> (also referred to as <em>subjects</em>) caused by repeated measures</p></li>
+<li><p>the varying effects of <strong>Congruence for each participant</strong></p></li>
+<li><p>the varying effects of <strong>Color for each participant</strong>.</p></li>
 </ul>
-<p>This structure will be modeled using Multilevel Models (also called hierarchical or mixed models), allowing us to add the sub-levels of the hierarchy within participant measures we described above in the model. RT data will be transformed using a Box-Cox transformation to bring the distributions closer to normality and improve the quality of the models.</p>
+<p>This structure will be modeled using Multilevel Models (also called hierarchical or mixed models), allowing us to add the sub-levels of the hierarchy within participant measures we described above in the model. <strong>RT data will be transformed using a Box-Cox transformation</strong> to bring the distributions closer to normality and improve the quality of the models.</p>
 <p>For a subject <span class="math inline">\(i\)</span> with a given <em>Group</em>/visual imagery, in the <em>Congruence</em> condition <span class="math inline">\(j\)</span> and the <em>Color</em> condition <span class="math inline">\(k\)</span>, The maximal model of the resulting response time <span class="math inline">\(RT_{ijk}\)</span> including all the predictors can be specified as such:</p>
 <p><span class="math display">\[
 \begin{aligned}
@@ -715,7 +715,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 </section>
 <section id="potential-models" class="level3">
 <h3 class="anchored" data-anchor-id="potential-models">Potential models</h3>
-<p>RT data will be standardized before modelling, therefore the standardized coefficients reported will scale on <em>standard deviations of the RT variable</em>. This allows to interpret these parameters (regression coefficients) roughly with the same guidelines as usual indices, e.g., Cohen’s <em>d</em>. Several models will be fitted in turn: we are not going to fit reduced models excluding some main effects, as we would like to model all of them in any case to produce inferences (as opposed to raw predictions of future data). We’ll specify the following:</p>
+<p><strong>RT data will be standardized before modelling</strong>, therefore the standardized coefficients reported will scale on <em>standard deviations of the RT variable</em>. This allows to interpret these parameters (regression coefficients) roughly with the same guidelines as usual indices, e.g., Cohen’s <em>d</em>. Several models will be fitted in turn. we are not going to fit reduced models that exclude some main effects, as we would like to model all of them in any case to produce inferences (as opposed to raw predictions of future data). We’ll specify the following:</p>
 <ol type="1">
 <li>The minimal model, accounting only for the random effect of subjects, will serve as a comparison baseline:</li>
 </ol>
@@ -888,14 +888,14 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 
 </div>
 </section>
-<section id="explicit-task" class="level2">
-<h2 class="anchored" data-anchor-id="explicit-task">Explicit task</h2>
+<section id="explicit-task-results" class="level2">
+<h2 class="anchored" data-anchor-id="explicit-task-results">Explicit task results</h2>
 <p>The parameters of the best model for the <strong>explicit task</strong> are displayed in <a href="#tbl-model_explicit_4_params">Table&nbsp;5</a>. The significant parameters in the explicit task are the color and the interaction between the group and the congruence condition. The <strong>main effect of Color</strong> indicate that participants responded quicker in the colored condition, although this effect has no interaction with the other variables. The <strong>interaction between Group and Congruence</strong> reveals that non-aphantasics responded slower in the uncongruent condition. This effect is represented in <a href="#fig-model_explicit_4_plots">Figure&nbsp;7</a>.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="tbl-model_explicit_4_params" class="anchored">
 <table class="table table-sm table-striped">
-<caption>Table&nbsp;5: Explicit task - Parameters of the optimal model including a random intercept and slope by subject on Congruence.</caption>
+<caption>Table&nbsp;5: Parameters of the optimal model for the explicit task including a random intercept and slope by subject on Congruence.</caption>
 <colgroup>
 <col style="width: 56%">
 <col style="width: 11%">
@@ -988,15 +988,15 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <div class="cell-output-display">
 <div id="fig-model_explicit_4_plots" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
-<p><img src="aphantasia_priming_analysis_files/figure-html/fig-model_explicit_4_plots-1.png" class="img-fluid figure-img" width="768"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;7: Visualization of the Congruence and Group variables in the optimal model for the explicit task. The bottom plot is a ‘zoomed’ version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the ‘violins’ represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations.</figcaption><p></p>
+<p><img src="aphantasia_priming_analysis_files/figure-html/fig-model_explicit_4_plots-1.png" class="img-fluid figure-img" width="1152"></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;7: Visualization of the predictions of the optimal model for the explicit task. The bottom plots are ‘zoomed’ versions of the top ones on shorter (standard) RT ranges for clearer views of the model. The horizontal colored lines in the ‘violins’ represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model whereas the black bars represent the credible intervals of these estimations: the <strong>Congruence figures on the left</strong> represent the estimates at each Congruence condition and Group, highlighting the significant interaction between the two variables. The <strong>Color figures on the right</strong> represent the estimates at each Color condition and Group, highlighting the main effect of Color and non-significance of the interaction with the Group factor.</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="implicit-task" class="level2">
-<h2 class="anchored" data-anchor-id="implicit-task">Implicit task</h2>
+<section id="implicit-task-results" class="level2">
+<h2 class="anchored" data-anchor-id="implicit-task-results">Implicit task results</h2>
 <p>The parameters of the best model for the <strong>implicit task</strong> are displayed in <a href="#tbl-model_implicit_3_params">Table&nbsp;6</a>. The significant parameters are the <strong>Group</strong>, the <strong>interaction between Group and Congruence</strong> and the <strong>interaction between Group and Color</strong>. These parameters indicate that: 1) aphantasics responded slower, 2) the uncongruent condition had non-aphantasics becoming slower, and 3) non-aphantasics also responded slower in the uncolored condition. This main effect and the interactions are represented in <a href="#fig-model_implicit_3_plots_congruence">Figure&nbsp;8</a> for the <span class="math inline">\(Group \times Congruence\)</span> interaction, and <a href="#fig-model_implicit_3_plots_color">Figure&nbsp;9</a> for the <span class="math inline">\(Group \times Color\)</span> interaction.</p>
 <div class="cell">
 <div class="cell-output-display">
