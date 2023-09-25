@@ -817,6 +817,8 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 \end{aligned}
 $$
 
+The significant parameters will thereafter be analysed with **marginal contrasts analyses** (robust model-based analogues of "post-hoc" statistical tests) to evaluate the differences between factor levels.
+
 ## Fitting the models
 
 ```{r model_recipes_workflows_and_engines}
@@ -1063,7 +1065,7 @@ all_models_parameters <-
 
 ## Explicit task results
 
-The parameters of the best model for the **explicit task** are displayed in @tbl-model_explicit_4_params. The significant parameters in the explicit task are the Color and the interaction between the Group and the Congruence conditions. The **main effect of Color** indicate that participants responded quicker in the colored condition, although this effect has no interaction with the other variables. The **interaction between Group and Congruence** reveals that non-aphantasics responded slower in the uncongruent condition. These effects are illustrated in @fig-model_explicit_4_plots.
+The parameters of the best model for the **explicit task** are displayed in @tbl-model_explicit_4_params. The significant parameters in the explicit task are the Color and the interaction between the Group and the Congruence conditions. The **main effect of Color** indicate that participants responded quicker in the colored condition, although this effect has no interaction with the other variables. The **interaction between Group and Congruence** reveals that non-aphantasics responded slower in the uncongruent condition, as . These effects are illustrated in @fig-model_explicit_4_plots. Both estimates are in the $[0.1 : 0.2]$ range, which denotes a *very small* effect size according to most standardized differences interpretation guidelines (e.g. Cohen, 1988; Gignac & Szodorai, 2016; Lovakov & Agadullina, 2021).
 
 ```{r model_explicit_4_params}
 #| echo: false
@@ -1076,9 +1078,14 @@ all_models_parameters[["explicit_mods"]][["mod_explicit_4"]]
 ```{r model_explicit_4_plots}
 #| echo: false
 #| label: fig-model_explicit_4_plots
-#| fig-cap: "Visualization of the predictions of the optimal model for the explicit task. The bottom plots are 'zoomed' versions of the top ones on shorter (standard) RT ranges for clearer views of the model. The horizontal colored lines in the 'violins' represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model whereas the black bars represent the credible intervals of these estimations: the **Congruence figures on the left** represent the estimates at each Congruence condition and Group, highlighting the significant interaction between the two variables. The **Color figures on the right** represent the estimates at each Color condition and Group, highlighting the main effect of Color and non-significance of the interaction with the Group factor."
+#| fig-cap: "Visualization of the predictions of the optimal model for the explicit task. The bottom plots are 'zoomed' versions of the top ones on shorter (standard) RT ranges for clearer views of the model. The horizontal colored lines in the 'violins' (colored shapes outlining the distribution of responses) represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model whereas the black bars represent the credible intervals of these estimations. **Left:** The *Congruence* plots represent the estimates of the model at each Congruence condition and Group, highlighting the significant interaction between the two variables. **Right**: The *Color* plots represent the estimates at each Color condition and Group, highlighting the main effect of Color and non-significance of the interaction with the Group factor."
 #| fig-width: 12
 #| fig-height: 8
+
+# setting dodge width for all the geoms
+dw <- .75
+# and stat text size
+st <- 4
 
 # ---- Model Explicit 4 Group and Congruence plots ----
 
@@ -1087,9 +1094,29 @@ preds_mod_4_g_cng <-
   all_models_fitted[[1]][[4]] %>% 
   estimate_means(at = c("aphantasia", "congruence"))
 
-# setting dodge width for all the geoms
-dw <- .75
+# model 4 contrasts between aphantasia and congruence levels
+contrasts_mod_4_g_cng <-
+  all_models_fitted[[1]][[4]] %>% 
+  estimate_contrasts(contrast = c("aphantasia", "congruence"))
 
+# stats for the group congruence interaction
+stats_mod_4_g_cng_full <- 
+  df_explicit_rt %>% 
+  standardize(rt_explicit) %>% 
+  group_by(aphantasia) %>% 
+  pairwise_wilcox_test(rt_explicit ~ congruence) %>% 
+  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) %>% 
+  mutate(y.position = 3.1) %>% 
+  filter(aphantasia == "no")
+
+stats_mod_4_g_cng_zoom <- 
+  df_explicit_rt %>% 
+  standardize(rt_explicit) %>% 
+  group_by(aphantasia) %>% 
+  pairwise_wilcox_test(rt_explicit ~ congruence) %>% 
+  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) %>% 
+  mutate(y.position = c(.22, .3))
+  
 # ------------------------------------- Full G x Cng plot ----
 p_mod_4_g_cng_full <-
   recipe_explicit %>% 
@@ -1154,6 +1181,14 @@ p_mod_4_g_cng_full <-
   
   # intercept at 0
   geom_hline(yintercept = 0, linewidth = .05, linetype = 2, alpha = .5) +
+  
+  # stats display
+  stat_pvalue_manual(
+    stats_mod_4_g_cng_full, 
+    label = "p.adj.signif", 
+    # tip.length = 0,
+    size = st
+    ) +
   
   # color_palettes and options
   labs(x = NULL, y = NULL) +
@@ -1234,6 +1269,14 @@ p_mod_4_g_cng_zoom <-
   # intercept at 0
   geom_hline(yintercept = 0, linetype = 2) +
   
+  # stats display
+  stat_pvalue_manual(
+    stats_mod_4_g_cng_zoom, 
+    label = "p.adj.signif", 
+    tip.length = 0,
+    size = st
+    ) +
+  
   # zoom on a shorter y range
   coord_cartesian(ylim = c(-.3,.3)) +
   
@@ -1265,6 +1308,20 @@ p_mod_4_g_cng_zoom <-
 preds_mod_4_g_col <- 
   all_models_fitted[[1]][[4]] %>% 
   estimate_means(at = c("aphantasia", "color"))
+
+# model 4 contrasts between aphantasia and congruence levels
+contrasts_mod_4_col <-
+  all_models_fitted[[1]][[4]] %>% 
+  estimate_contrasts(contrast = c("color"))
+
+# stats for the group color interaction
+stats_mod_4_g_col_full <- 
+  df_explicit_rt %>% 
+  standardize(rt_explicit) %>%
+  group_by(aphantasia) %>% 
+  pairwise_wilcox_test(rt_explicit ~ color) %>% 
+  add_xy_position(x = "color", dodge = dw) %>% 
+  mutate(y.position = 3.1)
 
 # ------------------------------------- Full G x Col plot ----
 p_mod_4_g_col_full <-
@@ -1331,6 +1388,14 @@ p_mod_4_g_col_full <-
   # intercept at 0
   geom_hline(yintercept = 0, linewidth = .05, linetype = 2, alpha = .5) +
   
+  # stats display
+  stat_pvalue_manual(
+    stats_mod_4_g_col_full, 
+    label = "p.adj.signif", 
+    # tip.length = 0,
+    size = st
+    ) +
+  
   # color_palettes and options
   labs(x = NULL, y = NULL) +
   # scale_x_discrete(labels = c("Congruent", "Incongruent")) +
@@ -1346,6 +1411,17 @@ p_mod_4_g_col_full <-
     )
 
 # ----------------------------------- Zoomed G x Col plot ----
+
+# stat for the color effect
+stats_mod_4_g_col_zoom <- 
+  df_explicit_rt %>% 
+  standardize(rt_explicit) %>%
+  group_by(aphantasia) %>%
+  pairwise_wilcox_test(rt_explicit ~ color) %>% 
+  add_xy_position(x = "color", dodge = dw) %>% 
+  mutate(y.position = .3)
+
+
 p_mod_4_g_col_zoom <-
   recipe_explicit %>% 
   prep() %>% 
@@ -1410,6 +1486,14 @@ p_mod_4_g_col_zoom <-
   # intercept at 0
   geom_hline(yintercept = 0, linetype = 2) +
   
+  # stats display
+  stat_pvalue_manual(
+    stats_mod_4_g_col_zoom,
+    label = "p.adj.signif",
+    tip.length = 0.005,
+    size = st
+    ) +
+    
   # zoom on a shorter y range
   coord_cartesian(ylim = c(-.3,.3)) +
   
