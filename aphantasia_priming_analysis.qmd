@@ -7,20 +7,34 @@ editor_options:
 toc: true
 ---
 
-:::{.callout-note collapse="true"}
-## Software and setup
+### Preliminary Set-up
 
-This analysis was conducted in R language through the [RStudio](https://posit.co/download/rstudio-desktop/) Integrated Development Environment. This analysis report was written with [Quarto](https://quarto.org/). Just down below is the setup code, including two essential steps: 
+::: {.callout-tip collapse="true"}
+#### Datasets and code availability
+
+The folder containing this HTML file also has a "`data/`" folder, wherein can be found the main Excel file from which the datasets analysed here are sourced, i.e. "`aphantasia_priming_tidy_data.xlsx`". It has several sheets:
+
+- `data_asso`/`_implicit`/`_explicit`/`_rotation`/`_questionnaires` are raw datasheets retrieved from old Excels and cleaned up
+
+- `data_processed_explicit`/`_implicit` are the datasets of the two main tasks after being processed here and in their final state after [exploratory analysis](#sec-eda), and before the [inferential analyses conducted afterwards](#sec-inferential).
+
+The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the `aphantasia_priming_analysis.qmd` file, for which the best reading software are coding Integrated Development Environments (IDE) like [RStudio](https://posit.co/download/rstudio-desktop/) or [Visual Studio Code](https://code.visualstudio.com/). The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.
+:::
+
+:::{.callout-note collapse="true"}
+#### Software and setup
+
+This analysis was conducted in R language on [RStudio](https://posit.co/download/rstudio-desktop/). This analysis report was written with [Quarto](https://quarto.org/). Just down below is the set-up code, including two essential steps: 
 
 1. Installing the required packages for this data analysis
 
 2. importing data into the dataframes used throughout. 
 
-I left this (usually hidden) step there for reference in a view of transparency for the interested reader.
-:::
+I left this (usually hidden) step here for reference of the tools used in a view of transparency for the interested reader.
 
 ```{r setup}
 #| output: false
+#| code-summary: "Setup code"
 
 # --- Packages -----------------------------------------------------------------
 
@@ -39,7 +53,7 @@ shelf(
   easystats,      # collection of data analysis packages
   tidymodels,     # collection of packages for a tidy modelling workflow
   bayesian,       # bayesian modelling with brms and tidymodels
-  multilevelmod,  # multilevel modelling with lmer
+  multilevelmod,  # multilevel modelling with lmer and tidymodels
   mclust,         # mixture clustering
   ggpubr,         # ggplot tools
   ggbeeswarm,     # ggplot tools
@@ -83,18 +97,9 @@ df_questionnaires <-
     aphantasia = fct_relevel(aphantasia, "yes", "no")
     )
 ```
-
-::: {.callout-tip collapse="false"}
-## Datasets availability
-
-The folder containing this HTML file also has a "data" folder, wherein can be found the main Excel file from which the datasets analysed here are sourced, "aphantasia_priming_tidy_data.xlsx". It has several sheets:
-
-- `data_asso`/`_implicit`/`_explicit`/`_rotation`/`_questionnaires` are raw datasheets retrieved from old Excels and cleaned up
-
-- `data_processed_explicit`/`_implicit` are the datasets of the two main tasks after being processed here and in their final state before the inferential analyses in @sec-inferential.
 :::
 
-# Exploratory Data Analysis
+# Exploratory Data Analysis {#sec-eda}
 
 ## Questionnaire data and imagery
 

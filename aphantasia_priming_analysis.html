@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.353">
+<meta name="generator" content="quarto-1.2.335">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -18,10 +18,9 @@ div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
   width: 0.8em;
-  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  margin: 0 0.8em 0.2em -1.6em;
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
@@ -48,13 +47,43 @@ pre.numberSource code > span > a:first-child::before
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
     padding: 0 4px; width: 4em;
+    color: #aaaaaa;
   }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
   {   }
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 </style>
 
 
@@ -69,7 +98,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="aphantasia_priming_analysis_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="aphantasia_priming_analysis_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 </head>
@@ -82,7 +110,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#exploratory-data-analysis" id="toc-exploratory-data-analysis" class="nav-link active" data-scroll-target="#exploratory-data-analysis">Exploratory Data Analysis</a>
+  <li><a href="#preliminary-set-up" id="toc-preliminary-set-up" class="nav-link active" data-scroll-target="#preliminary-set-up">Preliminary Set-up</a></li>
+  <li><a href="#sec-eda" id="toc-sec-eda" class="nav-link" data-scroll-target="#sec-eda">Exploratory Data Analysis</a>
   <ul class="collapse">
   <li><a href="#questionnaire-data-and-imagery" id="toc-questionnaire-data-and-imagery" class="nav-link" data-scroll-target="#questionnaire-data-and-imagery">Questionnaire data and imagery</a>
   <ul class="collapse">
@@ -139,113 +168,55 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<div class="callout callout-style-default callout-note callout-titled">
+<section id="preliminary-set-up" class="level3">
+<h3 class="anchored" data-anchor-id="preliminary-set-up">Preliminary Set-up</h3>
+<div class="callout-tip callout callout-style-default callout-captioned">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
-<div class="callout-title-container flex-fill">
-Software and setup
+<div class="callout-caption-container flex-fill">
+Datasets and code availability
 </div>
 <div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
 </div>
 <div id="callout-1" class="callout-1-contents callout-collapse collapse">
 <div class="callout-body-container callout-body">
-<p>This analysis was conducted in R language through the <a href="https://posit.co/download/rstudio-desktop/">RStudio</a> Integrated Development Environment. This analysis report was written with <a href="https://quarto.org/">Quarto</a>. Just down below is the setup code, including two essential steps:</p>
+<p>The folder containing this HTML file also has a “<code>data/</code>” folder, wherein can be found the main Excel file from which the datasets analysed here are sourced, i.e.&nbsp;“<code>aphantasia_priming_tidy_data.xlsx</code>”. It has several sheets:</p>
+<ul>
+<li><p><code>data_asso</code>/<code>_implicit</code>/<code>_explicit</code>/<code>_rotation</code>/<code>_questionnaires</code> are raw datasheets retrieved from old Excels and cleaned up</p></li>
+<li><p><code>data_processed_explicit</code>/<code>_implicit</code> are the datasets of the two main tasks after being processed here and in their final state after <a href="#sec-eda">exploratory analysis</a>, and before the <a href="#sec-inferential">inferential analyses conducted afterwards</a>.</p></li>
+</ul>
+<p>The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the <code>aphantasia_priming_analysis.qmd</code> file, for which the best reading software are coding Integrated Development Environments (IDE) like <a href="https://posit.co/download/rstudio-desktop/">RStudio</a> or <a href="https://code.visualstudio.com/">Visual Studio Code</a>. The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.</p>
+</div>
+</div>
+</div>
+<div class="callout-note callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Software and setup
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-2" class="callout-2-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>This analysis was conducted in R language on <a href="https://posit.co/download/rstudio-desktop/">RStudio</a>. This analysis report was written with <a href="https://quarto.org/">Quarto</a>. Just down below is the set-up code, including two essential steps:</p>
 <ol type="1">
 <li><p>Installing the required packages for this data analysis</p></li>
 <li><p>importing data into the dataframes used throughout.</p></li>
 </ol>
-<p>I left this (usually hidden) step there for reference in a view of transparency for the interested reader.</p>
-</div>
-</div>
-</div>
+<p>I left this (usually hidden) step here for reference of the tools used in a view of transparency for the interested reader.</p>
 <div class="cell">
-<details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Packages -----------------------------------------------------------------</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The package `librairian` will ease the package management with the "shelf" </span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># function, which automatically: </span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1) checks if a package is installed </span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 2) installs it if need be</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3) loads the package like the "library()" function would.</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(librarian)) <span class="fu">install.packages</span>(librarian)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(librarian)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># now putting packages on our library's shelves:</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">shelf</span>(</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  readxl,         <span class="co"># Excel files management</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  openxlsx,       <span class="co"># Excel files management</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  easystats,      <span class="co"># collection of data analysis packages</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  tidymodels,     <span class="co"># collection of packages for a tidy modelling workflow</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  bayesian,       <span class="co"># bayesian modelling with brms and tidymodels</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  multilevelmod,  <span class="co"># multilevel modelling with lmer</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  mclust,         <span class="co"># mixture clustering</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  ggpubr,         <span class="co"># ggplot tools</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  ggbeeswarm,     <span class="co"># ggplot tools</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  viridis,        <span class="co"># ggplot colour-blind friendly palettes</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  tidyverse       <span class="co"># the essentials</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Global cosmetic theme ---</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>(<span class="at">base_size =</span> <span class="dv">14</span>))</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Fixing a seed for reproducibility ---</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">14051998</span>)</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Importing data -----------------------------------------------------------</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Association task</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>df_asso <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_asso"</span>)</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Implicit task</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>df_implicit <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_implicit"</span>)</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Explicit task</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>df_explicit <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_explicit"</span>)</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Rotation task</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>df_rotation <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_rotation"</span>)</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="co"># Questionnaires</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>df_questionnaires <span class="ot">&lt;-</span> </span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel</span>(</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    <span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>,</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="st">"data_questionnaires"</span></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>  <span class="co"># creating the a/phantasia groups</span></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">aphantasia =</span> <span class="fu">ifelse</span>(vviq80 <span class="sc">&lt;</span> <span class="dv">32</span>, <span class="st">"yes"</span>, <span class="st">"no"</span>),</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">aphantasia =</span> <span class="fu">fct_relevel</span>(aphantasia, <span class="st">"yes"</span>, <span class="st">"no"</span>)</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<div class="callout callout-style-default callout-tip callout-titled">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="true" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Datasets availability
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-2" class="callout-2-contents callout-collapse collapse show">
-<div class="callout-body-container callout-body">
-<p>The folder containing this HTML file also has a “data” folder, wherein can be found the main Excel file from which the datasets analysed here are sourced, “aphantasia_priming_tidy_data.xlsx”. It has several sheets:</p>
-<ul>
-<li><p><code>data_asso</code>/<code>_implicit</code>/<code>_explicit</code>/<code>_rotation</code>/<code>_questionnaires</code> are raw datasheets retrieved from old Excels and cleaned up</p></li>
-<li><p><code>data_processed_explicit</code>/<code>_implicit</code> are the datasets of the two main tasks after being processed here and in their final state before the inferential analyses in <a href="#sec-inferential">Section&nbsp;2</a>.</p></li>
-</ul>
+
 </div>
 </div>
 </div>
-<section id="exploratory-data-analysis" class="level1">
+</div>
+</section>
+<section id="sec-eda" class="level1">
 <h1>Exploratory Data Analysis</h1>
 <section id="questionnaire-data-and-imagery" class="level2">
 <h2 class="anchored" data-anchor-id="questionnaire-data-and-imagery">Questionnaire data and imagery</h2>
@@ -255,17 +226,17 @@ Datasets availability
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Bayesian partial correlations between questionnaire scores ---</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>cor_questionnaires <span class="ot">&lt;-</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  df_questionnaires <span class="sc">%&gt;%</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">"vviq80"</span>, <span class="st">"suis60"</span>,<span class="st">"osiq_o75"</span>, <span class="st">"osiq_s75"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  standardise <span class="sc">%&gt;%</span> </span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">correlation</span>(</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">bayesian =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">partial =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">partial_bayesian =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">bayesian_test =</span> <span class="st">"bf"</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Bayesian partial correlations between questionnaire scores ---</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>cor_questionnaires <span class="ot">&lt;-</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  df_questionnaires <span class="sc">%&gt;%</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">"vviq80"</span>, <span class="st">"suis60"</span>,<span class="st">"osiq_o75"</span>, <span class="st">"osiq_s75"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  standardise <span class="sc">%&gt;%</span> </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">correlation</span>(</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">bayesian =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">partial =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">partial_bayesian =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">bayesian_test =</span> <span class="st">"bf"</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -273,7 +244,7 @@ Datasets availability
 <div id="fig-cor_matrix" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-cor_matrix-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption class="figure-caption">Figure&nbsp;1: Correlation matrix of the questionnaire variables. The stars indicate the amount of evidence in favour of a correlation, as assessed by the <span class="math inline">\(BF_{10}\)</span>: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence.</figcaption>
+<p></p><figcaption class="figure-caption">Figure&nbsp;1: Correlation matrix of the questionnaire variables. The stars indicate the amount of evidence in favour of a correlation, as assessed by the <span class="math inline">\(BF_{10}\)</span>: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -281,7 +252,7 @@ Datasets availability
 <div class="cell">
 <div class="cell-output-display">
 <div id="tbl-cor_stats" class="anchored">
-<table class="table table-sm table-striped small">
+<table class="table table-sm table-striped">
 <caption>Table&nbsp;1: Detailed correlation table of the questionnaire variables.</caption>
 <colgroup>
 <col style="width: 15%">
@@ -362,14 +333,14 @@ Datasets availability
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Principal Component Analysis ---</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>pca <span class="ot">&lt;-</span> </span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">principal_components</span>(</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    df_questionnaires[,<span class="dv">4</span><span class="sc">:</span><span class="dv">7</span>],</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="st">"max"</span>,</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">sort =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">standardize =</span> <span class="cn">TRUE</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Principal Component Analysis ---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>pca <span class="ot">&lt;-</span> </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">principal_components</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    df_questionnaires[,<span class="dv">4</span><span class="sc">:</span><span class="dv">7</span>],</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="st">"max"</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">sort =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">standardize =</span> <span class="cn">TRUE</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -377,7 +348,7 @@ Datasets availability
 <div id="fig-loadings" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-loadings-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption class="figure-caption">Figure&nbsp;2: Loadings of each variable on the three components extracted by a PCA.</figcaption>
+<p></p><figcaption class="figure-caption">Figure&nbsp;2: Loadings of each variable on the three components extracted by a PCA.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -385,7 +356,7 @@ Datasets availability
 <div class="cell">
 <div class="cell-output-display">
 <div id="tbl-eigenvalues" class="anchored">
-<table class="table table-sm table-striped small">
+<table class="table table-sm table-striped">
 <caption>Table&nbsp;2: Eigenvalues and variance explained by the three components extracted by a PCA.</caption>
 <thead>
 <tr class="header">
@@ -430,20 +401,20 @@ Datasets availability
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>pca_components <span class="ot">&lt;-</span> pca <span class="sc">%&gt;%</span> predict</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>df_questionnaires <span class="ot">&lt;-</span> </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(df_questionnaires, pca_components[,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">PC1 =</span> <span class="fu">standardize</span>(PC1),</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">PC2 =</span> <span class="sc">-</span><span class="fu">standardize</span>(PC2)</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"visual_imagery"</span> <span class="ot">=</span> PC1,</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"spatial_imagery"</span> <span class="ot">=</span> PC2</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(pca, pca_components)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pca_components <span class="ot">&lt;-</span> pca <span class="sc">%&gt;%</span> predict</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>df_questionnaires <span class="ot">&lt;-</span> </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(df_questionnaires, pca_components[,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">PC1 =</span> <span class="fu">standardize</span>(PC1),</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">PC2 =</span> <span class="sc">-</span><span class="fu">standardize</span>(PC2)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"visual_imagery"</span> <span class="ot">=</span> PC1,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"spatial_imagery"</span> <span class="ot">=</span> PC2</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(pca, pca_components)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -455,7 +426,7 @@ Datasets availability
 <div id="fig-spatial_corr" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-spatial_corr-1.png" class="img-fluid figure-img" width="864"></p>
-<figcaption class="figure-caption">Figure&nbsp;3: Correlation between the main visual imagery variables and the spatial imagery one.</figcaption>
+<p></p><figcaption class="figure-caption">Figure&nbsp;3: Correlation between the main visual imagery variables and the spatial imagery one.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -466,6 +437,9 @@ Datasets availability
 <li><p>Using <strong>Visual Imagery as a continuous variable.</strong></p></li>
 </ol>
 <p>In the main inferential analyses conducted down below, the first option has been selected for its ease of interpretation (and closeness to the results that would be obtained with the continuous variable anyway). Nevertheless, the two continuous variables of visual and spatial imagery defined here will be explored later in further data exploration.</p>
+<div class="cell">
+
+</div>
 </section>
 </section>
 <section id="outcomes-accuracy-and-rts" class="level2">
@@ -478,7 +452,7 @@ Datasets availability
 <div id="fig-tasks_errors" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-tasks_errors-1.png" class="img-fluid figure-img" width="864"></p>
-<figcaption class="figure-caption">Figure&nbsp;4: Distribution of errors between groups in the three main tasks.</figcaption>
+<p></p><figcaption class="figure-caption">Figure&nbsp;4: Distribution of errors between groups in the three main tasks.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -489,11 +463,14 @@ Datasets availability
 <h3 class="anchored" data-anchor-id="response-times">Response times</h3>
 <p>As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms, along with error trials. This amounts to 5.3% of trials in both tasks. As specified earlier, the data for each task from outliers that have an error rate above to 16% will be removed as well (9 participants in the explicit task and 4 in the implicit task). There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in <a href="#fig-rt_means">Figure&nbsp;5</a>, along with their statistics in <a href="#tbl-rt_means">Table&nbsp;3</a>.</p>
 <div class="cell">
+
+</div>
+<div class="cell">
 <div class="cell-output-display">
 <div id="fig-rt_means" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-rt_means-1.png" class="img-fluid figure-img" width="864"></p>
-<figcaption class="figure-caption">Figure&nbsp;5: Distribution of the mean RTs of participants in the explicit and implicit tasks.</figcaption>
+<p></p><figcaption class="figure-caption">Figure&nbsp;5: Distribution of the mean RTs of participants in the explicit and implicit tasks.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -501,7 +478,7 @@ Datasets availability
 <div class="cell">
 <div class="cell-output-display">
 <div id="tbl-rt_means" class="anchored">
-<table class="table table-sm table-striped small">
+<table class="table table-sm table-striped">
 <caption>Table&nbsp;3: Descriptive statistics of the average RTs across the sample in both tasks.</caption>
 <colgroup>
 <col style="width: 27%">
@@ -555,38 +532,38 @@ Datasets availability
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- second tidying ---</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="ot">&lt;-</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  df_explicit_rt <span class="sc">%&gt;%</span> </span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rt_explicit <span class="sc">&lt;</span> <span class="dv">1797</span>)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>df_implicit_rt <span class="ot">&lt;-</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  df_implicit_rt <span class="sc">%&gt;%</span> </span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rt_implicit <span class="sc">&lt;</span> <span class="dv">1386</span>)</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co"># --- checking individual stats again ---</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># df_explicit_rt %&gt;% </span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   group_by(subjectid) %&gt;% </span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#   summarise(</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#     mean = mean(rt_explicit),</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#     mad = mad(rt_explicit),</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#     min = min(rt_explicit),</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#     max = max(rt_explicit),</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#     obs = length(rt_explicit)</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#   )</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># df_implicit_rt %&gt;% </span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#   group_by(subjectid) %&gt;% </span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#   summarise(</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#     mean = mean(rt_implicit),</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#     mad = mad(rt_implicit),</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#     min = min(rt_implicit),</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     max = max(rt_implicit),</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     obs = length(rt_implicit)</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co">#   )</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"># --- removing the last outlier ---</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="ot">&lt;-</span> df_explicit_rt <span class="sc">%&gt;%</span> <span class="fu">filter</span>(subjectid <span class="sc">!=</span> <span class="st">"dchimenton"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- second tidying ---</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="ot">&lt;-</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  df_explicit_rt <span class="sc">%&gt;%</span> </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rt_explicit <span class="sc">&lt;</span> <span class="dv">1797</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>df_implicit_rt <span class="ot">&lt;-</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  df_implicit_rt <span class="sc">%&gt;%</span> </span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rt_implicit <span class="sc">&lt;</span> <span class="dv">1386</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># --- checking individual stats again ---</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># df_explicit_rt %&gt;% </span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   group_by(subjectid) %&gt;% </span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#   summarise(</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">#     mean = mean(rt_explicit),</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">#     mad = mad(rt_explicit),</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">#     min = min(rt_explicit),</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">#     max = max(rt_explicit),</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">#     obs = length(rt_explicit)</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">#   )</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># df_implicit_rt %&gt;% </span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">#   group_by(subjectid) %&gt;% </span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co">#   summarise(</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co">#     mean = mean(rt_implicit),</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">#     mad = mad(rt_implicit),</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co">#     min = min(rt_implicit),</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     max = max(rt_implicit),</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     obs = length(rt_implicit)</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co">#   )</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co"># --- removing the last outlier ---</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="ot">&lt;-</span> df_explicit_rt <span class="sc">%&gt;%</span> <span class="fu">filter</span>(subjectid <span class="sc">!=</span> <span class="st">"dchimenton"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -594,7 +571,7 @@ Datasets availability
 <div id="fig-rt_per_participant" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-rt_per_participant-1.png" class="img-fluid figure-img" width="1056"></p>
-<figcaption class="figure-caption">Figure&nbsp;6: Distribution of RTs in both tasks for each participant. Each colored line represents a single participant.</figcaption>
+<p></p><figcaption class="figure-caption">Figure&nbsp;6: Distribution of RTs in both tasks for each participant. Each colored line represents a single participant.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -626,7 +603,7 @@ Datasets availability
 \begin{aligned}
 RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\beta_{2} + \beta_{2_{subject[i]}}) \cdot Congruence_{j} \times (\beta_{3} + \beta_{3_{subject[i]}}) \cdot Color_{k}
 \end{aligned}
-\]</span> Where <span class="math inline">\(\alpha\)</span> is the global intercept, <span class="math inline">\(\alpha_{subject[i]}\)</span> is a random intercept by subject accounting for the inherent randomness tied to participants, and <span class="math inline">\(\beta_{1/2/3}\)</span> are the parameters representing the effect of each predictor. The “<span class="math inline">\(\times\)</span>” signs represent the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope <span class="math inline">\(\beta_{j/k_{subject[i]}}\)</span> by subject can be added to the Congruence and Color parameters to account for this variance.</p>
+\]</span> Where <span class="math inline">\(\alpha\)</span> is the global intercept, <span class="math inline">\(\alpha_{subject[i]}\)</span> is a random intercept by subject accounting for the inherent randomness tied to participants, and <span class="math inline">\(\beta_{1/2/3}\)</span> are the parameters representing the effect of each predictor. The “<span class="math inline">\(\times\)</span>” signs represent the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope <span class="math inline">\(\beta_{2/3_{subject[i]}}\)</span> by subject can be added to the Congruence or Color parameters to account for this variance.</p>
 </section>
 <section id="potential-models" class="level3">
 <h3 class="anchored" data-anchor-id="potential-models">Potential models</h3>
@@ -636,7 +613,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 </ol>
 <p><span class="math display">\[
 \begin{aligned}
-RT_{ijk} = \alpha + \alpha_{subject[i]}
+RT_{i} = \alpha + \alpha_{subject[i]}
 \end{aligned}
 \]</span></p>
 <ol start="2" type="1">
@@ -683,11 +660,20 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 </section>
 <section id="fitting-the-models" class="level2">
 <h2 class="anchored" data-anchor-id="fitting-the-models">Fitting the models</h2>
-<p>All of these models have been fitted for both tasks and their predictive performances compared using the AIC, AICc (Akaike corrected Information Criterion) and BIC (Bayesian Information Criterion). The maximal model did not converge, so only the five first models were evaluated. The results of these analyses are displayed in <a href="#tbl-model_perfs">Table&nbsp;4</a>.</p>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<div class="cell">
+
+</div>
+<p>All of these models have been fitted for both tasks and their predictive performances compared using the AIC, AICc (Akaike corrected Information Criterion) and BIC (Bayesian Information Criterion). The maximal model did not converge, so only the first five models were evaluated. The results of these analyses are displayed in <a href="#tbl-model_perfs">Table&nbsp;4</a>.</p>
 <div id="tbl-model_perfs" class="cell tbl-parent quarto-layout-panel anchored">
 <div class="quarto-layout-row quarto-layout-valign-top">
 <div id="tbl-model_perfs-1" class="quarto-layout-cell quarto-layout-cell-subref anchored" data-ref-parent="tbl-model_perfs" style="flex-basis: 100.0%;justify-content: center;">
-<table class="table table-sm table-striped small">
+<table class="table table-sm table-striped">
 <caption>(a) Explicit task models.</caption>
 <colgroup>
 <col style="width: 20%">
@@ -740,7 +726,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 </div>
 <div class="quarto-layout-row quarto-layout-valign-top">
 <div id="tbl-model_perfs-2" class="quarto-layout-cell quarto-layout-cell-subref anchored" data-ref-parent="tbl-model_perfs" style="flex-basis: 100.0%;justify-content: center;">
-<table class="table table-sm table-striped small">
+<table class="table table-sm table-striped">
 <caption>(b) Implicit task models.</caption>
 <thead>
 <tr class="header">
@@ -790,6 +776,9 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 </div>
 </div>
 <p>The fourth model including a slope by subject on Congruence is the most supported for the <strong>explicit task</strong>, while the third model including only an intercept by subject has the best performance for the <strong>implicit task</strong>. The parameters of these two models will be analysed in the following.</p>
+<div class="cell">
+
+</div>
 </section>
 <section id="explicit-task" class="level2">
 <h2 class="anchored" data-anchor-id="explicit-task">Explicit task</h2>
@@ -797,7 +786,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <div class="cell">
 <div class="cell-output-display">
 <div id="tbl-model_explicit_4_params" class="anchored">
-<table class="table table-sm table-striped small">
+<table class="table table-sm table-striped">
 <caption>Table&nbsp;5: Explicit task - Parameters of the optimal model including a random intercept and slope by subject on Congruence.</caption>
 <colgroup>
 <col style="width: 56%">
@@ -892,7 +881,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <div id="fig-model_explicit_4_plots" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-model_explicit_4_plots-1.png" class="img-fluid figure-img" width="768"></p>
-<figcaption class="figure-caption">Figure&nbsp;7: Visualization of the Congruence and Group variables in the optimal model for the explicit task. The bottom plot is a ‘zoomed’ version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the ‘violins’ represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations.</figcaption>
+<p></p><figcaption class="figure-caption">Figure&nbsp;7: Visualization of the Congruence and Group variables in the optimal model for the explicit task. The bottom plot is a ‘zoomed’ version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the ‘violins’ represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -904,7 +893,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <div class="cell">
 <div class="cell-output-display">
 <div id="tbl-model_implicit_3_params" class="anchored">
-<table class="table table-sm table-striped small">
+<table class="table table-sm table-striped">
 <caption>Table&nbsp;6: Implicit task - Parameters of the optimal model including a random intercept by subject.</caption>
 <colgroup>
 <col style="width: 54%">
@@ -999,7 +988,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <div id="fig-model_implicit_3_plots_congruence" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-model_implicit_3_plots_congruence-1.png" class="img-fluid figure-img" width="768"></p>
-<figcaption class="figure-caption">Figure&nbsp;8: Visualization of the Congruence and Group variables in the optimal model for the implicit task. The bottom plot is a ‘zoomed’ version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the ‘violins’ represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations.</figcaption>
+<p></p><figcaption class="figure-caption">Figure&nbsp;8: Visualization of the Congruence and Group variables in the optimal model for the implicit task. The bottom plot is a ‘zoomed’ version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the ‘violins’ represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -1009,7 +998,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <div id="fig-model_implicit_3_plots_color" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-model_implicit_3_plots_color-1.png" class="img-fluid figure-img" width="768"></p>
-<figcaption class="figure-caption">Figure&nbsp;9: Visualization of the Color and Group variables in the optimal model for the implicit task. The bottom plot is a ‘zoomed’ version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the ‘violins’ represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations.</figcaption>
+<p></p><figcaption class="figure-caption">Figure&nbsp;9: Visualization of the Color and Group variables in the optimal model for the implicit task. The bottom plot is a ‘zoomed’ version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the ‘violins’ represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -1026,7 +1015,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <div id="fig-rotation" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-rotation-1.png" class="img-fluid figure-img" width="1056"></p>
-<figcaption class="figure-caption">Figure&nbsp;10: Analyses of the rotation task, including the distribution of errors between groups and correlations with the imagery variables.</figcaption>
+<p></p><figcaption class="figure-caption">Figure&nbsp;10: Analyses of the rotation task, including the distribution of errors between groups and correlations with the imagery variables.</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -1063,23 +1052,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     icon: icon
   };
   anchorJS.add('.anchored');
-  const isCodeAnnotation = (el) => {
-    for (const clz of el.classList) {
-      if (clz.startsWith('code-annotation-')) {                     
-        return true;
-      }
-    }
-    return false;
-  }
   const clipboard = new window.ClipboardJS('.code-copy-button', {
-    text: function(trigger) {
-      const codeEl = trigger.previousElementSibling.cloneNode(true);
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
+    target: function(trigger) {
+      return trigger.previousElementSibling;
     }
   });
   clipboard.on('success', function(e) {
@@ -1144,92 +1119,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       return note.innerHTML;
     });
   }
-      let selectedAnnoteEl;
-      const selectorForAnnotation = ( cell, annotation) => {
-        let cellAttr = 'data-code-cell="' + cell + '"';
-        let lineAttr = 'data-code-annotation="' +  annotation + '"';
-        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-        return selector;
-      }
-      const selectCodeLines = (annoteEl) => {
-        const doc = window.document;
-        const targetCell = annoteEl.getAttribute("data-target-cell");
-        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-        const lineIds = lines.map((line) => {
-          return targetCell + "-" + line;
-        })
-        let top = null;
-        let height = null;
-        let parent = null;
-        if (lineIds.length > 0) {
-            //compute the position of the single el (top and bottom and make a div)
-            const el = window.document.getElementById(lineIds[0]);
-            top = el.offsetTop;
-            height = el.offsetHeight;
-            parent = el.parentElement.parentElement;
-          if (lineIds.length > 1) {
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
-            height = bottom - top;
-          }
-          if (top !== null && height !== null && parent !== null) {
-            // cook up a div (if necessary) and position it 
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            div.style.top = top - 2 + "px";
-            div.style.height = height + 4 + "px";
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            gutterDiv.style.top = top - 2 + "px";
-            gutterDiv.style.height = height + 4 + "px";
-          }
-          selectedAnnoteEl = annoteEl;
-        }
-      };
-      const unselectCodeLines = () => {
-        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-        elementsIds.forEach((elId) => {
-          const div = window.document.getElementById(elId);
-          if (div) {
-            div.remove();
-          }
-        });
-        selectedAnnoteEl = undefined;
-      };
-      // Attach click handler to the DT
-      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-      for (const annoteDlNode of annoteDls) {
-        annoteDlNode.addEventListener('click', (event) => {
-          const clickedEl = event.target;
-          if (clickedEl !== selectedAnnoteEl) {
-            unselectCodeLines();
-            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-            if (activeEl) {
-              activeEl.classList.remove('code-annotation-active');
-            }
-            selectCodeLines(clickedEl);
-            clickedEl.classList.add('code-annotation-active');
-          } else {
-            // Unselect the line
-            unselectCodeLines();
-            clickedEl.classList.remove('code-annotation-active');
-          }
-        });
-      }
   const findCites = (el) => {
     const parentEl = el.parentElement;
     if (parentEl) {
