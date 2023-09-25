@@ -9,7 +9,7 @@ toc: true
 
 ### Preliminary Set-up
 
-::: {.callout-tip collapse="true"}
+<!-- ::: {.callout-tip collapse="true"} -->
 #### Datasets and code availability
 
 The folder containing this HTML file also has a "`data/`" folder, wherein can be found the main Excel file from which the datasets analysed here are sourced, i.e. "`aphantasia_priming_tidy_data.xlsx`". It has several sheets:
@@ -19,9 +19,9 @@ The folder containing this HTML file also has a "`data/`" folder, wherein can be
 - `data_processed_explicit`/`_implicit` are the datasets of the two main tasks after being processed here and in their final state after [exploratory analysis](#sec-eda), and before the [inferential analyses conducted afterwards](#sec-inferential).
 
 The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the `aphantasia_priming_analysis.qmd` file, for which the best reading software are coding Integrated Development Environments (IDE) like [RStudio](https://posit.co/download/rstudio-desktop/) or [Visual Studio Code](https://code.visualstudio.com/). The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.
-:::
+<!-- ::: -->
 
-:::{.callout-note collapse="true"}
+<!-- :::{.callout-note collapse="true"} -->
 #### Software and setup
 
 This analysis was conducted in R language on [RStudio](https://posit.co/download/rstudio-desktop/). This analysis report was written with [Quarto](https://quarto.org/). Just down below is the set-up code, including two essential steps: 
@@ -97,7 +97,7 @@ df_questionnaires <-
     aphantasia = fct_relevel(aphantasia, "yes", "no")
     )
 ```
-:::
+<!-- ::: -->
 
 # Exploratory Data Analysis {#sec-eda}
 
@@ -108,6 +108,7 @@ df_questionnaires <-
 The four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - are meant to be used as predictors (independent variables) for the behavioural outcomes of the experiment (dependent variables, RTs and potentially accuracy). Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors and judge if they should be merged/omitted. The results of the Bayesian partial correlations between the four variables are displayed in @fig-cor_matrix and @tbl-cor_stats. Partial correlations have been chosen here to account for the (theoretically huge) covariance between visual imagery variables. It will result in more conservative estimations of the correlations, and a better understanding of the relations between visual and spatial imagery measures.
 
 ```{r correlation}
+#| code-summary: "Computing correlations"
 
 # --- Bayesian partial correlations between questionnaire scores ---
 cor_questionnaires <-
@@ -184,6 +185,8 @@ As we can see, while the three visual imagery variables are highly correlated, t
 ### Principal Component Analysis
 
 ```{r pca}
+#| code-summary: "Computing PCA"
+
 # --- Principal Component Analysis ---
 pca <- 
   principal_components(
@@ -229,6 +232,8 @@ As expected, the visual imagery variables are grouped in a single component ("PC
 Standardized predicted values for each component will be computed and added to the data, renamed ***Visual Imagery*** (PC1, mostly VVIQ + SUIS + OSIQ-O with an influence of OSIQ-S) and ***Spatial Imagery*** (PC2, mostly OSIQ-S, with an influence of SUIS). In order to align the Spatial Imagery variable with the OSIQ-Spatial, the variable will be reversed (they are correlated negatively as it is, as shown by the -.96 loading on PC2).
 
 ```{r pca_components}
+#| code-summary: "Adding the predicted PCA components to the data"
+
 pca_components <- pca %>% predict
 
 df_questionnaires <- 
@@ -505,96 +510,89 @@ rm(p_errors_asso, p_errors_explicit, p_errors_implcit)
 p_tasks_error_perc
 ```
 
-We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nonetheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each task separately, the results of participants with an error rate superior to 16% will be removed, prior to removing all the missed trials of the remaining participants for modelling RTs.**
-
-### Response times
-
-As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms, along with error trials. This amounts to 5.3% of trials in both tasks. As specified earlier, the data for each task from outliers that have an error rate above to 16% will be removed as well (9 participants in the explicit task and 4 in the implicit task). There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in @fig-rt_means, along with their statistics in @tbl-rt_means. 
+We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nonetheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each task separately, the results of participants with an error rate superior to 16% will be removed ***(i.e., nine participants in the explicit task and four in the implicit task)***, prior to removing all the missed trials of the remaining participants for modelling RTs.**
 
 ```{r acc_outliers}
-#| echo: false
+#| code-summary: "Removing incorrect trials and task-wise accuracy outliers"
+#| output: false
 
 # --- Accuracy outliers analysis ---
-df_outliers <- 
-  list(df_explicit, df_implicit) %>%
+list(df_explicit, df_implicit) %>%
   imap(
-    ~.x %>% 
+    ~.x %>%
       select(subjectid, starts_with("correct"), aphantasia) %>%
-      group_by(subjectid) %>% 
-      count(pick(2)) %>% 
+      group_by(subjectid) %>%
+      count(pick(2)) %>%
       filter(pick(1) == 1) %>%
-      ungroup() %>% 
+      ungroup() %>%
       mutate(
         n_tot = max(n),
-        prop = (n_tot - n) / n_tot * 100
+        prop = (n_tot - n) / n_tot * 100  # analysing the error rate per subject
       ) %>%
-      arrange(desc(prop)) %>% 
+      arrange(desc(prop)) %>%
       select(1, 5)
     )
 # 9 accuracy outliers in the explicit task, 4 in the implicit one
 
-# --- Tidied RT dataframes -----------------------------------------------------
+# --- Removing incorrect trials and task-wise accuracy outliers ---
 df_explicit_rt <-
-  df_explicit %>% 
+  df_explicit %>%
+  # filtering out...
   filter(
-    rt_explicit > 300 & 
-      rt_explicit < 3000 & 
-      correct_explicit == 1 &
-      !(subjectid %in% c(
-        "ldossantos", 
-        "aknezevic", 
-        "agayou", 
-        "bluciani", 
-        "lbrunie", 
-        "cmarcenytheault", 
-        "llhermitte", 
-        "jnaruse", 
-        "fc"))
+    # incorrect trials
+    correct_explicit == 1 &
+    # participants identified with with high error rates
+    !(subjectid %in% c(
+      "ldossantos", 
+      "aknezevic", 
+      "agayou", 
+      "bluciani", 
+      "lbrunie", 
+      "cmarcenytheault", 
+      "llhermitte", 
+      "jnaruse", 
+      "fc"))
     ) %>% 
+  # removing irrelevant variables
   select(-c(sex, vviq80, orientation, response, correct_explicit))
 
 df_implicit_rt <- 
   df_implicit %>% 
   filter(
-    rt_implicit > 300 & 
-      rt_implicit < 3000 & 
-      correct_implicit == 1 &
-      !(subjectid %in% c(
-        "bdispaux", 
-        "eleveque", 
-        "aleclaire", 
-        "dchimenton"))
+    correct_implicit == 1 &
+    !(subjectid %in% c(
+      "bdispaux", 
+      "eleveque", 
+      "aleclaire", 
+      "dchimenton"))
       ) %>% 
   select(-c(sex, vviq80, orientation, response, correct_implicit))
 ```
 
-```{r rt_means}
+### Response times
+
+As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms. The removal of accuracy outliers, incorrect trials and extreme RTs amounted to 5.3% of trials in both tasks. There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in @fig-rt_means, along with the overall RT statistics in @tbl-rt_means. 
+
+```{r first_rt_outliers}
+#| code-summary: "Removing extreme RTs"
+
+# --- First broad RT outlier trials removal ---
+df_explicit_rt <- 
+  df_explicit_rt %>% 
+  # filtering out extreme RTs
+  filter(rt_explicit > 300 & rt_explicit < 3000)
+
+df_implicit_rt <- 
+  df_implicit %>% 
+  filter(rt_implicit > 300 & rt_implicit < 3000)
+```
+
+```{r rt_means_plot}
 #| echo: false
 #| label: fig-rt_means
-#| fig-cap: "Distribution of the mean RTs of participants in the explicit and implicit tasks."
+#| fig-cap: "Distribution of the mean RTs of participants in the explicit and implicit tasks (very high RT means have been cut for better readability)."
 #| fig-width: 9
 #| fig-height: 4
-
-# --- checking individual stats ---
-# df_explicit_rt %>% 
-#   group_by(subjectid) %>% 
-#   summarise(
-#     mean = mean(rt_explicit),
-#     mad = mad(rt_explicit),
-#     min = min(rt_explicit),
-#     max = max(rt_explicit),
-#     obs = length(rt_explicit)
-#   )
-# 
-# df_implicit_rt %>% 
-#   group_by(subjectid) %>% 
-#   summarise(
-#     mean = mean(rt_implicit),
-#     mad = mad(rt_implicit),
-#     min = min(rt_implicit),
-#     max = max(rt_implicit),
-#     obs = length(rt_implicit)
-#   )
 
 # --- RT outliers visual analysis ---
 p_rt_explicit <-
@@ -653,11 +651,13 @@ df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
 df_rt %>% display
 ```
 
-For this more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). Common thresholds used for outlier detection with MADs are $median \ \pm \ 3 \cdot MAD$ (Hampel filter; see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case, as all the participants with fast RT means stay above the $median \ - \ 1.5 \cdot MAD$. As for the high threshold, the choice the $median \ + \ 3 \cdot MAD$ would set a highly conservative maximum (e.g. 1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at $median \ + \ 5 \cdot MAD$ (i.e. 1797ms for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in @fig-rt_per_participant.
+For a more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). Common thresholds used for outlier detection in Gaussian distributions with MADs are $median \ \pm \ 3 \cdot MAD$ (Hampel filter; see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case of a skewed distribution, as all the participants with fast RT means stay above the $median \ - \ 1.5 \cdot MAD$. As for the high threshold, the choice the $median \ + \ 3 \cdot MAD$ would set a highly conservative maximum (e.g. 1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at $median \ + \ 5 \cdot MAD$ (i.e. 1797ms for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in @fig-rt_per_participant.
 
-```{r second_df_cleaning}
+```{r second_rt_outliers}
+#| code-summary: "Removing individual outlier trials"
+#| output: false
 
-# --- second tidying ---
+# --- second precise RT outlier trials removal ---
 df_explicit_rt <-
   df_explicit_rt %>% 
   filter(rt_explicit < 1797)
@@ -666,36 +666,35 @@ df_implicit_rt <-
   df_implicit_rt %>% 
   filter(rt_implicit < 1386)
 
-# --- checking individual stats again ---
-# df_explicit_rt %>% 
-#   group_by(subjectid) %>% 
-#   summarise(
-#     mean = mean(rt_explicit),
-#     mad = mad(rt_explicit),
-#     min = min(rt_explicit),
-#     max = max(rt_explicit),
-#     obs = length(rt_explicit)
-#   )
-# 
-# df_implicit_rt %>% 
-#   group_by(subjectid) %>% 
-#   summarise(
-#     mean = mean(rt_implicit),
-#     mad = mad(rt_implicit),
-#     min = min(rt_implicit),
-#     max = max(rt_implicit),
-#     obs = length(rt_implicit)
-#   )
+# --- checking individual participant stats for lone outliers ---
+df_explicit_rt %>%
+  group_by(subjectid) %>%
+  summarise(
+    mean = mean(rt_explicit),
+    mad = mad(rt_explicit),
+    min = min(rt_explicit),
+    max = max(rt_explicit),
+    obs = length(rt_explicit)
+  )
 
-# --- removing the last outlier ---
+df_implicit_rt %>%
+  group_by(subjectid) %>%
+  summarise(
+    mean = mean(rt_implicit),
+    mad = mad(rt_implicit),
+    min = min(rt_implicit),
+    max = max(rt_implicit),
+    obs = length(rt_implicit)
+  )
+
+# --- removing the last outlier (unusually high mean RT) ---
 df_explicit_rt <- df_explicit_rt %>% filter(subjectid != "dchimenton")
 ```
-
 
 ```{r rt_per_participant}
 #| echo: false
 #| label: fig-rt_per_participant
-#| fig-cap: "Distribution of RTs in both tasks for each participant. Each colored line represents a single participant."
+#| fig-cap: "Resulting distribution of RTs in both tasks for each participant. Each colored line represents a single participant."
 #| fig-width: 11
 #| fig-height: 4
 

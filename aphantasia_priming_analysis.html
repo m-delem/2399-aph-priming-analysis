@@ -170,39 +170,19 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <section id="preliminary-set-up" class="level3">
 <h3 class="anchored" data-anchor-id="preliminary-set-up">Preliminary Set-up</h3>
-<div class="callout-tip callout callout-style-default callout-captioned">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-caption-container flex-fill">
-Datasets and code availability
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-1" class="callout-1-contents callout-collapse collapse">
-<div class="callout-body-container callout-body">
+<!-- ::: {.callout-tip collapse="true"} -->
+<section id="datasets-and-code-availability" class="level4">
+<h4 class="anchored" data-anchor-id="datasets-and-code-availability">Datasets and code availability</h4>
 <p>The folder containing this HTML file also has a “<code>data/</code>” folder, wherein can be found the main Excel file from which the datasets analysed here are sourced, i.e.&nbsp;“<code>aphantasia_priming_tidy_data.xlsx</code>”. It has several sheets:</p>
 <ul>
 <li><p><code>data_asso</code>/<code>_implicit</code>/<code>_explicit</code>/<code>_rotation</code>/<code>_questionnaires</code> are raw datasheets retrieved from old Excels and cleaned up</p></li>
 <li><p><code>data_processed_explicit</code>/<code>_implicit</code> are the datasets of the two main tasks after being processed here and in their final state after <a href="#sec-eda">exploratory analysis</a>, and before the <a href="#sec-inferential">inferential analyses conducted afterwards</a>.</p></li>
 </ul>
-<p>The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the <code>aphantasia_priming_analysis.qmd</code> file, for which the best reading software are coding Integrated Development Environments (IDE) like <a href="https://posit.co/download/rstudio-desktop/">RStudio</a> or <a href="https://code.visualstudio.com/">Visual Studio Code</a>. The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.</p>
-</div>
-</div>
-</div>
-<div class="callout-note callout callout-style-default callout-captioned">
-<div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-2-contents" aria-controls="callout-2" aria-expanded="false" aria-label="Toggle callout">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-caption-container flex-fill">
-Software and setup
-</div>
-<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
-</div>
-<div id="callout-2" class="callout-2-contents callout-collapse collapse">
-<div class="callout-body-container callout-body">
+<p>The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the <code>aphantasia_priming_analysis.qmd</code> file, for which the best reading software are coding Integrated Development Environments (IDE) like <a href="https://posit.co/download/rstudio-desktop/">RStudio</a> or <a href="https://code.visualstudio.com/">Visual Studio Code</a>. The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism. <!-- ::: --></p>
+<!-- :::{.callout-note collapse="true"} -->
+</section>
+<section id="software-and-setup" class="level4">
+<h4 class="anchored" data-anchor-id="software-and-setup">Software and setup</h4>
 <p>This analysis was conducted in R language on <a href="https://posit.co/download/rstudio-desktop/">RStudio</a>. This analysis report was written with <a href="https://quarto.org/">Quarto</a>. Just down below is the set-up code, including two essential steps:</p>
 <ol type="1">
 <li><p>Installing the required packages for this data analysis</p></li>
@@ -210,11 +190,72 @@ Software and setup
 </ol>
 <p>I left this (usually hidden) step here for reference of the tools used in a view of transparency for the interested reader.</p>
 <div class="cell">
-
+<details>
+<summary>Setup code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Packages -----------------------------------------------------------------</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The package `librairian` will ease the package management with the "shelf" </span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># function, which automatically: </span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1) checks if a package is installed </span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 2) installs it if need be</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 3) loads the package like the "library()" function would.</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">require</span>(librarian)) <span class="fu">install.packages</span>(librarian)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(librarian)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># now putting packages on our library's shelves:</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">shelf</span>(</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  readxl,         <span class="co"># Excel files management</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  openxlsx,       <span class="co"># Excel files management</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  easystats,      <span class="co"># collection of data analysis packages</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  tidymodels,     <span class="co"># collection of packages for a tidy modelling workflow</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  bayesian,       <span class="co"># bayesian modelling with brms and tidymodels</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  multilevelmod,  <span class="co"># multilevel modelling with lmer and tidymodels</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  mclust,         <span class="co"># mixture clustering</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  ggpubr,         <span class="co"># ggplot tools</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  ggbeeswarm,     <span class="co"># ggplot tools</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  viridis,        <span class="co"># ggplot colour-blind friendly palettes</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  tidyverse       <span class="co"># the essentials</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Global cosmetic theme ---</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_bw</span>(<span class="at">base_size =</span> <span class="dv">14</span>))</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Fixing a seed for reproducibility ---</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">14051998</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Importing data -----------------------------------------------------------</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Association task</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>df_asso <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_asso"</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Implicit task</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>df_implicit <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_implicit"</span>)</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Explicit task</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>df_explicit <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_explicit"</span>)</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Rotation task</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>df_rotation <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>, </span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>                     <span class="at">sheet =</span> <span class="st">"data_rotation"</span>)</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="co"># Questionnaires</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>df_questionnaires <span class="ot">&lt;-</span> </span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel</span>(</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    <span class="st">"data/aphantasia_priming_tidy_data.xlsx"</span>,</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    <span class="at">sheet =</span> <span class="st">"data_questionnaires"</span></span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>  <span class="co"># creating the a/phantasia groups</span></span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">aphantasia =</span> <span class="fu">ifelse</span>(vviq80 <span class="sc">&lt;</span> <span class="dv">32</span>, <span class="st">"yes"</span>, <span class="st">"no"</span>),</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">aphantasia =</span> <span class="fu">fct_relevel</span>(aphantasia, <span class="st">"yes"</span>, <span class="st">"no"</span>)</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
-</div>
-</div>
-</div>
+<!-- ::: -->
+</section>
 </section>
 <section id="sec-eda" class="level1">
 <h1>Exploratory Data Analysis</h1>
@@ -225,18 +266,18 @@ Software and setup
 <p>The four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - are meant to be used as predictors (independent variables) for the behavioural outcomes of the experiment (dependent variables, RTs and potentially accuracy). Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: as such, in a view of parsimony, we are going to evaluate the correlation between these continuous predictors and judge if they should be merged/omitted. The results of the Bayesian partial correlations between the four variables are displayed in <a href="#fig-cor_matrix">Figure&nbsp;1</a> and <a href="#tbl-cor_stats">Table&nbsp;1</a>. Partial correlations have been chosen here to account for the (theoretically huge) covariance between visual imagery variables. It will result in more conservative estimations of the correlations, and a better understanding of the relations between visual and spatial imagery measures.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Bayesian partial correlations between questionnaire scores ---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>cor_questionnaires <span class="ot">&lt;-</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  df_questionnaires <span class="sc">%&gt;%</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">"vviq80"</span>, <span class="st">"suis60"</span>,<span class="st">"osiq_o75"</span>, <span class="st">"osiq_s75"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  standardise <span class="sc">%&gt;%</span> </span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">correlation</span>(</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">bayesian =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">partial =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">partial_bayesian =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">bayesian_test =</span> <span class="st">"bf"</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<summary>Computing correlations</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Bayesian partial correlations between questionnaire scores ---</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>cor_questionnaires <span class="ot">&lt;-</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  df_questionnaires <span class="sc">%&gt;%</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">"vviq80"</span>, <span class="st">"suis60"</span>,<span class="st">"osiq_o75"</span>, <span class="st">"osiq_s75"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  standardise <span class="sc">%&gt;%</span> </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">correlation</span>(</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">bayesian =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">partial =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">partial_bayesian =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">bayesian_test =</span> <span class="st">"bf"</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -332,15 +373,15 @@ Software and setup
 <h3 class="anchored" data-anchor-id="principal-component-analysis">Principal Component Analysis</h3>
 <div class="cell">
 <details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Principal Component Analysis ---</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>pca <span class="ot">&lt;-</span> </span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">principal_components</span>(</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    df_questionnaires[,<span class="dv">4</span><span class="sc">:</span><span class="dv">7</span>],</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="st">"max"</span>,</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">sort =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">standardize =</span> <span class="cn">TRUE</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<summary>Computing PCA</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Principal Component Analysis ---</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>pca <span class="ot">&lt;-</span> </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">principal_components</span>(</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    df_questionnaires[,<span class="dv">4</span><span class="sc">:</span><span class="dv">7</span>],</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="st">"max"</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">sort =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">standardize =</span> <span class="cn">TRUE</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -400,21 +441,21 @@ Software and setup
 <p>Standardized predicted values for each component will be computed and added to the data, renamed <strong><em>Visual Imagery</em></strong> (PC1, mostly VVIQ + SUIS + OSIQ-O with an influence of OSIQ-S) and <strong><em>Spatial Imagery</em></strong> (PC2, mostly OSIQ-S, with an influence of SUIS). In order to align the Spatial Imagery variable with the OSIQ-Spatial, the variable will be reversed (they are correlated negatively as it is, as shown by the -.96 loading on PC2).</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pca_components <span class="ot">&lt;-</span> pca <span class="sc">%&gt;%</span> predict</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>df_questionnaires <span class="ot">&lt;-</span> </span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(df_questionnaires, pca_components[,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">PC1 =</span> <span class="fu">standardize</span>(PC1),</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">PC2 =</span> <span class="sc">-</span><span class="fu">standardize</span>(PC2)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"visual_imagery"</span> <span class="ot">=</span> PC1,</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"spatial_imagery"</span> <span class="ot">=</span> PC2</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(pca, pca_components)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<summary>Adding the predicted PCA components to the data</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>pca_components <span class="ot">&lt;-</span> pca <span class="sc">%&gt;%</span> predict</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>df_questionnaires <span class="ot">&lt;-</span> </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(df_questionnaires, pca_components[,<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">PC1 =</span> <span class="fu">standardize</span>(PC1),</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">PC2 =</span> <span class="sc">-</span><span class="fu">standardize</span>(PC2)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"visual_imagery"</span> <span class="ot">=</span> PC1,</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"spatial_imagery"</span> <span class="ot">=</span> PC2</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(pca, pca_components)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -457,20 +498,87 @@ Software and setup
 </div>
 </div>
 </div>
-<p>We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nonetheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. <strong>For each task separately, the results of participants with an error rate superior to 16% will be removed, prior to removing all the missed trials of the remaining participants for modelling RTs.</strong></p>
+<p>We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nonetheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. <strong>For each task separately, the results of participants with an error rate superior to 16% will be removed </strong><em>(i.e., nine participants in the explicit task and four in the implicit task)</em><strong>, prior to removing all the missed trials of the remaining participants for modelling RTs.</strong></p>
+<div class="cell">
+<details>
+<summary>Removing incorrect trials and task-wise accuracy outliers</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Accuracy outliers analysis ---</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">list</span>(df_explicit, df_implicit) <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">imap</span>(</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="sc">~</span>.x <span class="sc">%&gt;%</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(subjectid, <span class="fu">starts_with</span>(<span class="st">"correct"</span>), aphantasia) <span class="sc">%&gt;%</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">group_by</span>(subjectid) <span class="sc">%&gt;%</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">count</span>(<span class="fu">pick</span>(<span class="dv">2</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(<span class="fu">pick</span>(<span class="dv">1</span>) <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">n_tot =</span> <span class="fu">max</span>(n),</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">prop =</span> (n_tot <span class="sc">-</span> n) <span class="sc">/</span> n_tot <span class="sc">*</span> <span class="dv">100</span>  <span class="co"># analysing the error rate per subject</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">arrange</span>(<span class="fu">desc</span>(prop)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(<span class="dv">1</span>, <span class="dv">5</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># 9 accuracy outliers in the explicit task, 4 in the implicit one</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Removing incorrect trials and task-wise accuracy outliers ---</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="ot">&lt;-</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  df_explicit <span class="sc">%&gt;%</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># filtering out...</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># incorrect trials</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    correct_explicit <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># participants identified with with high error rates</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span>(subjectid <span class="sc">%in%</span> <span class="fu">c</span>(</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>      <span class="st">"ldossantos"</span>, </span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>      <span class="st">"aknezevic"</span>, </span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>      <span class="st">"agayou"</span>, </span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>      <span class="st">"bluciani"</span>, </span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>      <span class="st">"lbrunie"</span>, </span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>      <span class="st">"cmarcenytheault"</span>, </span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>      <span class="st">"llhermitte"</span>, </span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>      <span class="st">"jnaruse"</span>, </span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>      <span class="st">"fc"</span>))</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># removing irrelevant variables</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(sex, vviq80, orientation, response, correct_explicit))</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>df_implicit_rt <span class="ot">&lt;-</span> </span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  df_implicit <span class="sc">%&gt;%</span> </span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>    correct_implicit <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span>(subjectid <span class="sc">%in%</span> <span class="fu">c</span>(</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>      <span class="st">"bdispaux"</span>, </span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>      <span class="st">"eleveque"</span>, </span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>      <span class="st">"aleclaire"</span>, </span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>      <span class="st">"dchimenton"</span>))</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(sex, vviq80, orientation, response, correct_implicit))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
 </section>
 <section id="response-times" class="level3">
 <h3 class="anchored" data-anchor-id="response-times">Response times</h3>
-<p>As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms, along with error trials. This amounts to 5.3% of trials in both tasks. As specified earlier, the data for each task from outliers that have an error rate above to 16% will be removed as well (9 participants in the explicit task and 4 in the implicit task). There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in <a href="#fig-rt_means">Figure&nbsp;5</a>, along with their statistics in <a href="#tbl-rt_means">Table&nbsp;3</a>.</p>
+<p>As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms. The removal of accuracy outliers, incorrect trials and extreme RTs amounted to 5.3% of trials in both tasks. There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in <a href="#fig-rt_means">Figure&nbsp;5</a>, along with their statistics in <a href="#tbl-rt_means">Table&nbsp;3</a>.</p>
 <div class="cell">
-
+<details>
+<summary>Removing extreme RTs</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- First broad RT outlier trials removal ---</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="ot">&lt;-</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  df_explicit_rt <span class="sc">%&gt;%</span> </span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># filtering out extreme RTs</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rt_explicit <span class="sc">&gt;</span> <span class="dv">300</span> <span class="sc">&amp;</span> rt_explicit <span class="sc">&lt;</span> <span class="dv">3000</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>df_implicit_rt <span class="ot">&lt;-</span> </span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  df_implicit <span class="sc">%&gt;%</span> </span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rt_implicit <span class="sc">&gt;</span> <span class="dv">300</span> <span class="sc">&amp;</span> rt_implicit <span class="sc">&lt;</span> <span class="dv">3000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <div class="cell">
 <div class="cell-output-display">
 <div id="fig-rt_means" class="quarto-figure quarto-figure-center anchored">
 <figure class="figure">
 <p><img src="aphantasia_priming_analysis_files/figure-html/fig-rt_means-1.png" class="img-fluid figure-img" width="864"></p>
-<p></p><figcaption class="figure-caption">Figure&nbsp;5: Distribution of the mean RTs of participants in the explicit and implicit tasks.</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Figure&nbsp;5: Distribution of the mean RTs of participants in the explicit and implicit tasks (very high RT means have been cut for better readability).</figcaption><p></p>
 </figure>
 </div>
 </div>
@@ -515,13 +623,13 @@ Software and setup
 </tr>
 <tr class="even">
 <td style="text-align: left;">Implicit task mean RTs</td>
-<td style="text-align: center;">9017</td>
-<td style="text-align: center;">578.00</td>
-<td style="text-align: center;">161.60</td>
+<td style="text-align: center;">9589</td>
+<td style="text-align: center;">579.00</td>
+<td style="text-align: center;">164.57</td>
 <td style="text-align: center;">301.00</td>
 <td style="text-align: center;">2914.00</td>
-<td style="text-align: center;">2.68</td>
-<td style="text-align: center;">9.77</td>
+<td style="text-align: center;">2.64</td>
+<td style="text-align: center;">9.41</td>
 </tr>
 </tbody>
 </table>
@@ -531,39 +639,39 @@ Software and setup
 <p>For this more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). Common thresholds used for outlier detection with MADs are <span class="math inline">\(median \ \pm \ 3 \cdot MAD\)</span> (Hampel filter; see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case, as all the participants with fast RT means stay above the <span class="math inline">\(median \ - \ 1.5 \cdot MAD\)</span>. As for the high threshold, the choice the <span class="math inline">\(median \ + \ 3 \cdot MAD\)</span> would set a highly conservative maximum (e.g.&nbsp;1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at <span class="math inline">\(median \ + \ 5 \cdot MAD\)</span> (i.e.&nbsp;1797ms for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in <a href="#fig-rt_per_participant">Figure&nbsp;6</a>.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- second tidying ---</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="ot">&lt;-</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  df_explicit_rt <span class="sc">%&gt;%</span> </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rt_explicit <span class="sc">&lt;</span> <span class="dv">1797</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>df_implicit_rt <span class="ot">&lt;-</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  df_implicit_rt <span class="sc">%&gt;%</span> </span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rt_implicit <span class="sc">&lt;</span> <span class="dv">1386</span>)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># --- checking individual stats again ---</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># df_explicit_rt %&gt;% </span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   group_by(subjectid) %&gt;% </span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">#   summarise(</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">#     mean = mean(rt_explicit),</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">#     mad = mad(rt_explicit),</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">#     min = min(rt_explicit),</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">#     max = max(rt_explicit),</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">#     obs = length(rt_explicit)</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co">#   )</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># df_implicit_rt %&gt;% </span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co">#   group_by(subjectid) %&gt;% </span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co">#   summarise(</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co">#     mean = mean(rt_implicit),</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co">#     mad = mad(rt_implicit),</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co">#     min = min(rt_implicit),</span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     max = max(rt_implicit),</span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co">#     obs = length(rt_implicit)</span></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co">#   )</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co"># --- removing the last outlier ---</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="ot">&lt;-</span> df_explicit_rt <span class="sc">%&gt;%</span> <span class="fu">filter</span>(subjectid <span class="sc">!=</span> <span class="st">"dchimenton"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<summary>Removing individual outlier trials</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- second precise RT outlier trials removal ---</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="ot">&lt;-</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  df_explicit_rt <span class="sc">%&gt;%</span> </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rt_explicit <span class="sc">&lt;</span> <span class="dv">1797</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>df_implicit_rt <span class="ot">&lt;-</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  df_implicit_rt <span class="sc">%&gt;%</span> </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(rt_implicit <span class="sc">&lt;</span> <span class="dv">1386</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co"># --- checking individual participant stats for lone outliers ---</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="sc">%&gt;%</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(subjectid) <span class="sc">%&gt;%</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean =</span> <span class="fu">mean</span>(rt_explicit),</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">mad =</span> <span class="fu">mad</span>(rt_explicit),</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">min =</span> <span class="fu">min</span>(rt_explicit),</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">max =</span> <span class="fu">max</span>(rt_explicit),</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">obs =</span> <span class="fu">length</span>(rt_explicit)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>df_implicit_rt <span class="sc">%&gt;%</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(subjectid) <span class="sc">%&gt;%</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean =</span> <span class="fu">mean</span>(rt_implicit),</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">mad =</span> <span class="fu">mad</span>(rt_implicit),</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">min =</span> <span class="fu">min</span>(rt_implicit),</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">max =</span> <span class="fu">max</span>(rt_implicit),</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">obs =</span> <span class="fu">length</span>(rt_implicit)</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a><span class="co"># --- removing the last outlier (unusually high mean RT) ---</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>df_explicit_rt <span class="ot">&lt;-</span> df_explicit_rt <span class="sc">%&gt;%</span> <span class="fu">filter</span>(subjectid <span class="sc">!=</span> <span class="st">"dchimenton"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -739,33 +847,33 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">mod_implicit_1</td>
-<td style="text-align: center;">22052.6 (0.01)</td>
-<td style="text-align: center;">22052.6 (0.01)</td>
-<td style="text-align: center;">22073.8 (&gt;.999)</td>
+<td style="text-align: center;">23365.0 (0.11)</td>
+<td style="text-align: center;">23365.0 (0.11)</td>
+<td style="text-align: center;">23386.4 (&gt;.999)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">mod_implicit_2</td>
-<td style="text-align: center;">22047.1 (0.20)</td>
-<td style="text-align: center;">22047.1 (0.21)</td>
-<td style="text-align: center;">22089.5 (&lt;.001)</td>
+<td style="text-align: center;">23362.0 (0.50)</td>
+<td style="text-align: center;">23362.0 (0.50)</td>
+<td style="text-align: center;">23404.8 (&lt;.001)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">mod_implicit_3</td>
-<td style="text-align: center;">22045.5 (0.45)</td>
-<td style="text-align: center;">22045.5 (0.45)</td>
-<td style="text-align: center;">22116.2 (&lt;.001)</td>
+<td style="text-align: center;">23363.2 (0.27)</td>
+<td style="text-align: center;">23363.3 (0.27)</td>
+<td style="text-align: center;">23434.5 (&lt;.001)</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">mod_implicit_4</td>
-<td style="text-align: center;">22046.9 (0.22)</td>
-<td style="text-align: center;">22047.0 (0.22)</td>
-<td style="text-align: center;">22131.7 (&lt;.001)</td>
+<td style="text-align: center;">23366.3 (0.06)</td>
+<td style="text-align: center;">23366.3 (0.06)</td>
+<td style="text-align: center;">23451.8 (&lt;.001)</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">mod_implicit_5</td>
-<td style="text-align: center;">22048.1 (0.12)</td>
-<td style="text-align: center;">22048.2 (0.12)</td>
-<td style="text-align: center;">22132.9 (&lt;.001)</td>
+<td style="text-align: center;">23366.0 (0.07)</td>
+<td style="text-align: center;">23366.0 (0.07)</td>
+<td style="text-align: center;">23451.5 (&lt;.001)</td>
 </tr>
 </tbody>
 </table>
@@ -896,12 +1004,12 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <table class="table table-sm table-striped">
 <caption>Table&nbsp;6: Implicit task - Parameters of the optimal model including a random intercept by subject.</caption>
 <colgroup>
-<col style="width: 54%">
-<col style="width: 10%">
-<col style="width: 4%">
-<col style="width: 16%">
-<col style="width: 7%">
+<col style="width: 56%">
+<col style="width: 11%">
 <col style="width: 5%">
+<col style="width: 12%">
+<col style="width: 7%">
+<col style="width: 6%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -909,7 +1017,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <th style="text-align: center;">Coefficient</th>
 <th style="text-align: center;">SE</th>
 <th style="text-align: center;">95% CI</th>
-<th style="text-align: center;">t(8654)</th>
+<th style="text-align: center;">t(9199)</th>
 <th style="text-align: center;">p</th>
 </tr>
 </thead>
@@ -918,65 +1026,65 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 <td style="text-align: left;">(Intercept)</td>
 <td style="text-align: center;">0.06</td>
 <td style="text-align: center;">0.06</td>
-<td style="text-align: center;">(-0.06, 0.19)</td>
-<td style="text-align: center;">0.98</td>
-<td style="text-align: center;">0.325</td>
+<td style="text-align: center;">(-0.07, 0.18)</td>
+<td style="text-align: center;">0.90</td>
+<td style="text-align: center;">0.370</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">aphantasia (no)</td>
-<td style="text-align: center;">-0.21</td>
+<td style="text-align: center;">-0.17</td>
 <td style="text-align: center;">0.10</td>
-<td style="text-align: center;">(-0.40, -0.01)</td>
-<td style="text-align: center;">-2.06</td>
-<td style="text-align: center;">0.039</td>
+<td style="text-align: center;">(-0.36, 0.03)</td>
+<td style="text-align: center;">-1.66</td>
+<td style="text-align: center;">0.098</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">congruence (uncongruent)</td>
-<td style="text-align: center;">-0.01</td>
+<td style="text-align: center;">-6.83e-03</td>
 <td style="text-align: center;">0.03</td>
-<td style="text-align: center;">(-0.08, 0.05)</td>
-<td style="text-align: center;">-0.41</td>
-<td style="text-align: center;">0.681</td>
+<td style="text-align: center;">(-0.07, 0.06)</td>
+<td style="text-align: center;">-0.21</td>
+<td style="text-align: center;">0.832</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">color (uncoloured)</td>
 <td style="text-align: center;">-0.03</td>
 <td style="text-align: center;">0.03</td>
-<td style="text-align: center;">(-0.10, 0.03)</td>
-<td style="text-align: center;">-1.06</td>
-<td style="text-align: center;">0.288</td>
+<td style="text-align: center;">(-0.09, 0.04)</td>
+<td style="text-align: center;">-0.85</td>
+<td style="text-align: center;">0.396</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">aphantasia (no) × congruence (uncongruent)</td>
-<td style="text-align: center;">0.15</td>
+<td style="text-align: center;">0.13</td>
 <td style="text-align: center;">0.05</td>
-<td style="text-align: center;">(0.05, 0.25)</td>
-<td style="text-align: center;">2.93</td>
-<td style="text-align: center;">0.003</td>
+<td style="text-align: center;">(0.03, 0.22)</td>
+<td style="text-align: center;">2.52</td>
+<td style="text-align: center;">0.012</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">aphantasia (no) × color (uncoloured)</td>
-<td style="text-align: center;">0.11</td>
-<td style="text-align: center;">0.05</td>
-<td style="text-align: center;">(6.91e-03, 0.21)</td>
-<td style="text-align: center;">2.09</td>
-<td style="text-align: center;">0.036</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">congruence (uncongruent) × color (uncoloured)</td>
 <td style="text-align: center;">0.08</td>
 <td style="text-align: center;">0.05</td>
 <td style="text-align: center;">(-0.02, 0.17)</td>
-<td style="text-align: center;">1.63</td>
-<td style="text-align: center;">0.103</td>
+<td style="text-align: center;">1.52</td>
+<td style="text-align: center;">0.128</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">congruence (uncongruent) × color (uncoloured)</td>
+<td style="text-align: center;">0.05</td>
+<td style="text-align: center;">0.05</td>
+<td style="text-align: center;">(-0.03, 0.14)</td>
+<td style="text-align: center;">1.21</td>
+<td style="text-align: center;">0.226</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">(aphantasia (no) × congruence (uncongruent)) × color (uncoloured)</td>
-<td style="text-align: center;">-0.15</td>
+<td style="text-align: center;">-0.11</td>
 <td style="text-align: center;">0.07</td>
-<td style="text-align: center;">(-0.30, -8.31e-03)</td>
-<td style="text-align: center;">-2.07</td>
-<td style="text-align: center;">0.038</td>
+<td style="text-align: center;">(-0.25, 0.02)</td>
+<td style="text-align: center;">-1.62</td>
+<td style="text-align: center;">0.105</td>
 </tr>
 </tbody>
 </table>
