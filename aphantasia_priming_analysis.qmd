@@ -1066,7 +1066,23 @@ all_models_parameters <-
 
 ## Explicit task results
 
-The parameters of the best model for the **explicit task** are displayed in @tbl-model_explicit_4_params. The significant parameters in the explicit task are the Color and the interaction between the Group and the Congruence conditions. The **main effect of Color** indicate that participants responded quicker in the colored condition, although this effect has no interaction with the other variables. The **interaction between Group and Congruence** reveals that non-aphantasics responded slower in the uncongruent condition, as . These effects are illustrated in @fig-model_explicit_4_plots. Both estimates are in the $[0.1 : 0.2]$ range, which denotes a *very small* effect size according to most standardized differences interpretation guidelines (e.g. Cohen, 1988; Gignac & Szodorai, 2016; Lovakov & Agadullina, 2021).
+```{r model_explicit_4_contrasts}
+#| echo: false
+
+# model 4 contrasts between aphantasia and congruence levels
+c_4_gcn <-
+  all_models_fitted[[1]][[4]] %>% 
+  estimate_contrasts(contrast = c("aphantasia", "congruence")) %>% 
+  mutate(across(where(is.numeric), ~ round(.x, digits = 2)))
+
+# model 4 contrasts between color levels
+c_4_col <-
+  all_models_fitted[[1]][[4]] %>% 
+  estimate_contrasts(contrast = c("color")) %>% 
+  mutate(across(where(is.numeric), ~ round(.x, digits = 2)))
+```
+
+The parameters of the best model for the explicit task are displayed in @tbl-model_explicit_4_params. The significant parameters in the explicit task are the Color and the interaction between the Group and the Congruence conditions. The **main effect of Color** indicate that participants responded quicker in the colored condition (Marginal contrast = `r c_4_col[1,3]`, CI = $[`r c_4_col[1,4]` ; `r c_4_col[1,5]`]$, SE = `r c_4_col[1,6]`, $p < .001$), although this effect has no interaction with the other variables. The **interaction between Group and Congruence** reveals that non-aphantasics responded slower in the uncongruent condition, as this contrast is the only significant one in this interaction (Marginal contrast = `r c_4_gcn[1,3]`, CI = $[`r c_4_gcn[1,4]` ; `r c_4_gcn[1,5]`]$, SE = `r c_4_gcn[1,6]`, $p < .001$). These effects are illustrated in @fig-model_explicit_4_plots. Both estimates are in the $[0.1 ; 0.2]$ range, which denotes a *very small* effect size according to most standardized differences interpretation guidelines (e.g. Cohen, 1988; Gignac & Szodorai, 2016; Lovakov & Agadullina, 2021).
 
 ```{r model_explicit_4_params}
 #| echo: false
@@ -1096,11 +1112,6 @@ txt <- 22
 preds_mod_4_g_cng <- 
   all_models_fitted[[1]][[4]] %>% 
   estimate_means(at = c("aphantasia", "congruence"))
-
-# model 4 contrasts between aphantasia and congruence levels
-contrasts_mod_4_g_cng <-
-  all_models_fitted[[1]][[4]] %>% 
-  estimate_contrasts(contrast = c("aphantasia", "congruence"))
 
 # stats for the group congruence interaction
 stats_mod_4_g_cng_full <- 
