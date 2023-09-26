@@ -8,7 +8,7 @@ toc: true
 ---
 
 ### Preliminary Set-up
-
+<!--
 ::: {.callout-tip collapse="true"}
 
 #### Datasets and code availability
@@ -32,6 +32,7 @@ This analysis was conducted in R language on [RStudio](https://posit.co/download
 2. importing data into the dataframes used throughout. 
 
 I left this (usually hidden) step here for reference of the tools used in a view of transparency for the interested reader.
+-->
 
 ```{r setup}
 #| output: false
@@ -59,6 +60,7 @@ shelf(
   mclust,         # mixture clustering
   ggpubr,         # ggplot tools
   ggbeeswarm,     # ggplot tools
+  plotly,         # interactive plots
   viridis,        # ggplot colour-blind friendly palettes
   tidyverse       # the essentials
 )
@@ -99,8 +101,10 @@ df_questionnaires <-
     aphantasia = fct_relevel(aphantasia, "yes", "no")
     )
 ```
-:::
 
+<!--
+:::
+-->
 
 # Exploratory Data Analysis {#sec-eda}
 
@@ -420,7 +424,7 @@ p_errors_asso <-
     xlim = c(0.5, 24),
     ylim = c(.01,.36)
     ) +
-  labs(title = "Association task") +
+  labs(title = "Association task",  x = NULL, y = NULL) +
   scale_color_okabeito(guide = NULL) +
   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
 
@@ -455,7 +459,7 @@ p_errors_implcit <-
     xlim = c(1, 40),
     ylim = c(.01,.28)
     ) +
-  labs(title = "Implicit task") +
+  labs(title = "Implicit task", x = NULL, y = NULL) +
   scale_color_okabeito(guide = NULL) +
   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
 
@@ -490,27 +494,34 @@ p_errors_explicit <-
     xlim = c(1, 46),
     ylim = c(.01,.36)
     ) +
-  labs(title = "Explicit task") +
+  labs(title = "Explicit task", x = NULL, y = NULL) +
   scale_color_okabeito(guide = NULL) +
   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
 
 # --- All distributions --------------------------------------------------------
-p_tasks_error_perc <- 
+p_tasks_error_perc <-
   ggarrange(
-  p_errors_asso + rremove("xlab") + rremove("ylab"),
-  p_errors_explicit + rremove("xlab") + rremove("ylab"),
-  p_errors_implcit + rremove("xlab") + rremove("ylab"),
+  p_errors_asso,
+  p_errors_explicit,
+  p_errors_implcit,
   ncol = 1,
   common.legend = TRUE,
   legend = "right"
-  ) %>% 
+  ) %>%
   annotate_figure(
     left = text_grob("Proportion of the group", size = 20, rot = 90),
     bottom = text_grob("Percentage of errors", size = 20)
     )
 
+subplot(
+  p_errors_asso,
+  p_errors_explicit,
+  p_errors_implcit,
+  nrows = 3
+)
+
 rm(p_errors_asso, p_errors_explicit, p_errors_implcit)
-p_tasks_error_perc
+# p_tasks_error_perc
 ```
 
 We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nonetheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each task separately, the results of participants with an error rate superior to 16% will be removed ***(i.e., nine participants in the explicit task and four in the implicit task)***, prior to removing all the missed trials of the remaining participants for modelling RTs.**
@@ -1046,6 +1057,8 @@ all_models_performances <-
 all_models_performances[["explicit_mods"]]
 
 all_models_performances[["implicit_mods"]]
+
+
 ```
 
 The fourth model including a slope by subject on Congruence is the most supported for the **explicit task**, while the third model including only an intercept by subject has the best performance for the **implicit task**. The parameters of these two models will be analysed in the following.
@@ -1963,8 +1976,11 @@ p_mod_3_color_both
 # Further correlational exploration
 
 :::{.callout-important}
+## Note for the team
 
-I struggled to understand the variables used for clustering in the actual state of the manuscript. The algorithms need continuous variables, and I only found 3: *Visual imagery* (VVIQ), *Congruence effect* (a transformed RT difference variable) in the *Explicit* and *Implicit* tasks. I would add a fourth one, the Spatial component of the PCA, in the exploratory process. However there is a mention of adding *Color* as a clustering variable in the process: how was this possible? The question comes from the fact that Color is a sub-structure of the task, therefore adding Color would mean adding *four* variables instead of two (Colored or Uncolored in Explicit or Implicit), along with 
+I struggled to understand the variables used for clustering in the actual state of the manuscript. The clustering algorithms need continuous variables, and I only found three of them: *Visual imagery* (VVIQ, besides other redundant questionnaires), and two *Congruence effects* (transformed RT difference variables) respectively in the *Explicit* and *Implicit* tasks. On my end, I will also add a fourth variable, the *Spatial* component of the PCA, in the exploratory process. However, there is a mention in the manuscript of adding *Color* as a clustering variable: how was this possible? The question comes from the fact that Color is a sub-structure of the task, therefore adding Color would mean adding *four* Congruence variables instead of two (the Congruence effect in the Colored or Uncolored condition in the Explicit or Implicit task), along with an additional layer of complexity for the understanding of the meaning and relevance of the variables chosen (an essential aspect of unsupervised analysis).
+
+I would very much like to read the full analysis code/computations to be able to offer a more informed critique of the process.
 :::
 
 
