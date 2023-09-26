@@ -1,14 +1,19 @@
 ---
 title: "Sensory priming in aphantasia - Data analysis"
 author: "Maël Delem"
+date: 2023-09-13
+date-modified: last-modified
+date-format: "D/MM/YYYY"
 format: html
 editor_options: 
   chunk_output_type: console
 toc: true
+fig-width: 6
+fig-asp: .618
 ---
 
-### Preliminary Set-up
-<!--
+### Preliminary Set-up {.unnumbered}
+
 ::: {.callout-tip collapse="true"}
 
 #### Datasets and code availability
@@ -32,7 +37,6 @@ This analysis was conducted in R language on [RStudio](https://posit.co/download
 2. importing data into the dataframes used throughout. 
 
 I left this (usually hidden) step here for reference of the tools used in a view of transparency for the interested reader.
--->
 
 ```{r setup}
 #| output: false
@@ -102,9 +106,7 @@ df_questionnaires <-
     )
 ```
 
-<!--
 :::
--->
 
 # Exploratory Data Analysis {#sec-eda}
 
@@ -263,15 +265,12 @@ rm(pca, pca_components)
 Now we can see that the main visual imagery variables, namely the (conventional) VVIQ and the *Visual Imagery* component created through PCA are completely decorrelated from the *Spatial Imagery* component, as shown in @fig-spatial_corr.
 
 ```{r spatial_correlations}
-#| label: fig-spatial_corr
 #| echo: false
-#| fig-cap: "Correlation between the main visual imagery variables and the spatial imagery one."
-#| fig-width: 14
-#| fig-height: 7
+#| out-width: 100%
 
 # --- correlation between visual and spatial ---
 p_cor_spatial_vis <- 
-  df_questionnaires %>% 
+  (df_questionnaires %>% 
   mutate(
     visual_imagery = rescale(visual_imagery),
     spatial_imagery = rescale(spatial_imagery),
@@ -293,11 +292,12 @@ p_cor_spatial_vis <-
   #   label.x.npc = .5,
   #   label.y.npc = .7) +
   labs(x = "Visual Imagery",
-       y = "Spatial Imagery")
+       y = "Spatial Imagery")) %>% 
+  ggplotly
 
 # --- correlation between vviq and spatial ---
 p_cor_spatial_vviq <- 
-  df_questionnaires %>% 
+  (df_questionnaires %>% 
   mutate(
     vviq80 = rescale(vviq80),
     spatial_imagery = rescale(spatial_imagery)
@@ -318,7 +318,9 @@ p_cor_spatial_vviq <-
   #   label.x.npc = .5,
   #   label.y.npc = .7) +
   labs(x = "VVIQ",
-       y = "Spatial Imagery")
+       y = "Spatial Imagery")) %>% 
+  ggplotly
+  
 
 # p_spatial_correlations <- 
 #   ggarrange(
@@ -328,15 +330,42 @@ p_cor_spatial_vviq <-
 #   legend = "bottom"
 #   )
 
-subplot(
-  p_cor_spatial_vis,
-  style(p_cor_spatial_vviq, showlegend = FALSE),
-  shareX = TRUE,
-  shareY = TRUE
-)
+# subplot(
+#   p_cor_spatial_vis,
+#   style(p_cor_spatial_vviq, showlegend = FALSE),
+#   shareX = TRUE,
+#   shareY = TRUE
+# )
 # rm(p_cor_spatial_vis, p_cor_spatial_vviq)
 # p_spatial_correlations
 ```
+
+:::{.panel-tabset}
+
+## Spatial and Visual Imagery
+
+```{r}
+#| label: fig-spatial_corr
+#| echo: false
+#| fig-cap: "Correlation between the main visual imagery variables and the spatial imagery one."
+#| out-width: 100%
+
+p_cor_spatial_vis
+```
+
+## Spatial imagery and VVIQ
+
+```{r}
+#| label: fig-spatial_corr2
+#| echo: false
+#| fig-cap: "Correlation between the main visual imagery variables and the spatial imagery one."
+#| out-width: 100%
+
+p_cor_spatial_vviq
+```
+
+
+:::
 
 The consequence of this analysis is that from this point onwards two options are available to model the data:
 
@@ -391,14 +420,10 @@ rm(dfs)
 
 ### Accuracy
 
-While response time is an obvious outcome to model when it comes to decision tasks, the use of accuracy is more debatable, as the tasks were not specifically designed to be challenging. Traditionally, accuracy is mostly used to remove incorrect trials from RT modelling. We'll describe accuracy data to evaluate its relevance in this analysis. The distribution of the percentages of errors across the three tasks is displayed in @fig-tasks_errors.
+While response time is an obvious outcome to model when it comes to decision tasks, the use of accuracy is more debatable, as the tasks were not specifically designed to be challenging. Traditionally, accuracy is mostly used to remove incorrect trials from RT modelling. We'll describe accuracy data to evaluate its relevance in this analysis. The distribution of the percentages of errors across the three tasks is displayed in @fig-tasks_errors, [-@fig-tasks_errors2], and [-@fig-tasks_errors3].
 
 ```{r tasks_errors}
-#| label: fig-tasks_errors
 #| echo: false
-#| fig-cap: "Distribution of errors between groups in the three main tasks."
-#| fig-width: 9
-#| fig-height: 11
 
 # --- Number of errors - association task --------------------------------------
 p_errors_asso <-
@@ -420,11 +445,11 @@ p_errors_asso <-
     alpha = .5
     ) +
   scale_x_continuous(
-    # name = "Percentage of errors",
+    name = "Percentage of errors",
     breaks = breaks_pretty(n = 20)
     ) +
   scale_y_continuous(
-    # name = "Proportion of the group",
+    name = "Proportion of the group",
     breaks = breaks_pretty(n = 10)
     ) +
   coord_cartesian(
@@ -432,25 +457,25 @@ p_errors_asso <-
     ylim = c(.01,.36)
     ) +
   labs(
-    # title = "Association task",  
-    x = NULL,
+    title = "Association task",
+    # x = NULL,
     # y = "Proportion of the group"
-    y = NULL
+    # y = NULL
     ) +
   scale_color_okabeito(guide = NULL) +
   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
   # ggplotly-ing it
-  ggplotly %>%
-  layout(
-    annotations = list(
-      list(
-        x = .01, 
-        y = 1.11, 
-        text = "Association task", 
-        showarrow = F, 
-        xref='paper', 
-        yref='paper'
-        )))
+  ggplotly #%>%
+  # layout(
+  #   annotations = list(
+  #     list(
+  #       x = .01, 
+  #       y = 1.11, 
+  #       text = "Association task", 
+  #       showarrow = F, 
+  #       xref='paper', 
+  #       yref='paper'
+  #       )))
 
 # --- Number of errors - implicit task -----------------------------------------
 p_errors_implicit <-
@@ -476,7 +501,7 @@ p_errors_implicit <-
     breaks = breaks_pretty(n = 20)
     ) +
   scale_y_continuous(
-    # name = "Proportion of the group",
+    name = "Proportion of the group",
     breaks = breaks_pretty(n = 10)
     ) +
   coord_cartesian(
@@ -484,26 +509,26 @@ p_errors_implicit <-
     ylim = c(.01,.28)
     ) +
   labs(
-    # title = "Implicit task",
+    title = "Implicit task",
     # x = "Percentage of errors",
     # y = "Proportion of the group"
-    y = NULL
+    # y = NULL
     ) +
   scale_color_okabeito(guide = NULL) +
   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
   # plotly-ing it
-  ggplotly %>%
-  layout(
-    annotations = list(
-      list(
-        x = .01, 
-        y = 1, 
-        text = "Implicit task", 
-        showarrow = F, 
-        xref='paper', 
-        yref='paper'
-        ))) %>% 
-  style(showlegend = FALSE)
+  ggplotly #%>%
+  # layout(
+  #   annotations = list(
+  #     list(
+  #       x = .01, 
+  #       y = 1, 
+  #       text = "Implicit task", 
+  #       showarrow = F, 
+  #       xref='paper', 
+  #       yref='paper'
+  #       ))) %>% 
+  # style(showlegend = FALSE)
 
 # --- Number of errors - explicit task -----------------------------------------
 p_errors_explicit <-
@@ -525,11 +550,11 @@ p_errors_explicit <-
     alpha = .6
     ) +
   scale_x_continuous(
-    # name = "Percentage of errors",
+    name = "Percentage of errors",
     breaks = breaks_pretty(n = 20)
     ) +
   scale_y_continuous(
-    # name = "Proportion of the group",
+    name = "Proportion of the group",
     breaks = breaks_pretty(n = 10)
     ) +
   coord_cartesian(
@@ -537,24 +562,25 @@ p_errors_explicit <-
     ylim = c(.01,.36)
     ) +
   labs(
-    # title = "Explicit task", 
-    x = NULL,
-    y = "Proportion of the group") +
+    title = "Explicit task",
+    # x = NULL,
+    # y = "Proportion of the group"
+    ) +
   scale_color_okabeito(guide = NULL) +
   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
   # plotly-ing it
-  ggplotly %>%
-  layout(
-    annotations = list(
-      list(
-        x = .01, 
-        y = 1.065, 
-        text = "Explicit task", 
-        showarrow = F, 
-        xref='paper', 
-        yref='paper'
-        ))) %>% 
-  style(showlegend = FALSE)
+  ggplotly #%>%
+  # layout(
+  #   annotations = list(
+  #     list(
+  #       x = .01, 
+  #       y = 1.065, 
+  #       text = "Explicit task", 
+  #       showarrow = F, 
+  #       xref='paper', 
+  #       yref='paper'
+  #       ))) %>% 
+  # style(showlegend = FALSE)
   
 
 # --- All distributions --------------------------------------------------------
@@ -572,24 +598,62 @@ p_errors_explicit <-
 #     bottom = text_grob("Percentage of errors", size = 20)
 #     )
 
-subplot(
-  p_errors_asso,
-  p_errors_explicit,
-  p_errors_implicit,
-  nrows = 3,
-  margin = .035,
-  shareX = FALSE,
-  titleX = TRUE,
-  shareY = TRUE,
-  titleY = TRUE
-  ) %>% 
-  layout(
-    title = ""
-  )
+# subplot(
+#   p_errors_asso,
+#   p_errors_explicit,
+#   p_errors_implicit,
+#   nrows = 3,
+#   margin = .035,
+#   shareX = FALSE,
+#   titleX = TRUE,
+#   shareY = TRUE,
+#   titleY = TRUE
+#   ) %>% 
+#   layout(
+#     title = ""
+#   )
 
 # rm(p_errors_asso, p_errors_explicit, p_errors_implcit)
 # p_tasks_error_perc
 ```
+
+:::{.panel-tabset}
+
+## Association task
+
+```{r}
+#| echo: false
+#| label: fig-tasks_errors
+#| fig-cap: "Distribution of errors between groups in the three main tasks."
+#| out-width: 100%
+
+p_errors_asso
+```
+
+## Explicit task
+
+```{r}
+#| echo: false
+#| label: fig-tasks_errors2
+#| fig-cap: "Distribution of errors between groups in the three main tasks."
+#| out-width: 100%
+
+p_errors_explicit
+```
+
+## Implicit task
+
+
+```{r}
+#| echo: false
+#| label: fig-tasks_errors3
+#| fig-cap: "Distribution of errors between groups in the three main tasks."
+#| out-width: 100%
+
+p_errors_implicit
+```
+
+:::
 
 We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nonetheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each task separately, the results of participants with an error rate superior to 16% will be removed ***(i.e., nine participants in the explicit task and four in the implicit task)***, prior to removing all the missed trials of the remaining participants for modelling RTs.**
 
@@ -2048,13 +2112,13 @@ p_mod_3_color_both
 # Further correlational exploration
 
 :::{.callout-important}
+
 ## Note for the team
 
 I struggled to understand the variables used for clustering in the actual state of the manuscript. The clustering algorithms need continuous variables, and I only found three of them: *Visual imagery* (VVIQ, besides other redundant questionnaires), and two *Congruence effects* (transformed RT difference variables) respectively in the *Explicit* and *Implicit* tasks. On my end, I will also add a fourth variable, the *Spatial* component of the PCA, in the exploratory process. However, there is a mention in the manuscript of adding *Color* as a clustering variable: how was this possible? The question comes from the fact that Color is a sub-structure of the task, therefore adding Color would mean adding *four* Congruence variables instead of two (the Congruence effect in the Colored or Uncolored condition in the Explicit or Implicit task), along with an additional layer of complexity for the understanding of the meaning and relevance of the variables chosen (an essential aspect of unsupervised analysis).
 
 I would very much like to read the full analysis code/computations to be able to offer a more informed critique of the process.
 :::
-
 
 # Annexes
 
