@@ -151,7 +151,8 @@ cor_questionnaires %>%
     ) +
   scale_fill_viridis(
     option = "D",
-    name = expression(rho),
+    guide = NULL,
+    # name = expression(rho),
     alpha = .6,
     direction = 1,
     limits = c(-1,1)
@@ -265,8 +266,8 @@ Now we can see that the main visual imagery variables, namely the (conventional)
 #| label: fig-spatial_corr
 #| echo: false
 #| fig-cap: "Correlation between the main visual imagery variables and the spatial imagery one."
-#| fig-width: 9
-#| fig-height: 4.5
+#| fig-width: 14
+#| fig-height: 7
 
 # --- correlation between visual and spatial ---
 p_cor_spatial_vis <- 
@@ -276,21 +277,21 @@ p_cor_spatial_vis <-
     spatial_imagery = rescale(spatial_imagery),
     aphantasia = fct_relevel(aphantasia, "yes", "no")
     ) %>%
-  ggplot(aes(x = visual_imagery, y = spatial_imagery, color = aphantasia)) +
-  geom_point() +
+  ggplot(aes(x = visual_imagery, y = spatial_imagery)) +
+  geom_point(aes(color = aphantasia)) +
   scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
   geom_smooth(
     aes(x = visual_imagery, y = spatial_imagery), 
     color = "black", 
     method = "lm", 
     stat = "smooth") +
-  stat_cor(
-    aes(x = visual_imagery, 
-        y = spatial_imagery), 
-    inherit.aes = FALSE, 
-    cor.coef.name = "r", 
-    label.x.npc = .5,
-    label.y.npc = .7) +
+  # stat_cor(
+  #   aes(x = visual_imagery, 
+  #       y = spatial_imagery), 
+  #   inherit.aes = FALSE, 
+  #   cor.coef.name = "r", 
+  #   label.x.npc = .5,
+  #   label.y.npc = .7) +
   labs(x = "Visual Imagery",
        y = "Spatial Imagery")
 
@@ -301,34 +302,40 @@ p_cor_spatial_vviq <-
     vviq80 = rescale(vviq80),
     spatial_imagery = rescale(spatial_imagery)
     ) %>%
-  ggplot(aes(x = vviq80, y = spatial_imagery, color = aphantasia)) +
-  geom_point() +
+  ggplot(aes(x = vviq80, y = spatial_imagery)) +
+  geom_point(aes(color = aphantasia)) +
   scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
   geom_smooth(
     aes(x = vviq80, y = spatial_imagery), 
     color = "black", 
     method = "lm", 
     stat = "smooth") +
-  stat_cor(
-    aes(x = vviq80, 
-        y = spatial_imagery), 
-    inherit.aes = FALSE, 
-    cor.coef.name = "r", 
-    label.x.npc = .5,
-    label.y.npc = .7) +
+  # stat_cor(
+  #   aes(x = vviq80, 
+  #       y = spatial_imagery), 
+  #   inherit.aes = FALSE, 
+  #   cor.coef.name = "r", 
+  #   label.x.npc = .5,
+  #   label.y.npc = .7) +
   labs(x = "VVIQ",
        y = "Spatial Imagery")
 
-p_spatial_correlations <- 
-  ggarrange(
-  p_cor_spatial_vis,
-  p_cor_spatial_vviq + rremove("ylab"),
-  common.legend = TRUE,
-  legend = "bottom"
-  )
+# p_spatial_correlations <- 
+#   ggarrange(
+#   p_cor_spatial_vis,
+#   p_cor_spatial_vviq + rremove("ylab"),
+#   common.legend = TRUE,
+#   legend = "bottom"
+#   )
 
-rm(p_cor_spatial_vis, p_cor_spatial_vviq)
-p_spatial_correlations
+subplot(
+  p_cor_spatial_vis,
+  style(p_cor_spatial_vviq, showlegend = FALSE),
+  shareX = TRUE,
+  shareY = TRUE
+)
+# rm(p_cor_spatial_vis, p_cor_spatial_vviq)
+# p_spatial_correlations
 ```
 
 The consequence of this analysis is that from this point onwards two options are available to model the data:
@@ -395,7 +402,7 @@ While response time is an obvious outcome to model when it comes to decision tas
 
 # --- Number of errors - association task --------------------------------------
 p_errors_asso <-
-  df_asso %>%
+  (df_asso %>%
   select(subjectid, correct_association, aphantasia) %>% 
   group_by(subjectid, aphantasia) %>% 
   count(correct_association) %>% 
@@ -413,24 +420,41 @@ p_errors_asso <-
     alpha = .5
     ) +
   scale_x_continuous(
-    name = "Percentage of errors",
+    # name = "Percentage of errors",
     breaks = breaks_pretty(n = 20)
     ) +
   scale_y_continuous(
-    name = "Proportion of the group",
+    # name = "Proportion of the group",
     breaks = breaks_pretty(n = 10)
     ) +
   coord_cartesian(
     xlim = c(0.5, 24),
     ylim = c(.01,.36)
     ) +
-  labs(title = "Association task",  x = NULL, y = NULL) +
+  labs(
+    # title = "Association task",  
+    x = NULL,
+    # y = "Proportion of the group"
+    y = NULL
+    ) +
   scale_color_okabeito(guide = NULL) +
-  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
+  # ggplotly-ing it
+  ggplotly %>%
+  layout(
+    annotations = list(
+      list(
+        x = .01, 
+        y = 1.11, 
+        text = "Association task", 
+        showarrow = F, 
+        xref='paper', 
+        yref='paper'
+        )))
 
 # --- Number of errors - implicit task -----------------------------------------
-p_errors_implcit <-
-  df_implicit %>%
+p_errors_implicit <-
+  (df_implicit %>%
   select(subjectid, correct_implicit, aphantasia) %>% 
   group_by(subjectid, aphantasia) %>% 
   count(correct_implicit) %>% 
@@ -452,20 +476,38 @@ p_errors_implcit <-
     breaks = breaks_pretty(n = 20)
     ) +
   scale_y_continuous(
-    name = "Proportion of the group",
+    # name = "Proportion of the group",
     breaks = breaks_pretty(n = 10)
     ) +
   coord_cartesian(
     xlim = c(1, 40),
     ylim = c(.01,.28)
     ) +
-  labs(title = "Implicit task", x = NULL, y = NULL) +
+  labs(
+    # title = "Implicit task",
+    # x = "Percentage of errors",
+    # y = "Proportion of the group"
+    y = NULL
+    ) +
   scale_color_okabeito(guide = NULL) +
-  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
+  # plotly-ing it
+  ggplotly %>%
+  layout(
+    annotations = list(
+      list(
+        x = .01, 
+        y = 1, 
+        text = "Implicit task", 
+        showarrow = F, 
+        xref='paper', 
+        yref='paper'
+        ))) %>% 
+  style(showlegend = FALSE)
 
 # --- Number of errors - explicit task -----------------------------------------
 p_errors_explicit <-
-  df_explicit %>%
+  (df_explicit %>%
   select(subjectid, correct_explicit, aphantasia) %>% 
   group_by(subjectid, aphantasia) %>% 
   count(correct_explicit) %>% 
@@ -483,44 +525,69 @@ p_errors_explicit <-
     alpha = .6
     ) +
   scale_x_continuous(
-    name = "Percentage of errors",
+    # name = "Percentage of errors",
     breaks = breaks_pretty(n = 20)
     ) +
   scale_y_continuous(
-    name = "Proportion of the group",
+    # name = "Proportion of the group",
     breaks = breaks_pretty(n = 10)
     ) +
   coord_cartesian(
     xlim = c(1, 46),
     ylim = c(.01,.36)
     ) +
-  labs(title = "Explicit task", x = NULL, y = NULL) +
+  labs(
+    # title = "Explicit task", 
+    x = NULL,
+    y = "Proportion of the group") +
   scale_color_okabeito(guide = NULL) +
-  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
+  # plotly-ing it
+  ggplotly %>%
+  layout(
+    annotations = list(
+      list(
+        x = .01, 
+        y = 1.065, 
+        text = "Explicit task", 
+        showarrow = F, 
+        xref='paper', 
+        yref='paper'
+        ))) %>% 
+  style(showlegend = FALSE)
+  
 
 # --- All distributions --------------------------------------------------------
-p_tasks_error_perc <-
-  ggarrange(
-  p_errors_asso,
-  p_errors_explicit,
-  p_errors_implcit,
-  ncol = 1,
-  common.legend = TRUE,
-  legend = "right"
-  ) %>%
-  annotate_figure(
-    left = text_grob("Proportion of the group", size = 20, rot = 90),
-    bottom = text_grob("Percentage of errors", size = 20)
-    )
+# p_tasks_error_perc <-
+#   ggarrange(
+#   p_errors_asso,
+#   p_errors_explicit,
+#   p_errors_implcit,
+#   ncol = 1,
+#   common.legend = TRUE,
+#   legend = "right"
+#   ) %>%
+#   annotate_figure(
+#     left = text_grob("Proportion of the group", size = 20, rot = 90),
+#     bottom = text_grob("Percentage of errors", size = 20)
+#     )
 
 subplot(
   p_errors_asso,
   p_errors_explicit,
-  p_errors_implcit,
-  nrows = 3
-)
+  p_errors_implicit,
+  nrows = 3,
+  margin = .035,
+  shareX = FALSE,
+  titleX = TRUE,
+  shareY = TRUE,
+  titleY = TRUE
+  ) %>% 
+  layout(
+    title = ""
+  )
 
-rm(p_errors_asso, p_errors_explicit, p_errors_implcit)
+# rm(p_errors_asso, p_errors_explicit, p_errors_implcit)
 # p_tasks_error_perc
 ```
 
@@ -708,15 +775,15 @@ df_explicit_rt <- df_explicit_rt %>% filter(subjectid != "dchimenton")
 ```{r rt_per_participant}
 #| echo: false
 #| label: fig-rt_per_participant
-#| fig-cap: "Resulting distribution of RTs in both tasks for each participant. Each colored line represents a single participant."
-#| fig-width: 11
-#| fig-height: 4
+#| fig-cap: "Resulting distribution of RTs in both tasks for each participant. Each colored distribution represents a single participant."
+#| fig-width: 12
+#| fig-height: 7
 
 # --- RT distributions per participant ---
 p_rt_subject_explicit <- 
   df_explicit_rt %>% 
-  ggplot(aes(x = rt_explicit, fill = subjectid, color = subjectid)) +
-  geom_density(alpha = .07) +
+  ggplot(aes(x = rt_explicit, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
   scale_x_continuous(name = "Explicit task RT", breaks = breaks_pretty()) +
   scale_y_continuous(name = "Density") +
   coord_cartesian(
@@ -728,8 +795,8 @@ p_rt_subject_explicit <-
 
 p_rt_subject_implicit <-
   df_implicit_rt %>% 
-  ggplot(aes(x = rt_implicit, fill = subjectid, color = subjectid)) +
-  geom_density(alpha = .07) +
+  ggplot(aes(x = rt_implicit, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
   scale_x_continuous(name = "Implicit task RT", breaks = breaks_pretty()) +
   scale_y_continuous(name = NULL) +
   theme(axis.text.y = element_blank()) +
@@ -740,10 +807,15 @@ p_rt_subject_implicit <-
   scale_fill_viridis_d(guide = NULL) +
   scale_color_viridis_d(guide = NULL)
 
-p_tasks_rt_per_subject <-
-  ggarrange(p_rt_subject_explicit, p_rt_subject_implicit)
+subplot(
+  style(p_rt_subject_explicit, showlegend = FALSE), 
+  style(p_rt_subject_implicit, showlegend = FALSE)
+)
+
+# p_tasks_rt_per_subject <-
+  # ggarrange(p_rt_subject_explicit, p_rt_subject_implicit)
 rm(p_rt_subject_explicit, p_rt_subject_implicit)
-p_tasks_rt_per_subject
+# p_tasks_rt_per_subject
 ```
 
 # Inferential Analyses {#sec-inferential}
