@@ -5,12 +5,25 @@ date: 2023-09-13
 date-modified: last-modified
 date-format: "D/MM/YYYY"
 format: html
+execute: 
+  echo: false
 editor_options: 
   chunk_output_type: console
 toc: true
+toc-depth: 3
+toc-expand: 2
+number-sections: true
+number-depth: 2
 fig-width: 6
 fig-asp: .618
 ---
+
+<!-- CSS options for custom title numbers styling-->
+<style>
+.header-section-number:after {
+  content: ". ";
+}
+</style>
 
 ### Preliminary Set-up {.unnumbered}
 
@@ -40,6 +53,7 @@ I left this (usually hidden) step here for reference of the tools used in a view
 
 ```{r setup}
 #| output: false
+#| echo: true
 #| code-summary: "Setup code"
 
 # --- Packages -----------------------------------------------------------------
@@ -118,6 +132,7 @@ The four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - are
 
 ```{r correlation}
 #| code-summary: "Computing correlations"
+#| echo: true
 
 # --- Bayesian partial correlations between questionnaire scores ---
 cor_questionnaires <-
@@ -134,7 +149,6 @@ cor_questionnaires <-
 
 ```{r correlation_matrix}
 #| label: fig-cor_matrix
-#| echo: false
 #| fig-cap: "Correlation matrix of the questionnaire variables. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
 
 # --- Correlation matrix ---
@@ -168,7 +182,6 @@ cor_questionnaires %>%
 
 ```{r correlation_table}
 #| label: tbl-cor_stats
-#| echo: false
 #| tbl-cap: "Detailed correlation table of the questionnaire variables."
 
 # --- Correlation table ---
@@ -196,6 +209,7 @@ As we can see, while the three visual imagery variables are highly correlated, t
 
 ```{r pca}
 #| code-summary: "Computing PCA"
+#| echo: true
 
 # --- Principal Component Analysis ---
 pca <- 
@@ -209,7 +223,6 @@ pca <-
 
 ```{r loadings}
 #| label: fig-loadings
-#| echo: false
 #| fig-cap: "Loadings of each variable on the three components extracted by a PCA."
 
 # --- Loadings ---
@@ -222,7 +235,6 @@ pca %>% plot +
 
 ```{r eigenvalues}
 #| label: tbl-eigenvalues
-#| echo: false
 #| tbl-cap: "Eigenvalues and variance explained by the three components extracted by a PCA."
 
 # --- Eigenvalues and variance ---
@@ -243,6 +255,7 @@ Standardized predicted values for each component will be computed and added to t
 
 ```{r pca_components}
 #| code-summary: "Adding the predicted PCA components to the data"
+#| echo: true
 
 pca_components <- pca %>% predict
 
@@ -262,15 +275,88 @@ rm(pca, pca_components)
 
 ### VVIQ, visual and spatial imagery
 
-Now we can see that the main visual imagery variables, namely the (conventional) VVIQ and the *Visual Imagery* component created through PCA are completely decorrelated from the *Spatial Imagery* component, as shown in @fig-spatial_corr.
+Now we can see that the main visual imagery variables, namely the (conventional) VVIQ and the *Visual Imagery* component created through PCA are completely decorrelated from the *Spatial Imagery* component, as shown in @fig-spatial_corr1 and [-@fig-spatial_corr2].
 
-```{r spatial_correlations}
-#| echo: false
+<!-- ggpubr ggarranges replacd by plotly panels further down -->
+```{r spatial_correlations_ggarrange}
+#| out-width: 100%
+#| eval: false
+
+# # --- correlation between visual and spatial ---
+# p_cor_spatial_vis <-
+#   df_questionnaires %>%
+#   mutate(
+#     visual_imagery = rescale(visual_imagery),
+#     spatial_imagery = rescale(spatial_imagery),
+#     aphantasia = fct_relevel(aphantasia, "yes", "no")
+#     ) %>%
+#   ggplot(aes(x = visual_imagery, y = spatial_imagery)) +
+#   geom_point(aes(color = aphantasia)) +
+#   scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+#   geom_smooth(
+#     aes(x = visual_imagery, y = spatial_imagery),
+#     color = "black",
+#     method = "lm",
+#     stat = "smooth") +
+#   stat_cor(
+#     aes(x = visual_imagery,
+#         y = spatial_imagery),
+#     inherit.aes = FALSE,
+#     cor.coef.name = "r",
+#     label.x.npc = .5,
+#     label.y.npc = .7) +
+#   labs(x = "Visual Imagery",
+#        y = "Spatial Imagery")
+# 
+# # --- correlation between vviq and spatial ---
+# p_cor_spatial_vviq <-
+#   df_questionnaires %>%
+#   mutate(
+#     vviq80 = rescale(vviq80),
+#     spatial_imagery = rescale(spatial_imagery)
+#     ) %>%
+#   ggplot(aes(x = vviq80, y = spatial_imagery)) +
+#   geom_point(aes(color = aphantasia)) +
+#   scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+#   geom_smooth(
+#     aes(x = vviq80, y = spatial_imagery),
+#     color = "black",
+#     method = "lm",
+#     stat = "smooth") +
+#   stat_cor(
+#     aes(x = vviq80,
+#         y = spatial_imagery),
+#     inherit.aes = FALSE,
+#     cor.coef.name = "r",
+#     label.x.npc = .5,
+#     label.y.npc = .7) +
+#   labs(x = "VVIQ",
+#        y = "Spatial Imagery")
+# 
+# p_spatial_correlations <-
+#   ggarrange(
+#   p_cor_spatial_vis,
+#   p_cor_spatial_vviq + rremove("ylab"),
+#   common.legend = TRUE,
+#   legend = "bottom"
+#   )
+#
+# rm(p_cor_spatial_vis, p_cor_spatial_vviq)
+# p_spatial_correlations
+```
+
+<!-- plotly tabs -->
+:::{.panel-tabset}
+
+#### Spatial and Visual Imagery
+
+```{r spatial_correlations_plotly_1}
+#| label: fig-spatial_corr1
+#| fig-cap: "Correlation between the visual imagery PCA component and the spatial imagery one."
 #| out-width: 100%
 
 # --- correlation between visual and spatial ---
-p_cor_spatial_vis <- 
-  (df_questionnaires %>% 
+(df_questionnaires %>% 
   mutate(
     visual_imagery = rescale(visual_imagery),
     spatial_imagery = rescale(spatial_imagery),
@@ -285,19 +371,26 @@ p_cor_spatial_vis <-
     method = "lm", 
     stat = "smooth") +
   # stat_cor(
-  #   aes(x = visual_imagery, 
-  #       y = spatial_imagery), 
-  #   inherit.aes = FALSE, 
-  #   cor.coef.name = "r", 
+  #   aes(x = visual_imagery,
+  #       y = spatial_imagery),
+  #   inherit.aes = FALSE,
+  #   cor.coef.name = "r",
   #   label.x.npc = .5,
   #   label.y.npc = .7) +
   labs(x = "Visual Imagery",
        y = "Spatial Imagery")) %>% 
   ggplotly
+```
 
-# --- correlation between vviq and spatial ---
-p_cor_spatial_vviq <- 
-  (df_questionnaires %>% 
+#### Spatial imagery and VVIQ
+
+```{r spatial_correlations_plotly_2}
+#| label: fig-spatial_corr2
+#| fig-cap: "Correlation between the VVIQ and the spatial imagery PCA component."
+#| out-width: 100%
+
+# --- correlation between VVIQ and spatial ---
+(df_questionnaires %>% 
   mutate(
     vviq80 = rescale(vviq80),
     spatial_imagery = rescale(spatial_imagery)
@@ -311,60 +404,16 @@ p_cor_spatial_vviq <-
     method = "lm", 
     stat = "smooth") +
   # stat_cor(
-  #   aes(x = vviq80, 
-  #       y = spatial_imagery), 
-  #   inherit.aes = FALSE, 
-  #   cor.coef.name = "r", 
+  #   aes(x = vviq80,
+  #       y = spatial_imagery),
+  #   inherit.aes = FALSE,
+  #   cor.coef.name = "r",
   #   label.x.npc = .5,
   #   label.y.npc = .7) +
   labs(x = "VVIQ",
        y = "Spatial Imagery")) %>% 
   ggplotly
-  
-
-# p_spatial_correlations <- 
-#   ggarrange(
-#   p_cor_spatial_vis,
-#   p_cor_spatial_vviq + rremove("ylab"),
-#   common.legend = TRUE,
-#   legend = "bottom"
-#   )
-
-# subplot(
-#   p_cor_spatial_vis,
-#   style(p_cor_spatial_vviq, showlegend = FALSE),
-#   shareX = TRUE,
-#   shareY = TRUE
-# )
-# rm(p_cor_spatial_vis, p_cor_spatial_vviq)
-# p_spatial_correlations
 ```
-
-:::{.panel-tabset}
-
-## Spatial and Visual Imagery
-
-```{r}
-#| label: fig-spatial_corr
-#| echo: false
-#| fig-cap: "Correlation between the main visual imagery variables and the spatial imagery one."
-#| out-width: 100%
-
-p_cor_spatial_vis
-```
-
-## Spatial imagery and VVIQ
-
-```{r}
-#| label: fig-spatial_corr2
-#| echo: false
-#| fig-cap: "Correlation between the main visual imagery variables and the spatial imagery one."
-#| out-width: 100%
-
-p_cor_spatial_vviq
-```
-
-
 :::
 
 The consequence of this analysis is that from this point onwards two options are available to model the data:
@@ -376,7 +425,6 @@ The consequence of this analysis is that from this point onwards two options are
 In the main inferential analyses conducted down below, the first option has been selected for its ease of interpretation (and closeness to the results that would be obtained with the continuous variable anyway). Nevertheless, the two continuous variables of visual and spatial imagery defined here will be explored later in further data exploration.
 
 ```{r df_updates}
-#| echo: false
 
 # updating all the dataframes with the imagery variables
 dfs <- 
@@ -422,12 +470,195 @@ rm(dfs)
 
 While response time is an obvious outcome to model when it comes to decision tasks, the use of accuracy is more debatable, as the tasks were not specifically designed to be challenging. Traditionally, accuracy is mostly used to remove incorrect trials from RT modelling. We'll describe accuracy data to evaluate its relevance in this analysis. The distribution of the percentages of errors across the three tasks is displayed in @fig-tasks_errors, [-@fig-tasks_errors2], and [-@fig-tasks_errors3].
 
-```{r tasks_errors}
-#| echo: false
+<!-- ggpubr ggarrange replaced by plotly panels further down -->
+```{r tasks_errors_ggarrange}
 
-# --- Number of errors - association task --------------------------------------
-p_errors_asso <-
-  (df_asso %>%
+# p_errors_asso <-
+#   (df_asso %>%
+#   select(subjectid, correct_association, aphantasia) %>% 
+#   group_by(subjectid, aphantasia) %>% 
+#   count(correct_association) %>% 
+#   filter(correct_association == 1) %>% 
+#   mutate(n = 100 - n) %>% 
+#   ggplot(aes(
+#     x = n, 
+#     color = aphantasia,
+#     fill = aphantasia
+#     )) +
+#   geom_bar(
+#     aes(y = after_stat(prop)),
+#     position = position_dodge(),
+#     width = .8,
+#     alpha = .5
+#     ) +
+#   scale_x_continuous(
+#     name = "Percentage of errors",
+#     breaks = breaks_pretty(n = 20)
+#     ) +
+#   scale_y_continuous(
+#     name = "Proportion of the group",
+#     breaks = breaks_pretty(n = 10)
+#     ) +
+#   coord_cartesian(
+#     xlim = c(0.5, 24),
+#     ylim = c(.01,.36)
+#     ) +
+#   labs(
+#     title = "Association task",
+#     # x = NULL,
+#     # y = "Proportion of the group"
+#     # y = NULL
+#     ) +
+#   scale_color_okabeito(guide = NULL) +
+#   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
+#   # ggplotly-ing it
+#   ggplotly #%>%
+#   # layout(
+#   #   annotations = list(
+#   #     list(
+#   #       x = .01, 
+#   #       y = 1.11, 
+#   #       text = "Association task", 
+#   #       showarrow = F, 
+#   #       xref='paper', 
+#   #       yref='paper'
+#   #       )))
+# 
+# p_errors_implicit <-
+#   (df_implicit %>%
+#   select(subjectid, correct_implicit, aphantasia) %>% 
+#   group_by(subjectid, aphantasia) %>% 
+#   count(correct_implicit) %>% 
+#   filter(correct_implicit == 1) %>% 
+#   mutate(n = (64 - n)/64 * 100) %>% 
+#   ggplot(aes(
+#     x = n, 
+#     color = aphantasia,
+#     fill = aphantasia
+#     )) +
+#   geom_bar(
+#     aes(y = after_stat(prop)),
+#     position = position_dodge(),
+#     width = .6,
+#     alpha = .6
+#     ) +
+#   scale_x_continuous(
+#     name = "Percentage of errors",
+#     breaks = breaks_pretty(n = 20)
+#     ) +
+#   scale_y_continuous(
+#     name = "Proportion of the group",
+#     breaks = breaks_pretty(n = 10)
+#     ) +
+#   coord_cartesian(
+#     xlim = c(1, 40),
+#     ylim = c(.01,.28)
+#     ) +
+#   labs(
+#     title = "Implicit task",
+#     # x = "Percentage of errors",
+#     # y = "Proportion of the group"
+#     # y = NULL
+#     ) +
+#   scale_color_okabeito(guide = NULL) +
+#   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
+#   # plotly-ing it
+#   ggplotly #%>%
+#   # layout(
+#   #   annotations = list(
+#   #     list(
+#   #       x = .01, 
+#   #       y = 1, 
+#   #       text = "Implicit task", 
+#   #       showarrow = F, 
+#   #       xref='paper', 
+#   #       yref='paper'
+#   #       ))) %>% 
+#   # style(showlegend = FALSE)
+# 
+# p_errors_explicit <-
+#   (df_explicit %>%
+#   select(subjectid, correct_explicit, aphantasia) %>% 
+#   group_by(subjectid, aphantasia) %>% 
+#   count(correct_explicit) %>% 
+#   filter(correct_explicit == 1) %>% 
+#   mutate(n = (64 - n)/64 * 100) %>% 
+#   ggplot(aes(
+#     x = n, 
+#     color = aphantasia,
+#     fill = aphantasia
+#     )) +
+#   geom_bar(
+#     aes(y = after_stat(prop)),
+#     position = position_dodge(),
+#     width = .6,
+#     alpha = .6
+#     ) +
+#   scale_x_continuous(
+#     name = "Percentage of errors",
+#     breaks = breaks_pretty(n = 20)
+#     ) +
+#   scale_y_continuous(
+#     name = "Proportion of the group",
+#     breaks = breaks_pretty(n = 10)
+#     ) +
+#   coord_cartesian(
+#     xlim = c(1, 46),
+#     ylim = c(.01,.36)
+#     ) +
+#   labs(
+#     title = "Explicit task",
+#     # x = NULL,
+#     # y = "Proportion of the group"
+#     ) +
+#   scale_color_okabeito(guide = NULL) +
+#   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
+#   # plotly-ing it
+#   ggplotly #%>%
+#   # layout(
+#   #   annotations = list(
+#   #     list(
+#   #       x = .01, 
+#   #       y = 1.065, 
+#   #       text = "Explicit task", 
+#   #       showarrow = F, 
+#   #       xref='paper', 
+#   #       yref='paper'
+#   #       ))) %>% 
+#   # style(showlegend = FALSE)
+  
+# # garrange
+# p_tasks_error_perc <-
+#   ggarrange(
+#   p_errors_asso,
+#   p_errors_explicit,
+#   p_errors_implcit,
+#   ncol = 1,
+#   common.legend = TRUE,
+#   legend = "right"
+#   ) %>%
+#   annotate_figure(
+#     left = text_grob("Proportion of the group", size = 20, rot = 90),
+#     bottom = text_grob("Percentage of errors", size = 20)
+#     )
+
+# rm(p_errors_asso, p_errors_explicit, p_errors_implcit)
+# p_tasks_error_perc
+```
+
+:::{.panel-tabset}
+
+<!-- Number of errors in the tasks -->
+
+## Association task
+
+```{r tasks_errors_plotly_asso}
+#| echo: false
+#| label: fig-tasks_errors
+#| fig-cap: "Distribution of errors between groups in the three main tasks."
+#| out-width: 100%
+
+(df_asso %>%
   select(subjectid, correct_association, aphantasia) %>% 
   group_by(subjectid, aphantasia) %>% 
   count(correct_association) %>% 
@@ -456,83 +687,22 @@ p_errors_asso <-
     xlim = c(0.5, 24),
     ylim = c(.01,.36)
     ) +
-  labs(
-    title = "Association task",
-    # x = NULL,
-    # y = "Proportion of the group"
-    # y = NULL
-    ) +
+  labs(title = "Association task") +
   scale_color_okabeito(guide = NULL) +
   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
   # ggplotly-ing it
-  ggplotly #%>%
-  # layout(
-  #   annotations = list(
-  #     list(
-  #       x = .01, 
-  #       y = 1.11, 
-  #       text = "Association task", 
-  #       showarrow = F, 
-  #       xref='paper', 
-  #       yref='paper'
-  #       )))
+  ggplotly
+```
 
-# --- Number of errors - implicit task -----------------------------------------
-p_errors_implicit <-
-  (df_implicit %>%
-  select(subjectid, correct_implicit, aphantasia) %>% 
-  group_by(subjectid, aphantasia) %>% 
-  count(correct_implicit) %>% 
-  filter(correct_implicit == 1) %>% 
-  mutate(n = (64 - n)/64 * 100) %>% 
-  ggplot(aes(
-    x = n, 
-    color = aphantasia,
-    fill = aphantasia
-    )) +
-  geom_bar(
-    aes(y = after_stat(prop)),
-    position = position_dodge(),
-    width = .6,
-    alpha = .6
-    ) +
-  scale_x_continuous(
-    name = "Percentage of errors",
-    breaks = breaks_pretty(n = 20)
-    ) +
-  scale_y_continuous(
-    name = "Proportion of the group",
-    breaks = breaks_pretty(n = 10)
-    ) +
-  coord_cartesian(
-    xlim = c(1, 40),
-    ylim = c(.01,.28)
-    ) +
-  labs(
-    title = "Implicit task",
-    # x = "Percentage of errors",
-    # y = "Proportion of the group"
-    # y = NULL
-    ) +
-  scale_color_okabeito(guide = NULL) +
-  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
-  # plotly-ing it
-  ggplotly #%>%
-  # layout(
-  #   annotations = list(
-  #     list(
-  #       x = .01, 
-  #       y = 1, 
-  #       text = "Implicit task", 
-  #       showarrow = F, 
-  #       xref='paper', 
-  #       yref='paper'
-  #       ))) %>% 
-  # style(showlegend = FALSE)
+## Explicit task
 
-# --- Number of errors - explicit task -----------------------------------------
-p_errors_explicit <-
-  (df_explicit %>%
+```{r tasks_errors_plotly_explicit}
+#| echo: false
+#| label: fig-tasks_errors2
+#| fig-cap: "Distribution of errors between groups in the three main tasks."
+#| out-width: 100%
+
+(df_explicit %>%
   select(subjectid, correct_explicit, aphantasia) %>% 
   group_by(subjectid, aphantasia) %>% 
   count(correct_explicit) %>% 
@@ -561,96 +731,55 @@ p_errors_explicit <-
     xlim = c(1, 46),
     ylim = c(.01,.36)
     ) +
-  labs(
-    title = "Explicit task",
-    # x = NULL,
-    # y = "Proportion of the group"
-    ) +
+  labs(title = "Explicit task") +
   scale_color_okabeito(guide = NULL) +
   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
   # plotly-ing it
-  ggplotly #%>%
-  # layout(
-  #   annotations = list(
-  #     list(
-  #       x = .01, 
-  #       y = 1.065, 
-  #       text = "Explicit task", 
-  #       showarrow = F, 
-  #       xref='paper', 
-  #       yref='paper'
-  #       ))) %>% 
-  # style(showlegend = FALSE)
-  
-
-# --- All distributions --------------------------------------------------------
-# p_tasks_error_perc <-
-#   ggarrange(
-#   p_errors_asso,
-#   p_errors_explicit,
-#   p_errors_implcit,
-#   ncol = 1,
-#   common.legend = TRUE,
-#   legend = "right"
-#   ) %>%
-#   annotate_figure(
-#     left = text_grob("Proportion of the group", size = 20, rot = 90),
-#     bottom = text_grob("Percentage of errors", size = 20)
-#     )
-
-# subplot(
-#   p_errors_asso,
-#   p_errors_explicit,
-#   p_errors_implicit,
-#   nrows = 3,
-#   margin = .035,
-#   shareX = FALSE,
-#   titleX = TRUE,
-#   shareY = TRUE,
-#   titleY = TRUE
-#   ) %>% 
-#   layout(
-#     title = ""
-#   )
-
-# rm(p_errors_asso, p_errors_explicit, p_errors_implcit)
-# p_tasks_error_perc
-```
-
-:::{.panel-tabset}
-
-## Association task
-
-```{r}
-#| echo: false
-#| label: fig-tasks_errors
-#| fig-cap: "Distribution of errors between groups in the three main tasks."
-#| out-width: 100%
-
-p_errors_asso
-```
-
-## Explicit task
-
-```{r}
-#| echo: false
-#| label: fig-tasks_errors2
-#| fig-cap: "Distribution of errors between groups in the three main tasks."
-#| out-width: 100%
-
-p_errors_explicit
+  ggplotly
 ```
 
 ## Implicit task
 
-
-```{r}
+```{r tasks_errors_plotly_implicit}
 #| echo: false
 #| label: fig-tasks_errors3
 #| fig-cap: "Distribution of errors between groups in the three main tasks."
 #| out-width: 100%
 
-p_errors_implicit
+(df_implicit %>%
+  select(subjectid, correct_implicit, aphantasia) %>% 
+  group_by(subjectid, aphantasia) %>% 
+  count(correct_implicit) %>% 
+  filter(correct_implicit == 1) %>% 
+  mutate(n = (64 - n)/64 * 100) %>% 
+  ggplot(aes(
+    x = n, 
+    color = aphantasia,
+    fill = aphantasia
+    )) +
+  geom_bar(
+    aes(y = after_stat(prop)),
+    position = position_dodge(),
+    width = .6,
+    alpha = .6
+    ) +
+  scale_x_continuous(
+    name = "Percentage of errors",
+    breaks = breaks_pretty(n = 20)
+    ) +
+  scale_y_continuous(
+    name = "Proportion of the group",
+    breaks = breaks_pretty(n = 10)
+    ) +
+  coord_cartesian(
+    xlim = c(1, 40),
+    ylim = c(.01,.28)
+    ) +
+  labs(title = "Implicit task") +
+  scale_color_okabeito(guide = NULL) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) %>% 
+  # plotly-ing it
+  ggplotly
 ```
 
 :::
@@ -1217,7 +1346,7 @@ all_models_parameters <-
 
 ## Explicit task results
 
-```{r model_explicit_4_contrasts}
+```{r model_explicit_contrasts}
 #| echo: false
 
 # model 4 contrasts between aphantasia and congruence levels
@@ -1233,22 +1362,18 @@ c_4_col <-
   mutate(across(where(is.numeric), ~ round(.x, digits = 2)))
 ```
 
-The parameters of the best model for the explicit task are displayed in @tbl-model_explicit_4_params. The significant parameters in the explicit task are the Color and the interaction between the Group and the Congruence conditions. The **main effect of Color** indicate that participants responded quicker in the colored condition (Marginal contrast = `r c_4_col[1,3]`, CI = $[`r c_4_col[1,4]` ; `r c_4_col[1,5]`]$, SE = `r c_4_col[1,6]`, $p < .001$), although this effect has no interaction with the other variables. The **interaction between Group and Congruence** reveals that non-aphantasics responded slower in the uncongruent condition, as this contrast is the only significant one in this interaction (Marginal contrast = `r c_4_gcn[1,3]`, CI = $[`r c_4_gcn[1,4]` ; `r c_4_gcn[1,5]`]$, SE = `r c_4_gcn[1,6]`, $p < .001$). These effects are illustrated in @fig-model_explicit_4_plots. Both estimates are in the $[0.1 ; 0.2]$ range, which denotes a *very small* effect size according to most standardized differences interpretation guidelines (e.g. Cohen, 1988; Gignac & Szodorai, 2016; Lovakov & Agadullina, 2021).
+The parameters of the best model for the explicit task are displayed in @tbl-model_explicit_params_table. The significant parameters in the explicit task are the Color and the interaction between the Group and the Congruence conditions. The **main effect of Color** indicate that participants responded quicker in the colored condition (Marginal contrast = `r c_4_col[1,3]`, CI = $[`r c_4_col[1,4]` ; `r c_4_col[1,5]`]$, SE = `r c_4_col[1,6]`, $p < .001$), although this effect has no interaction with the other variables. The **interaction between Group and Congruence** reveals that non-aphantasics responded slower in the uncongruent condition, as this contrast is the only significant one in this interaction (Marginal contrast = `r c_4_gcn[1,3]`, CI = $[`r c_4_gcn[1,4]` ; `r c_4_gcn[1,5]`]$, SE = `r c_4_gcn[1,6]`, $p < .001$). These effects are illustrated in @fig-model_explicit_ggarrange. Both estimates are in the $[0.1 ; 0.2]$ range, which denotes a *very small* effect size according to most standardized differences interpretation guidelines (e.g. Cohen, 1988; Gignac & Szodorai, 2016; Lovakov & Agadullina, 2021).
 
-```{r model_explicit_4_params}
+```{r model_explicit_params_table}
 #| echo: false
-#| label: tbl-model_explicit_4_params
+#| label: tbl-model_explicit_params_table
 #| tbl-cap: "Parameters of the optimal model for the explicit task including a random intercept and slope by subject on Congruence."
 
 all_models_parameters[["explicit_mods"]][["mod_explicit_4"]]
 ```
 
-```{r model_explicit_4_plots}
-#| echo: false
-#| label: fig-model_explicit_4_plots
-#| fig-cap: "Visualization of the predictions of the optimal model for the explicit task. The bottom plots are 'zoomed' versions of the top ones on shorter (standard) RT ranges for clearer views of the model. The horizontal colored lines in the 'violins' (colored shapes outlining the distribution of responses) represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model whereas the black bars represent the credible intervals of these estimations. **Left:** The *Congruence* plots represent the estimates of the model at each Congruence condition and Group, highlighting the significant interaction between the two variables. **Right**: The *Color* plots represent the estimates at each Color condition and Group, highlighting the main effect of Color and non-significance of the interaction with the Group factor."
-#| fig-width: 14
-#| fig-height: 10
+<!-- Plot settings -->
+```{r model_plots_general_settings}
 
 # setting dodge width for all the geoms
 dw <- .75
@@ -1256,15 +1381,19 @@ dw <- .75
 st <- 7
 # legend and axis text size
 txt <- 22
-  
-# ---- Model Explicit 4 Group and Congruence plots ----
+```
 
-# model 4 marginal means predictions
+<!-- GCN -->
+
+<!-- Explicit model means and stats for congruence and group -->
+```{r model_explicit_gcn_plot_stats}
+
+# model explicit gcn marginal means predictions
 preds_mod_4_g_cng <- 
   all_models_fitted[[1]][[4]] %>% 
   estimate_means(at = c("aphantasia", "congruence"))
 
-# stats for the group congruence interaction
+# stats for the gcn interaction
 stats_mod_4_g_cng_full <- 
   df_explicit_rt %>% 
   standardize(rt_explicit) %>% 
@@ -1281,9 +1410,11 @@ stats_mod_4_g_cng_zoom <-
   pairwise_wilcox_test(rt_explicit ~ congruence) %>% 
   add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) %>% 
   mutate(y.position = c(.22, .3))
-  
-# ------------------------------------- Full G x Cng plot ----
-p_mod_4_g_cng_full <-
+```
+
+<!-- Explicit model full group and congruence plot -->
+```{r model_explicit_gcn_full_plot}
+p_mod_ex_gcn_full <-
   recipe_explicit %>% 
   prep() %>% 
   bake(df_explicit_rt) %>%
@@ -1356,21 +1487,24 @@ p_mod_4_g_cng_full <-
     ) +
   
   # color_palettes and options
-  labs(x = NULL, y = NULL) +
+  labs(x = NULL, y = NULL, title = "Congruence") +
   # scale_x_discrete(labels = c("Congruent", "Incongruent")) +
   scale_y_continuous(breaks = breaks_pretty(10)) +
   scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
   scale_color_okabeito(guide = NULL) +
   theme(
+    title = element_text(size = 26, face = "bold"),
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
     axis.text.x = element_blank(),
     legend.title = element_text(size = txt),
     legend.text = element_text(size = 18)
     )
+```
 
-# ----------------------------------- Zoomed G x Cng plot ----
-p_mod_4_g_cng_zoom <-
+<!-- Explicit model zoomed group and congruence plot -->
+```{r model_explicit_gcn_zoomed_plot}
+p_mod_ex_gcn_zoom <-
   recipe_explicit %>% 
   prep() %>% 
   bake(df_explicit_rt) %>%
@@ -1463,23 +1597,18 @@ p_mod_4_g_cng_zoom <-
     # axis.title.x = element_text(size = 18, vjust = -.5),
     legend.title = element_text(size = txt)
     )
+```
 
+<!-- GCOL -->
 
-
-# . ----
-# ---- Model Explicit 4 Group and Color plots ----
-
-# model 4 marginal means predictions
+<!-- Explicit model means and stats for color and group -->
+```{r model_explicit_gcol_plot_stats}
+# model explicit gcol marginal means predictions
 preds_mod_4_g_col <- 
   all_models_fitted[[1]][[4]] %>% 
   estimate_means(at = c("aphantasia", "color"))
 
-# model 4 contrasts between aphantasia and congruence levels
-contrasts_mod_4_col <-
-  all_models_fitted[[1]][[4]] %>% 
-  estimate_contrasts(contrast = c("color"))
-
-# stats for the group color interaction
+# stats for the gcol interaction
 stats_mod_4_g_col_full <- 
   df_explicit_rt %>% 
   standardize(rt_explicit) %>%
@@ -1488,8 +1617,19 @@ stats_mod_4_g_col_full <-
   add_xy_position(x = "color", dodge = dw) %>% 
   mutate(y.position = 3.1)
 
-# ------------------------------------- Full G x Col plot ----
-p_mod_4_g_col_full <-
+# stat for the color effect
+stats_mod_4_g_col_zoom <- 
+  df_explicit_rt %>% 
+  standardize(rt_explicit) %>%
+  group_by(aphantasia) %>%
+  pairwise_wilcox_test(rt_explicit ~ color) %>% 
+  add_xy_position(x = "color", dodge = dw) %>% 
+  mutate(y.position = .3)
+```
+
+<!-- Explicit model full group and color plot -->
+```{r model_explicit_gcol_full_plot}
+p_mod_ex_gcol_full <-
   recipe_explicit %>% 
   prep() %>% 
   bake(df_explicit_rt) %>%
@@ -1562,32 +1702,24 @@ p_mod_4_g_col_full <-
     ) +
   
   # color_palettes and options
-  labs(x = NULL, y = NULL) +
+  labs(x = NULL, y = NULL, title = "Color") +
   # scale_x_discrete(labels = c("Congruent", "Incongruent")) +
   scale_y_continuous(breaks = breaks_pretty(10)) +
   scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
   scale_color_okabeito(guide = NULL) +
   theme(
+    plot.title = element_text(size = 26, face = "bold", hjust = 1),
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
     axis.text.x = element_blank(),
     legend.title = element_text(size = txt),
     legend.text = element_text(size = 18)
     )
+```
 
-# ----------------------------------- Zoomed G x Col plot ----
-
-# stat for the color effect
-stats_mod_4_g_col_zoom <- 
-  df_explicit_rt %>% 
-  standardize(rt_explicit) %>%
-  group_by(aphantasia) %>%
-  pairwise_wilcox_test(rt_explicit ~ color) %>% 
-  add_xy_position(x = "color", dodge = dw) %>% 
-  mutate(y.position = .3)
-
-
-p_mod_4_g_col_zoom <-
+<!-- Explicit model zoomed group and color plot -->
+```{r model_explicit_gcol_zoomed_plot}
+p_mod_ex_gcol_zoom <-
   recipe_explicit %>% 
   prep() %>% 
   bake(df_explicit_rt) %>%
@@ -1680,19 +1812,24 @@ p_mod_4_g_col_zoom <-
     # axis.title.x = element_text(size = 18, vjust = -.5),
     legend.title = element_text(size = txt)
     )
+```
 
-# . ----
-# ---------------------------------- Combined plot ----
-p_mod_4 <-
+<!-- GCN and GCOL -->
+
+```{r model_explicit_ggarrange}
+#| label: fig-model_explicit_ggarrange
+#| fig-cap: "Visualization of the predictions of the optimal model for the explicit task. The bottom plots are 'zoomed' versions of the top ones on shorter (standard) RT ranges for clearer views of the model. The horizontal colored lines in the 'violins' (colored shapes outlining the distribution of responses) represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model whereas the black bars represent the credible intervals of these estimations. **Left:** The *Congruence* plots represent the estimates of the model at each Congruence condition and Group, highlighting the significant interaction between the two variables. **Right**: The *Color* plots represent the estimates at each Color condition and Group, highlighting the main effect of Color and non-significance of the interaction with the Group factor."
+
+p_mod_explicit_ggarrange <-
   ggarrange(
-    p_mod_4_g_cng_full,
-    p_mod_4_g_col_full,
-    p_mod_4_g_cng_zoom,
-    p_mod_4_g_col_zoom,
-    labels = c("Congruence", "Color"),
-    label.x = c(-.1,.75),
-    vjust = -.1,
-    font.label = list(size = 26),
+    p_mod_ex_gcn_full,
+    p_mod_ex_gcol_full,
+    p_mod_ex_gcn_zoom,
+    p_mod_ex_gcol_zoom,
+    # labels = c("Congruence", "Color"),
+    # label.x = c(-.1,.75),
+    # vjust = -.1,
+    # font.label = list(size = 26),
     common.legend = TRUE,
     legend = "top",
     ncol = 2,
@@ -1702,7 +1839,7 @@ p_mod_4 <-
     left = text_grob("Response time (standardized)", size = txt, rot = 90)
     )
 
-p_mod_4
+p_mod_explicit_ggarrange
 ```
 
 ## Implicit task results
