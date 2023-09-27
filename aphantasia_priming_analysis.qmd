@@ -2191,7 +2191,9 @@ congruence_effect <-
 
 ## New exploration of the continuous variables
 
-As mentioned in the code above, we selected a specific set of variables to pursue the exploratory process, that is, *continuous variables* (besides the aphantasia grouping, that could be useful for comparison against the conventional framework)
+As mentioned in the code above, we selected a specific set of variables to pursue the exploratory process, that is, *continuous variables* (besides the aphantasia grouping, that could be useful for comparison against the conventional framework).
+
+
 
 
 
