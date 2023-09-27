@@ -2109,15 +2109,15 @@ I would very much like to read the full analysis through JASP inputs and outputs
 
 ## The Congruence effect
 
-As we have seen, besides the lonesome main effect of Color in the explicit task, the only significant effects identified by our best models are those of the interactions between $Group \times Congruence$, revealing that non-aphantasics tend to respond slower in the incongruent trials in both tasks whereas aphantasics have a constant performance. We will call this effect the **Congruence effect**, and it appears to vary between the groups. Now it would be very interesting to investigate the Congruence effect as a *continuous variable that varies across individuals*, a phenomenon that is hidden in our *group-wise* (or sample-wise, population-wise) analysis by averaging and searching for the main effect. To analyse the Congruence effect, we would need to calculate it per subject first. Here we have two possible approaches:
+As we have seen, besides the lonesome main effect of Color in the explicit task, the only significant effects identified by our best models are those of the interactions $Group \times Congruence$, revealing that non-aphantasics tend to respond slower in the incongruent trials in both tasks whereas aphantasics have a constant performance. We will call this effect the **Congruence effect**, and it appears to vary between the groups. Now it would be very interesting to investigate the Congruence effect as a *continuous variable that varies across individuals*, a phenomenon that is hidden in our *group-wise* (or sample-wise, population-wise) analysis by averaging and searching for the main effect. To analyse the Congruence effect, we would need to calculate it per subject first. Here we have two possible approaches:
 
-- An **empirical approach**, by averaging the RTs per condition across all trials and subtracting Congruent mean RT - Incongruent
+- An **empirical approach**, by averaging the RTs per condition across all trials and subtracting Congruent mean RT minus Incongruent
 
 - A **model-based approach**.
 
-The empirical approach would be an obvious manoeuvre if we only had the Congruence condition: this would be a simple transformation of an isolated within-subject predictor. Yet an added layer of complexity exists in our study, which lies in the *Color* condition. Manually averaging the RTs by Congruence level for each participant would involve blending in the two Color levels. This choice has assumptions that we can't verify empirically, such as assuming that the Congruence effect is comparable between Color levels, or assuming that the eventual variation between Color levels would be averaged in the process and that the resulting estimate would reflect the "true" isolated Congruence effect per subject. Betting on the veracity these assumptions is adventurous at best, and we argue that a model-based approach would be more suited to evaluate the Congruence effect.
+The empirical approach would be an obvious manoeuvre if we only had the Congruence condition: this would be a simple transformation of an isolated within-subject predictor. Yet an added layer of complexity exists in our study, which lies in the *Color* condition. Manually averaging the RTs by Congruence level for each participant would involve blending in the two Color levels. This choice has assumptions that we can't verify empirically, such as assuming that the Congruence effect is comparable between Color levels, or assuming that the eventual variation between Color levels would be averaged in the process and that the resulting estimate would reflect the "true" isolated Congruence effect per subject. Betting on the veracity of these assumptions is adventurous at best, and we argue that a model-based approach would be more suited to evaluate the Congruence effect.
 
-The model-based approach consists in using the multilevel models we fitted to isolate an estimate representing more accurately the Congruence effect per subject. The first step lies in the identification of what the "Congruence effect per subject" is in our model. We'll fetch the model described earlier that contains the most information about Congruence, Model 4. It is specified as such:
+The model-based approach consists in using the multilevel models we fitted to isolate an estimate representing more accurately the Congruence effect per subject. The first step lies in the identification of what we are searching for in our model. We'll fetch the model described earlier that contains the most information about Congruence, Model 4. It is specified as such:
 
 $$
 \begin{aligned}
@@ -2125,18 +2125,16 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 \end{aligned}
 $$
 
-What is the "Congruence effect per subject here?
+What is the "Congruence effect per subject" here?
 
-The whole $(\beta_{2} + \beta_{2_{subject[i]}})$ is the parameter describing the influence of the Congruence condition on the RT outcome. $\beta_{2}$ is the *sample-wise* parameter, that denotes the common effect of Congruence across the sample. Now $\beta_{2_{subject[i]}}$ is what we called the "*varying slope by subject*", i.e. the ***Congruence effect by subject***! A model-based estimation would therefore consist in extracting this $\beta_{2_{subject[i]}}$ for each subject $i$, which would become our estimation of the effect - while, this time, accounting for the other parameters of the model, including Color. This $\beta_{2_{subject[i]}}$ will be detached from the global effect, so it will be centered on 0 (the "norm" for the Congruence effect).
+The whole $(\beta_{2} + \beta_{2_{subject[i]}})$ is the parameter describing the influence of the Congruence condition on the RT outcome. $\beta_{2}$ is the *sample-wise* parameter, that denotes the common effect of Congruence across the sample. Now $\beta_{2_{subject[i]}}$ is what we called the "*varying slope by subject*", i.e. the ***Congruence effect by subject!*** A model-based estimation would therefore consist in extracting this $\beta_{2_{subject[i]}}$ for each subject $i$, which would become our estimation of the effect - while, this time, accounting for the other parameters of the model, including Color. This $\beta_{2_{subject[i]}}$ will be detached from the global effect, so it will be centered on 0 (the "norm" for the Congruence effect).
 
 The implementation of this calculation in R is shown below, and relies on the (aptly named) package `modelbased`.
 
 <!-- Predicting the congruence effect for each subject -->
 ```{r search_for_congruence_effect}
 #| echo: true
-#| code-summary: "Computing the model-based Congruence effects per subject"
-
-# --- Estimating the congruence effect for each subject based on random slope models ---
+#| code-summary: "Computing the model-based Congruence effect per subject"
 
 # first in the explicit task
 congruence_effect_explicit <-
