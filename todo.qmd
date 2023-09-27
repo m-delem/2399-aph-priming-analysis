@@ -2,17 +2,6 @@
 title: "To-do"
 ---
 
-
-## Adjustments
-
-They plotted the effects by congruence and color side by side 
--> do the same for explicit and implicit
--> draw the plot first to create a masterpiece
-
-Add statistics to the figures with ggpubr.
-Look up how to represent interactions.
-Make the best looking figures ever.
-
 ## Correlation analyses
 
 A coherent next step
