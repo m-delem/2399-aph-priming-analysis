@@ -2460,7 +2460,7 @@ mod_cng_effect_implicit %>%
 
 ```
 
-We can visualize these models interactively by plotting the  151 participants in a space defined by the three variables: such projections are presented in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]. The predictions of our model are represented as a plane that associates, for each Visual imagery $x$ and 
+We can visualize these models interactively by plotting the  151 participants in a space defined by the three variables: such projections are presented in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]. The predictions of our model are represented as a plane that associates, for each Visual imagery value $x$ and Spatial imagery value $y$, a predicted value $z$ (the "*Predicted effect*"): the model's plane is the collection of those points (it is colored by a gradient to ease the reading of a high/low predicted Congruence effect).
 
 ```{r model_predictions_congruence_effect}
 
@@ -2510,7 +2510,8 @@ df_preds_congruence_effect %>%
     type = "mesh3d",
     intensity = ~ predicted_explicit, 
     colorscale = "Viridis",
-    colorbar = list(title = list(text = "Predicted effect"))
+    colorbar = list(title = list(text = "Predicted effect")),
+    hovertext = "z = Predicted effect"
     ) %>% 
   layout(
     legend = list(title = list(text = "Aphantasia")),
@@ -2546,7 +2547,8 @@ df_preds_congruence_effect %>%
     type = "mesh3d",
     intensity = ~ predicted_implicit, 
     colorscale = "Viridis",
-    colorbar = list(title = list(text = "Predicted effect"))
+    colorbar = list(title = list(text = "Predicted effect")),
+    hovertext = "z = Predicted effect"
     ) %>% 
   layout(
     legend = list(title = list(text = "Aphantasia")),
@@ -2576,7 +2578,7 @@ Although the effects of the mental imagery variables are statistically anecdotal
 
 ### Contradictory findings
 
-Once again, while fairly obvious in visual data exploration, these interaction dynamics between variables have shown to be weak and statistically insignificant. This failure to explain continuous data is reminiscent of another earlier finding, that *Visual imagery is not correlated with Congruence effect*, although we clearly showed that the global effect of $Congruence$ varied with the $Group$ in both tasks @sec-inferential. 
+Once again, while fairly obvious in visual data exploration, these interaction dynamics between variables have shown to be weak and statistically insignificant. This failure to explain continuous data is reminiscent of another earlier finding, that *Visual imagery is not correlated with Congruence effect*, although we clearly showed in @sec-inferential that the global effect of $Congruence$ varied with the $Group$ (i.e. visual imagery group) in both tasks. This reflects the high variability in the sample both in Congruence effect and mental imagery, variance that is only partly explained by the division in two groups based on visual imagery (although this division already yields - very small - significant interaction effects).
 
 
 
