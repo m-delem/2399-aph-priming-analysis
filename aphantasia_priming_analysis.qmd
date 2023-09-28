@@ -1142,9 +1142,6 @@ The significant parameters will thereafter be analysed with **marginal contrasts
 ## Fitting the models
 
 ```{r model_recipes_workflows_and_engines}
-#| echo: false
-
-# --- Setup ---
 
 # --- preprocessing recipe for explicit data ---
 recipe_explicit <- 
@@ -1207,8 +1204,6 @@ mod_0_lmer <-
 ```
 
 ```{r model_specifications}
-#| echo: false
-
 # --- Specifying all models ---
 
 # --- Explicit task ---
@@ -1303,7 +1298,6 @@ mod_implicit_6 <-
 ```
 
 ```{r model_fitting}
-#| echo: false
 
 # --- Fitting all models ---
 
@@ -1339,15 +1333,14 @@ all_models_fitted <-
     )
 ```
 
-All of these models have been fitted for both tasks and their predictive performances compared using the AIC, AICc (Akaike corrected Information Criterion) and BIC (Bayesian Information Criterion). The maximal model did not converge, so only the first five models were evaluated. The results of these analyses are displayed in @tbl-model_perfs.
+All of these models have been fitted for both tasks and their predictive performances compared using the AIC, AICc (Akaike corrected Information Criterion) and BIC (Bayesian Information Criterion). The maximal model did not converge, so only the first five models were evaluated. The results of these analyses are displayed in @tbl-model_perfs-1 and @tbl-model_perfs-2.
 
 ```{r model_performances}
-#| echo: false
 #| label: tbl-model_perfs
 #| tbl-cap: "Performances of the fitted models for both tasks."
 #| tbl-subcap: 
-#|   - "Explicit task models."
-#|   - "Implicit task models."
+#|   - "**Explicit** task models."
+#|   - "**Implicit** task models."
 #| layout-ncol: 1
 
 # --- Performance of the models ---
@@ -1370,7 +1363,6 @@ all_models_performances[["implicit_mods"]]
 The fourth model including a slope by subject on Congruence is the most supported for the **explicit task**, while the third model including only an intercept by subject has the best performance among models including interactions for the **implicit task**. The parameters of these two models will be analysed in the following.
 
 ```{r model_parameters}
-#| echo: false
 
 # --- Parameter estimations ---
 all_models_parameters <-
@@ -1388,7 +1380,6 @@ all_models_parameters <-
 ## Explicit task results
 
 ```{r model_explicit_contrasts}
-#| echo: false
 
 # model 4 contrasts between aphantasia and congruence levels
 c_ex_gcn <-
@@ -1406,7 +1397,6 @@ c_ex_col <-
 The parameters of the best model for the explicit task are displayed in @tbl-model_explicit_params_table. The significant parameters in the explicit task are the Color and the interaction between the Group and the Congruence conditions. The **main effect of Color** indicate that participants responded quicker in the colored condition (Marginal contrast (colored - uncolored) = `r c_ex_col[1,3]`, CI = $[`r c_ex_col[1,4]` ; `r c_ex_col[1,5]`]$, SE = `r c_ex_col[1,6]`, $p < .001$), although this effect has no interaction with the other variables. The **interaction between Group and Congruence** reveals that non-aphantasics responded slower in the uncongruent condition, as this contrast is the only significant one in this interaction (Marginal contrast (non-aphantasic congruent - incongruent) = `r c_ex_gcn[1,3]`, CI = $[`r c_ex_gcn[1,4]` ; `r c_ex_gcn[1,5]`]$, SE = `r c_ex_gcn[1,6]`, $p < .001$). These effects are illustrated in @fig-model_explicit_ggarrange. Both estimates are $\lt 0.2$, which denotes a *very small* effect size according to most standardized differences interpretation guidelines (e.g. Cohen, 1988; Gignac & Szodorai, 2016; Lovakov & Agadullina, 2021).
 
 ```{r model_explicit_params_table}
-#| echo: false
 #| label: tbl-model_explicit_params_table
 #| tbl-cap: "Parameters of the optimal model for the explicit task including a random intercept and slope by subject on Congruence."
 
@@ -2073,7 +2063,6 @@ p_mod_im_gcn_interaction_zoom <-
     )
 ```
 
-
 <!-- Implicit model group and congruence ggarrange -->
 ```{r model_implicit_ggarrange}
 #| label: fig-model_implicit_ggarrange
@@ -2111,11 +2100,15 @@ I would very much like to read the full analysis through JASP inputs and outputs
 
 As we have seen, besides the lonesome main effect of Color in the explicit task, the only significant effects identified by our best models are those of the interactions $Group \times Congruence$, revealing that non-aphantasics tend to respond slower in the incongruent trials in both tasks whereas aphantasics have a constant performance. We will call this effect the **Congruence effect**, and it appears to vary between the groups. Now it would be very interesting to investigate the Congruence effect as a *continuous variable that varies across individuals*, a phenomenon that is hidden in our *group-wise* (or sample-wise, population-wise) analysis by averaging and searching for the main effect. To analyse the Congruence effect, we would need to calculate it per subject first. Here we have two possible approaches:
 
-- An **empirical approach**, by averaging the RTs per condition across all trials and subtracting Congruent mean RT minus Incongruent
+- An **empirical approach**, by averaging the RTs per condition across all trials and subtracting Congruent mean RT minus Incongruent.
 
 - A **model-based approach**.
 
+### Empirical approach
+
 The empirical approach would be an obvious manoeuvre if we only had the Congruence condition: this would be a simple transformation of an isolated within-subject predictor. Yet an added layer of complexity exists in our study, which lies in the *Color* condition. Manually averaging the RTs by Congruence level for each participant would involve blending in the two Color levels. This choice has assumptions that we can't verify empirically, such as assuming that the Congruence effect is comparable between Color levels, or assuming that the eventual variation between Color levels would be averaged in the process and that the resulting estimate would reflect the "true" isolated Congruence effect per subject. Betting on the veracity of these assumptions is adventurous at best, and we argue that a model-based approach would be more suited to evaluate the Congruence effect.
+
+### Model-based approach
 
 The model-based approach consists in using the multilevel models we fitted to isolate an estimate representing more accurately the Congruence effect per subject. The first step lies in the identification of what we are searching for in our model. We'll fetch the model described earlier that contains the most information about Congruence, Model 4. It is specified as such:
 
@@ -2165,7 +2158,7 @@ congruence_effect_explicit <-
   )
 
 # completing with the implicit task
-congruence_effect <-
+df_congruence_effect <-
   left_join(
     congruence_effect_explicit,
     
@@ -2189,130 +2182,401 @@ congruence_effect <-
   select(subjectid, aphantasia, 4, 5, 2, 6)
 ```
 
-## New exploration of the continuous variables
+## Congruence effect and mental imagery
 
-As mentioned in the code above, we selected a specific set of variables to pursue the exploratory process, that is, *continuous variables* (besides the aphantasia grouping, that could be useful for comparison against the conventional framework).
+### Rationale and variables
 
+Why investigate the Congruence effect and mental imagery? The hypothesis is that the Congruence effect reflects Visual imagery, and by extension that **it could be used to screen aphantasia**. The testing of this hypothesis requires to examine all the "within-participants" variables (i.e. cognitive features), that are, in this study, the mental imagery modalities. To that end, we are going to use the two **PCA components** we extracted from the questionnaire scores - the ***Visual imagery*** and ***Spatial imagery*** variables. The assumption behind the choice of using the PCA components instead of the raw questionnaire scores is that these components better reflect the cognitive features of the participants since (1) they are decorrelated and eliminated the covariance shared by the old scores, all the while (2) the Spatial component remains highly correlated with the OSIQ-S as does the Visual component with the VVIQ, OSIQ-O and SUIS, thus justifying our interpretation of these variables as distinct imagery modalities.
 
+### Distributions
 
+In sum, we kept four variables: the Congruence effect in the Explicit and Implicit task, and the Visual and Spatial imageries. The distributions of these four variables are displayed in @fig-congruence_effect_explicit, [-@fig-congruence_effect_implicit], [-@fig-visual_imagery], and [-@fig-spatial_imagery]. Note that the Congruence effect is **not** $(Congruent \ RT - Incongruent \ RT)$, but the $standardized \ parameter \ \beta_{2_{subject[i]}}$ from the model for the Congruence effect per subject: therefore, a ***positive Congruence effect denotes a higher response time in the incongruent condition*** (which is arguably more intuitive).
 
+:::{.panel-tabset}
 
+#### Explicit - Congruence
 
+```{r congruence_effect_explicit_distribution}
+#| label: fig-congruence_effect_explicit
+#| fig-cap: "Distribution of the *Explicit task Congruence effect* in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Annexes
-
-## Rotation task
-
-Some quick analyses of the rotation task are summarized as visualizations in @fig-rotation.
-
-```{r rotation}
-#| label: fig-rotation
-#| echo: false
-#| fig-cap: "Analyses of the rotation task, including the distribution of errors between groups and correlations with the imagery variables."
-#| fig-width: 11
-#| fig-height: 7
-
-# --- Annex: analysis of the rotation task -------------------------------------
-
-# --- Number of errors - rotation task -----------------------------------------
-p_rotation_errors <- 
-  df_rotation %>%
-  select(subjectid, correct_rotation, aphantasia) %>% 
-  group_by(subjectid, aphantasia) %>% 
-  count(correct_rotation) %>% 
-  filter(correct_rotation == 1) %>% 
-  mutate(n = 20 - n) %>% 
-  ggplot(aes(
-    x = n, 
-    color = aphantasia,
-    fill = aphantasia
-    )) +
-  geom_bar(
-    aes(y = after_stat(prop)),
-    position = position_dodge(),
-    width = .8,
-    alpha = .4
-    ) +
-  geom_density(aes(y = after_stat(density), color = NULL), alpha = .2) +
-  scale_x_continuous(
-    name = "Number of errors",
-    breaks = breaks_pretty(n = 20)
-    ) +
-  scale_y_continuous(
-    name = "Proportion of the group",
-    breaks = breaks_pretty(n = 10)
-    ) +
-  coord_cartesian(
-    xlim = c(0, 14),
-    ylim = c(.01,.16)
-    ) +
-  labs(title = "Rotation task") +
-  scale_color_okabeito(guide = NULL) +
-  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
-  theme(legend.position = "top")
-
-# --- Correlation between rotation correct and spatial imagery -----------------
-p_rotation_cor_spa <- 
-  df_rotation %>% 
-  select(subjectid, correct_rotation, spatial_imagery) %>% 
-  group_by(subjectid) %>% 
-  summarise(
-    correct_perc = sum(correct_rotation)/20,
-    mean_s = mean(spatial_imagery)
+(df_congruence_effect %>%
+   ggplot(aes(x = congruence_effect_explicit)) +
+   
+   # geoms
+   geom_density(aes(color = aphantasia, fill = aphantasia), color = "black", alpha = .5) +
+   geom_density(
+     color = "red", 
+     # alpha = .3,
+     linetype = 3
+     ) +
+   
+   # appearance
+   scale_x_continuous(name = "Standardized Congruence effect", breaks = breaks_pretty(10)) +
+   scale_y_continuous(name = "Density") +
+   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+   theme(
+     axis.ticks.y = element_blank(),
+     axis.text.y = element_blank()
+     )
   ) %>% 
-  standardize(correct_perc) %>% 
-  cor_test("mean_s", "correct_perc", bayesian = TRUE) %>% 
-  plot +
-  labs(x = "Spatial imagery", y = "Correct responses")
-
-# --- Correlation between rotation correct and visual imagery ------------------
-p_rotation_cor_vis <- 
-  df_rotation %>% 
-  select(subjectid, correct_rotation, visual_imagery) %>% 
-  group_by(subjectid) %>% 
-  summarise(
-    correct_perc = sum(correct_rotation)/20,
-    mean_v = mean(visual_imagery)
-  ) %>% 
-  standardize(correct_perc) %>% 
-  cor_test("mean_v", "correct_perc", bayesian = TRUE) %>% 
-  plot +
-  labs(x = "Visual imagery", y = "Correct responses")
-
-# --- Correlation between rotation correct and vviq ----------------------------
-p_rotation_cor_vviq <-
-  df_rotation %>% 
-  select(subjectid, correct_rotation, vviq80) %>% 
-  group_by(subjectid) %>% 
-  summarise(
-    correct_perc = sum(correct_rotation)/20,
-    vviq = mean(vviq80)
-  ) %>% 
-  standardize(select = c("vviq", "correct_perc")) %>% 
-  cor_test("vviq", "correct_perc", bayesian = TRUE) %>% 
-  plot +
-  labs(x = "VVIQ", y = "Correct responses")
-
-ggarrange(
-  p_rotation_errors, 
-  p_rotation_cor_vis, 
-  p_rotation_cor_vviq, 
-  p_rotation_cor_spa + rremove("ylab")
-  )
+  ggplotly
 ```
+
+#### Implicit - Congruence
+
+```{r congruence_effect_implicit_distribution}
+#| label: fig-congruence_effect_implicit
+#| fig-cap: "Distribution of the *Implicit task Congruence effect* in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
+
+(df_congruence_effect %>%
+   ggplot(aes(x = congruence_effect_implicit)) +
+   
+   # geoms
+   geom_density(aes(color = aphantasia, fill = aphantasia), color = "black", alpha = .5) +
+   geom_density(
+     color = "red", 
+     # alpha = .3,
+     linetype = 3
+     ) +
+   
+   # appearance
+   scale_x_continuous(name = "Standardized Congruence effect", breaks = breaks_pretty(10)) +
+   scale_y_continuous(name = "Density") +
+   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+   theme(
+     axis.ticks.y = element_blank(),
+     axis.text.y = element_blank()
+     )
+  ) %>% 
+  ggplotly
+```
+
+#### Visual imagery
+
+```{r visual_imagery_distribution}
+#| label: fig-visual_imagery
+#| fig-cap: "Distribution of *Visual Imagery* in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
+
+(df_congruence_effect %>%
+   ggplot(aes(x = visual_imagery)) +
+   
+   # geoms
+   geom_density(aes(color = aphantasia, fill = aphantasia), color = "black", alpha = .5) +
+   geom_density(
+     color = "red", 
+     # alpha = .3,
+     linetype = 3
+     ) +
+   
+   # appearance
+   scale_x_continuous(name = "Standardized Visual Imagery", breaks = breaks_pretty(10)) +
+   scale_y_continuous(name = "Density") +
+   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+   theme(
+     axis.ticks.y = element_blank(),
+     axis.text.y = element_blank()
+     )
+  ) %>% 
+  ggplotly
+```
+
+#### Spatial imagery
+
+```{r spatial_imagery_distribution}
+#| label: fig-spatial_imagery
+#| fig-cap: "Distribution of *Spatial Imagery* in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
+
+(df_congruence_effect %>%
+   ggplot(aes(x = spatial_imagery)) +
+   
+   # geoms
+   geom_density(aes(color = aphantasia, fill = aphantasia), color = "black", alpha = .5) +
+   geom_density(
+     color = "red", 
+     # alpha = .3,
+     linetype = 3
+     ) +
+   
+   # appearance
+   scale_x_continuous(name = "Standardized Spatial Imagery", breaks = breaks_pretty(10)) +
+   scale_y_continuous(name = "Density") +
+   scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+   theme(
+     axis.ticks.y = element_blank(),
+     axis.text.y = element_blank()
+     )
+  ) %>% 
+  ggplotly
+```
+
+:::
+
+### Correlational analysis
+
+We want to characterize the Congruence effect with imagery variables. Thus, we will study the correlations between the three variables: 1) Congruence effect, 2) visual and 3) spatial imagery, *separately* in the explicit and implicit task. Let's analyse this link with Bayesian partial correlations, displayed in @fig-cor_matrix_congruence_explicit and [-@fig-cor_matrix_congruence_implicit].
+
+```{r correlation_congruence_effect}
+#| code-summary: "Computing correlations"
+#| echo: true
+
+# --- Bayesian partial correlations ---
+congruence_correlations_explicit <-
+  df_congruence_effect %>%
+  select(-congruence_effect_implicit) %>% 
+  correlation(
+    bayesian = TRUE,
+    partial = TRUE,
+    partial_bayesian = TRUE,
+    bayesian_test = "bf"
+    )
+
+congruence_correlations_implicit <-
+  df_congruence_effect %>%
+  select(-congruence_effect_explicit) %>% 
+  correlation(
+    bayesian = TRUE,
+    partial = TRUE,
+    partial_bayesian = TRUE,
+    bayesian_test = "bf"
+    )
+
+```
+
+:::{.panel-tabset}
+
+#### Explicit task
+
+```{r cor_matrix_congruence_explicit}
+#| label: fig-cor_matrix_congruence_explicit
+#| fig-cap: "Correlation matrix with the Congruence effect in the explicit task. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
+
+congruence_correlations_explicit %>%
+  mutate(across(c(Parameter1, Parameter2),
+    ~ case_when(
+    .x == "visual_imagery" ~ "Visual imagery",
+    .x == "spatial_imagery" ~ "Spatial imagery",
+    .x == "congruence_effect_explicit" ~ "Congruence effect",
+    TRUE ~ .x))
+    ) %>% 
+  summary(digits = 2) %>% 
+  plot(
+    text = list(size = 5),
+    labs = list(title = "")
+    ) +
+  scale_fill_viridis(
+    option = "D",
+    guide = NULL,
+    # name = expression(rho),
+    alpha = .6,
+    direction = 1,
+    limits = c(-1,1)
+    ) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(size = 14)
+    )
+```
+
+#### Implicit task
+
+```{r cor_matrix_congruence_implicit}
+#| label: fig-cor_matrix_congruence_implicit
+#| fig-cap: "Correlation matrix with the Congruence effect in the implicit task. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
+
+congruence_correlations_implicit %>%
+  mutate(across(c(Parameter1, Parameter2),
+    ~ case_when(
+    .x == "visual_imagery" ~ "Visual imagery",
+    .x == "spatial_imagery" ~ "Spatial imagery",
+    .x == "congruence_effect_implicit" ~ "Congruence effect",
+    TRUE ~ .x))
+    ) %>% 
+  summary(digits = 2) %>%
+  plot(
+    text = list(size = 5),
+    labs = list(title = "")
+    ) +
+  scale_fill_viridis(
+    option = "D",
+    guide = NULL,
+    # name = expression(rho),
+    alpha = .6,
+    direction = 1,
+    limits = c(-1,1)
+    ) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(size = 14)
+    )
+```
+
+:::
+
+The Congruence effect does not seem to be correlated with visual or spatial imagery when these variables are taken as continua. We'll examine the relations from another point of view, by trying to model the Congruence effect with the two imagery variables.
+
+### Modeling the Congruence effect
+
+We will fit a simple model to investigate the effect:
+
+$$
+Congruence \ effect = \beta_{1} \cdot Visual \ imagery \times \beta_{2} \cdot Spatial \ imagery
+$$
+
+The parameters of this model for each task are shown in @tbl-model_congruence_effect-1 and @tbl-model_congruence_effect-2. As we could expect from the correlations, the estimates are negligible and far from significance.
+
+```{r model_congruence_effect}
+#| label: tbl-model_congruence_effect
+#| tbl-cap: "Parameters of the models fitted on the Congruence effect in both tasks."
+#| tbl-subcap: 
+#|   - "Parameters of the **Explicit task** model."
+#|   - "Parameters of the **Implicit task** model."
+
+mod_cng_effect_explicit <-
+  linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression") %>% 
+  fit(congruence_effect_explicit ~ visual_imagery * spatial_imagery,data = df_congruence_effect) %>% 
+  extract_fit_engine
+
+mod_cng_effect_implicit <-
+  linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression") %>% 
+  fit(congruence_effect_implicit ~ visual_imagery * spatial_imagery,data = df_congruence_effect) %>% 
+  extract_fit_engine
+
+mod_cng_effect_explicit %>% 
+  model_parameters %>% 
+  rename("*p*" = p) %>% 
+  display
+
+mod_cng_effect_implicit %>% 
+  model_parameters %>% 
+  rename("*p*" = p) %>% 
+  display
+
+```
+
+We can visualize these models interactively by plotting the  151 participants in a space defined by the three variables: such projections are presented in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]. The predictions of our model are represented as a plane that associates, for each Visual imagery $x$ and 
+
+```{r model_predictions_congruence_effect}
+
+preds_explicit_congruence_effect <- 
+  estimate_expectation(mod_cng_effect_explicit) %>% 
+  select(1,3) %>%
+  rename("predicted_explicit" = Predicted) %>% 
+  left_join(
+    df_congruence_effect,
+    by = "visual_imagery"
+  )
+
+df_preds_congruence_effect <-
+  estimate_expectation(mod_cng_effect_implicit) %>% 
+  select(1,3) %>% 
+  rename("predicted_implicit" = Predicted) %>% 
+  left_join(
+    preds_explicit_congruence_effect,
+    by = "visual_imagery"
+  ) %>% 
+  select(4,5,1,6,7,8,3,2)
+```
+
+:::{.panel-tabset}
+
+#### Explicit task model
+
+```{r 3d_congruence_effect_explicit}
+#| label: fig-3d_congruence_effect_explicit
+#| fig-cap: "3D mapping of the three variables of interest in the **Explicit** task: Congruence effect, Visual, and Spatial imagery."
+
+df_preds_congruence_effect %>% 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_explicit
+  ) %>% 
+  add_markers(
+    color = ~ aphantasia,
+    colors = ~ c("#E69F00", "#56B4E9"),
+    size = 6
+    ) %>% 
+  add_trace(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ predicted_explicit,
+    type = "mesh3d",
+    intensity = ~ predicted_explicit, 
+    colorscale = "Viridis",
+    colorbar = list(title = list(text = "Predicted effect"))
+    ) %>% 
+  layout(
+    legend = list(title = list(text = "Aphantasia")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+#### Implicit task model
+
+```{r 3d_congruence_effect_implicit}
+#| label: fig-3d_congruence_effect_implicit
+#| fig-cap: "3D mapping of the three variables of interest in the **Implicit** task: Congruence effect, Visual and Spatial imagery."
+
+df_preds_congruence_effect %>% 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_implicit
+  ) %>% 
+  add_markers(
+    color = ~ aphantasia,
+    colors = ~ c("#E69F00", "#56B4E9"),
+    size = 6
+    ) %>% 
+  add_trace(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ predicted_implicit,
+    type = "mesh3d",
+    intensity = ~ predicted_implicit, 
+    colorscale = "Viridis",
+    colorbar = list(title = list(text = "Predicted effect"))
+    ) %>% 
+  layout(
+    legend = list(title = list(text = "Aphantasia")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+:::
+
+Although the effects of the mental imagery variables are statistically anecdotal, this method of visualization shows that the model's planes are not flat, reflecting the interaction dynamics between visual and spatial imagery, and allows us to intuitively understand this interaction. Some interesting observations (you can rotate @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit] to visualize the effects described here):
+
+- In the Explicit task:
+
+    - The Congruence effect diminishes with spatial imagery *for high visual imagers*, but stays even across spatial imagery for *low visual imagers* (mostly aphantasics)
+    
+    - The Congruence effect augments with visual imagery for *low spatial imagers*, but diminishes with visual imagery for *high spatial imagers* (i.e. completely contrary dynamics depending on the spatial imagery abilities).
+    
+- In the Implicit task:
+
+    - The Congruence effect diminishes with spatial imagery *for high visual imagers*, but stays even across spatial imagery for *low visual imagers / aphantasics* (i.e. the same dynamic as the Explicit task)
+    
+    - The Congruence effect augments with visual imagery for *low spatial imagers*, but stays even across visual imagery for *high spatial imagers* (i.e. comparable dynamics with the Explicit task, although not as extreme).
+
+### Contradictory findings
+
+Once again, while fairly obvious in visual data exploration, these interaction dynamics between variables have shown to be weak and statistically insignificant. This failure to explain continuous data is reminiscent of another earlier finding, that *Visual imagery is not correlated with Congruence effect*, although we clearly showed that the global effect of $Congruence$ varied with the $Group$ in both tasks @sec-inferential. 
 
 
 
