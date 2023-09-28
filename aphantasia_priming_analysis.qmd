@@ -132,7 +132,7 @@ Many figures in this report are interactive: hover over the plots to see some of
 
 :::
 
-# Exploratory Data Analysis {#sec-eda}
+# Exploratory Data Analysis (EDA) {#sec-eda}
 
 ## Questionnaire data and imagery
 
@@ -2085,7 +2085,7 @@ p_mod_implicit_ggarrange <-
 p_mod_implicit_ggarrange
 ```
 
-# Further correlational exploration {#sec-further}
+# Further EDA {#sec-further}
 
 :::{.callout-important}
 
@@ -2578,7 +2578,12 @@ Although the effects of the mental imagery variables are statistically anecdotal
 
 ### Contradictory findings
 
-Once again, while fairly obvious in visual data exploration, these interaction dynamics between variables have shown to be weak and statistically insignificant. This failure to explain continuous data is reminiscent of another earlier finding, that *Visual imagery is not correlated with Congruence effect*, although we clearly showed in @sec-inferential that the global effect of $Congruence$ varied with the $Group$ (i.e. visual imagery group) in both tasks. This reflects the high variability in the sample both in Congruence effect and mental imagery, variance that is only partly explained by the division in two groups based on visual imagery (although this division already yields - very small - significant interaction effects).
+Once again, while fairly obvious in visual data exploration, these interaction dynamics between variables have shown to be weak and statistically insignificant. This failure to explain continuous data is reminiscent of another earlier finding, that *Visual imagery is not correlated with Congruence effect*, although we clearly showed in @sec-inferential that the global effect of Congruence varied with the Group (i.e. visual imagery group) in both tasks. This reflects the high variability in the sample both in Congruence effect and mental imagery (clearly visible in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]), variance that is only partly explained by the division in two groups based on visual imagery (although this division already yields - very small - significant interaction effects). Said differently, ***the division by the VVIQ (aphantasics/phantasics) is a sufficient model statistically, yet is not satisfying to explain most of the cognitive differences at play in our tasks.***
+
+As we can see that the initial model of a division in two VVIQ groups somehow managed to explain some aspects of the data, one approach we could choose to tackle our problem is a redefinition of this model, i.e. a **redefinition of the groups**. To that end, we propose to conduct an analysis independent of our initial hypotheses and models through the use of **unsupervised clustering**.
+
+# Even deeper EDA: Unsupervised clustering
+
 
 
 
