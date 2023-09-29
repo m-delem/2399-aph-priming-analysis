@@ -2138,7 +2138,7 @@ $$
 
 What is the "Congruence effect per subject" here?
 
-The whole $(\beta_{2} + \beta_{2_{subject[i]}})$ is the parameter describing the influence of the Congruence condition on the RT outcome. $\beta_{2}$ is the *sample-wise* parameter, that denotes the common effect of Congruence across the sample. Now $\beta_{2_{subject[i]}}$ is what we called the "*varying slope by subject*", i.e. the ***Congruence effect by subject!*** A model-based estimation would therefore consist in extracting this $\beta_{2_{subject[i]}}$ for each subject $i$, which would become our estimation of the effect - while, this time, accounting for the other parameters of the model, including Color. This $\beta_{2_{subject[i]}}$ will be detached from the global effect, so it will be centered on 0 (the "norm" for the Congruence effect).
+The whole $(\beta_{2} + \beta_{2_{subject[i]}})$ is the parameter describing the influence of the Congruence condition on the RT outcome. $\beta_{2}$ is the *sample-wise* parameter, that denotes the common effect of Congruence across the sample. Now $\beta_{2_{subject[i]}}$ is what we called the "*varying slope by subject*", i.e. the ***Congruence effect by subject!*** A model-based estimation would therefore consist in extracting this $\beta_{2_{subject[i]}}$ for each subject $i$, which would become our estimation of the effect - while, this time, accounting for the other parameters of the model, including Color. This $\beta_{2_{subject[i]}}$ will be detached from the global effect, so it will be centered on 0 (the "norm" for the Congruence effect, i.e. null, since the Congruence had no main effect).
 
 The implementation of this calculation in R is shown below, and relies on the (aptly named) package `modelbased`.
 
@@ -2905,7 +2905,7 @@ As we can see from the repartition and 3D projections, the 2-clusters solution e
 
 ```{r 3d_4_clusters_pca_plotly}
 #| label: fig-3d_4_clusters_pca
-#| fig-cap: "3D mapping of the four clusters along the three components extracted by the PCA."
+#| fig-cap: "3D mapping of the four clusters along the three components extracted by the PCA. This 3D plot may look a bit crowded, so feel free to **click on the legend to see specific combinations of clusters**."
 
 df_clustering %>% 
   plot_ly(
@@ -2933,7 +2933,7 @@ df_clustering %>%
 
 ```{r 3d_4_clusters_explicit_plotly}
 #| label: fig-3d_4_clusters_explicit
-#| fig-cap: "3D mapping of the four clusters along the original variables in the explicit task."
+#| fig-cap: "3D mapping of the four clusters along the original variables in the explicit task. This 3D plot may look a bit crowded, so feel free to **click on the legend to see specific combinations of clusters**."
 
 df_clustering %>% 
   plot_ly(
@@ -2961,7 +2961,7 @@ df_clustering %>%
 
 ```{r 3d_4_clusters_implicit_plotly}
 #| label: fig-3d_4_clusters_implicit
-#| fig-cap: "3D mapping of the four clusters along the original variables in the implicit task."
+#| fig-cap: "3D mapping of the four clusters along the original variables in the implicit task. This 3D plot may look a bit crowded, so feel free to **click on the legend to see specific combinations of clusters**."
 
 df_clustering %>% 
   plot_ly(
@@ -3008,11 +3008,11 @@ df_clustering %>%
 
 :::
 
-Interestingly, the 4-clusters solution roughly split the two visual imagery groups along the line of high/low spatial imagery. This split does not seem to be associated with a consistent dynamic across both Congruence effects. The clusters have different various combinations of visual imagery, different spatial imagery, and congruence effects. To have an intuitive visualizaton of these mean differences, we will plot them in a radar chart in @fig-4_clusters_radar_chart.
+Interestingly, the 4-clusters solution roughly split the two visual imagery groups along the line of high/low spatial imagery. This split does not seem to be associated with a consistent dynamic across both Congruence effects. The clusters have different various combinations of visual imagery, different spatial imagery, and congruence effects. To have an intuitive visualization of these mean differences, we will plot them in a radar chart in @fig-4_clusters_radar_chart.
 
 ```{r 4_clusters_radar_charts}
 #| label: fig-4_clusters_radar_chart
-#| fig-cap: "Means of the four clusters in the four variables of interest. The axis have been rescaled to the minimum and maximum values of each variable, to 'zoom' on the differences and compensate for the small effect sizes."
+#| fig-cap: "Means of the four clusters in the four variables of interest. The axis have been rescaled to the minimum and maximum values of each variable, to 'zoom' on the differences and compensate for the small effect sizes. The 4-cluster plot may look a bit crowded, so feel free to **click on the legend to see specific combinations of clusters**."
 
 (df_clustering %>% 
   select(clusters_4, visual_imagery:congruence_effect_implicit) %>% 
@@ -3041,10 +3041,114 @@ Interestingly, the 4-clusters solution roughly split the two visual imagery grou
 
 ```
 
+This (admittedly slightly crowded) plot shows several tendencies:
 
+- The Congruence effect in the implicit task seems badly explained by the cluster model.
 
+- The Congruence effect in the explicit task varies a bit more between the clusters:
 
+    - Cluster 2 has a high Congruence effect: it characterized by a **high visual imagery** and **low spatial imagery**.
+    
+    - Cluster 1 has an average Congruence effect: it is characterized by **low visual** and **low spatial imagery**.
+    
+    - Cluster 3 and 4 have below average (i.e., inverted) Congruence effect: the two clusters are on opposite sides of the visual imagery continuum, but have in common a **high spatial imagery**
+    
+The means displayed in the radar chart are rescaled on the minimums and maximums of each variable in our data, therefore the effect sizes might be disproportionately exaggerated. Therefore, let's conclude this analysis with a final model to analyse the actual numerical dynamics. 
 
+### Coming full circle: 4-cluster models and end notes
+
+First, we will explain the rationale behind this conclusion. In the beginning, we created two groups based on the VVIQ, then tried to explain RTs in the task with this partition. Then, as we demonstrated a varying congruence effect between the groups, we analysed the congruence effect as a continuum varying in light of mental imagery. We did not find statistically significant (linear) trends, but we described tendencies by examining the distributions visually. We tried to explain these trends by fitting a new unsupervised GMM clustering, that eventually found four interesting groups with differences *both* in (explicit) congruence effect and mental imageries, bringing us full circle to a new group partition, this time not based on the sole VVIQ, but that encapsulates both Visual *and* Spatial imagery. Thus, we will go back to our initial objective, i.e. examining the Congruence effect in light of a group partition. We'll fit the simplest model we've seen so far:
+
+$$
+Congruence \ effect = \beta_{1} \cdot Cluster
+$$
+... Which is equivalent to analysing the width and significance of the differences identified by the GMM[^lie]. The parameters of this model are shown in @tbl-model_4_clusters_explicit. The Intercept of the model is centered on 0, denoting a null Congruence effect. Therefore, we can see that the first cluster indeed shows no Congruence effect, whereas the other three have significant Congruence effects in the direction observed in @fig-4_clusters_radar_chart and described above. We'll finally fit the same models for the other variables.
+
+[^lie]: Or, said differently, *is our radar chart a blatant lie?*
+
+```{r final_4_clusters_model}
+#| echo: true
+#| output: false
+#| code-summary: "Modelling the Congruence effect with clusters"
+
+# --- fitting a simple linear model ---
+linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression") %>% 
+  fit(congruence_effect_explicit ~ 0 + clusters_4, data = df_clustering)
+```
+
+:::{.panel-tabset}
+
+#### Congruence explicit
+
+```{r final_4_clusters_explicit}
+#| label: tbl-model_4_clusters_explicit
+#| tbl-cap: "Parameters of the model of the explicit Congruence effect with the 4-cluster solution.*Note: 'cluster 4' was just a variable name, read Cluster (1), etc.*"
+
+linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression") %>% 
+  fit(congruence_effect_explicit ~ 0 + clusters_4, data = df_clustering) %>% 
+  extract_fit_engine() %>% 
+  model_parameters %>% 
+  rename("*p*" = p) %>% 
+  display
+```
+
+#### Congruence implicit
+
+```{r final_4_clusters_implicit}
+#| label: tbl-model_4_clusters_implicit
+#| tbl-cap: "Parameters of the model of the implicit Congruence effect with the 4-cluster solution. *Note: 'cluster 4' was just a variable name, read Cluster (1), etc.*"
+
+linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression") %>% 
+  fit(congruence_effect_implicit ~ 0 + clusters_4, data = df_clustering) %>% 
+  extract_fit_engine() %>% 
+  model_parameters %>% 
+  rename("*p*" = p) %>% 
+  display
+```
+
+#### Visual imagery
+
+```{r final_4_clusters_visual_im}
+#| label: tbl-model_4_clusters_vmi
+#| tbl-cap: "Parameters of the model of the Visual imagery with the 4-cluster solution. *Note: 'cluster 4' was just a variable name, read Cluster (1), etc.*"
+
+linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression") %>% 
+  fit(visual_imagery ~ 0 + clusters_4, data = df_clustering) %>% 
+  extract_fit_engine() %>% 
+  model_parameters %>% 
+  rename("*p*" = p) %>% 
+  display
+```
+
+#### Spatial imagery
+
+```{r final_4_clusters_spatial_im}
+#| label: tbl-model_4_clusters_spatial_im
+#| tbl-cap: "Parameters of the model of the Spatial imagery with the 4-cluster solution. *Note: 'cluster 4' was just a variable name, read Cluster (1), etc.*"
+
+linear_reg() %>% 
+  set_engine("lm") %>% 
+  set_mode("regression") %>% 
+  fit(spatial_imagery ~ 0 + clusters_4, data = df_clustering) %>% 
+  extract_fit_engine() %>% 
+  model_parameters %>% 
+  rename("*p*" = p) %>% 
+  display
+```
+
+:::
+
+In the end, I interpret the 4-cluster model as saying that low spatial imagery participants tend to have a higher congruence effect than high spatial imagery ones, although this difference is in *relative* terms, not absolute (as the first - aphantasic - cluster has a null congruence effect with low spatial imagery). It appears, with a certain grouping on the basis of visual imagery, that non-aphantasic participants have a slightly higher congruence effect, but I interpret the last model as showing that cluster 2 - 24 non-aphantasics only, with low spatial imagery - is the sub-group driving this effect, whereas the other non-aphantasics (cluster 3 and 4, 32 non-aphantasics total) show the opposite pattern.
+
+I suspect the Gabor orientation factor as being a potential predictor of this importance of spatial imagery, but I also suspect that this influence is very small, so I'll wrap this analysis with this conclusion.
 
 
 
