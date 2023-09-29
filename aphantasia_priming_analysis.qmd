@@ -157,6 +157,10 @@ cor_questionnaires <-
     )
 ```
 
+:::{.panel-tabset}
+
+#### Correlation matrix
+
 ```{r correlation_matrix}
 #| label: fig-cor_matrix
 #| fig-cap: "Correlation matrix of the questionnaire variables. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
@@ -190,6 +194,8 @@ cor_questionnaires %>%
     )
 ```
 
+#### Correlation table
+
 ```{r correlation_table}
 #| label: tbl-cor_stats
 #| tbl-cap: "Detailed correlation table of the questionnaire variables."
@@ -213,12 +219,14 @@ cor_questionnaires %>%
   knitr::kable()
 ```
 
-As we can see, while the three visual imagery variables are highly correlated, the association between these visual variables and spatial imagery (OSIQ-S) is inconsistent: VVIQ and OSIQ-S are positively correlated although with anecdotal evidence, SUIS and OSIQ-S have a moderately evidenced positive correlation, while OSIQ-Object and OSIQ-Spatial are negatively correlated. We'll run a Principal Component Analysis to evaluate the possibility of a feature reduction of visual imagery as a single variable.
+:::
+
+As we can see, while the three visual imagery variables are highly correlated, the association between these visual variables and spatial imagery (OSIQ-S) is inconsistent: VVIQ and OSIQ-S are positively correlated although with anecdotal evidence, SUIS and OSIQ-S have a moderately evidenced positive correlation, while OSIQ-Object and OSIQ-Spatial are negatively correlated. We'll run a Principal Component Analysis to evaluate the possibility of a reduction of dimensions by considering visual imagery as a single variable.
 
 ### Principal Component Analysis
 
 ```{r pca}
-#| code-summary: "Computing PCA"
+#| code-summary: "Computing the PCA"
 #| echo: true
 
 # --- Principal Component Analysis ---
@@ -231,6 +239,10 @@ pca <-
     ) 
 ```
 
+:::{.panel-tabset}
+
+#### PCA loadings
+
 ```{r loadings}
 #| label: fig-loadings
 #| fig-cap: "Loadings of each variable on the three components extracted by a PCA."
@@ -242,6 +254,8 @@ pca %>% plot +
   labs(title = NULL) +
   theme(text = element_text(size = 14))
 ```
+
+#### Eigenvalues / variance explained
 
 ```{r eigenvalues}
 #| label: tbl-eigenvalues
@@ -258,6 +272,8 @@ pca %>%
   format(digits = 2) %>% 
   display
 ```
+
+:::
 
 As expected, the visual imagery variables are grouped in a single component ("PC1" in @fig-loadings or "Component 1" in @tbl-eigenvalues) with an Eigenvalue of 2.84, therefore accounting for 71% of the total variance of the data. The second component (PC2 / Component 2) has an Eigenvalue of .97, accounts for 24% of the total variance, and is mostly loaded negatively on the OSIQ-S: this brings the total explained proportion of variance to 95%. Traditionally, the threshold used for selecting a principal component is an Eigenvalue of 1. Nevertheless, given the Eigenvalue of .97 and the properties of this component, i.e. singling out the specificity of the spatial scale, this component will be kept for analysis.
 
@@ -2580,16 +2596,108 @@ Although the effects of the mental imagery variables are statistically anecdotal
 
 Once again, while fairly obvious in visual data exploration, these interaction dynamics between variables have shown to be weak and statistically insignificant. This failure to explain continuous data is reminiscent of another earlier finding, that *Visual imagery is not correlated with Congruence effect*, although we clearly showed in @sec-inferential that the global effect of Congruence varied with the Group (i.e. visual imagery group) in both tasks. This reflects the high variability in the sample both in Congruence effect and mental imagery (clearly visible in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]), variance that is only partly explained by the division in two groups based on visual imagery (although this division already yields - very small - significant interaction effects). Said differently, ***the division by the VVIQ (aphantasics/phantasics) is a sufficient model statistically, yet is not satisfying to explain most of the cognitive differences at play in our tasks.***
 
-As we can see that the initial model of a division in two VVIQ groups somehow managed to explain some aspects of the data, one approach we could choose to tackle our problem is a redefinition of this model, i.e. a **redefinition of the groups**. To that end, we propose to conduct an analysis independent of our initial hypotheses and models through the use of **unsupervised clustering**.
+As we can see that the initial model of a division in two VVIQ groups somehow managed to explain some aspects of the data, we can hypothesize that the partition of the sample in several groups has an underlying potential to explain the data. Therefore, one approach we could choose to tackle our problem is a redefinition of this division model, i.e. a **redefinition of the groups**. To that end, we propose to conduct an analysis independent of our initial hypotheses and models through the use of **unsupervised clustering**.
 
 # Even deeper EDA: Unsupervised clustering
 
+## Rationale
 
+### Variables?
 
+We mentioned that our initial groups were created based on the VVIQ, that is, **one variable**. We then showed that variance in our sample could come from several variables, limiting the explanatory power of this grouping. The clustering approach would consist in accounting for **all of these variables in the grouping**. This is still limited if we ponder about the innumerable reasons in the participants' cognition that could explain variance, but it is an analytic equivalent of "doing our best with what we have". But which variables do we have? Among the continuous within-subject variables, we isolated four, two mental imagery variables and two Congruence effects (one for each task). We could choose to use all four straight away, but that would mean ignoring an important methodological aspect of clustering procedures: as one could theoretically use an infinite number of variables for clustering, it is paramount that this choice be informed by the fact that all variables must be homogeneous in their physical meaning and equally important for classification. In operational terms, that means reducing covariance between variables as much as possible, often through *dimensionality reduction*, e.g., PCA. 
 
+### Dimensionality reductionn, part 2
 
+The Visual and Spatial imagery variables are already the result of a PCA, thus theoretically two distinct and equally meaningful variables. The question of dimensionality reduction comes from the two Congruence effects: do they represent the same "cognitive features"? To try to answer this question, we will run a second PCA on our four variables.
 
+```{r pca_part_2}
+#| echo: true
+#| code-summary: "Computing a PCA, part 2"
 
+# --- Principal component analysis on the four continuous variables ---
+pca_2 <-
+  principal_components(
+    df_congruence_effect[,3:6],
+    n = "max",
+    sort = TRUE
+  )
+```
+
+:::{.panel-tabset}
+
+#### Loadings
+
+```{r pca_2_loadings}
+#| label: fig-loadings2
+#| fig-cap: "Loadings of each variable on the three components extracted by a PCA."
+#| fig-width: 8
+
+# --- Loadings ---
+pca_2 %>% 
+  plot + 
+  scale_y_discrete(labels = c("Visual imagery", "Congruence explicit", "Spatial imagery", "Congruence implicit")) +
+  scale_fill_viridis(alpha = .6) +
+  labs(title = NULL) +
+  theme(text = element_text(size = 14))
+```
+
+#### Eigenvalues
+
+```{r pca_2_eigenvalues}
+#| label: tbl-eigenvalues2
+#| tbl-cap: "Eigenvalues and variance explained by the three components extracted by a PCA."
+
+# --- Eigenvalues and variance ---
+pca_2 %>% 
+  summary %>% 
+  rename(
+    "Component 1" = PC1,
+    "Component 2" = PC2,
+    "Component 3" = PC3,
+  ) %>%
+  format(digits = 2) %>%
+  display
+
+df_congruence_effect <- 
+  df_congruence_effect %>% 
+  mutate(across(3:6, as.numeric))
+
+df_clustering <-
+  left_join(
+    df_congruence_effect[,1:3], 
+    rotated_data(pca_2),  
+    by = "visual_imagery")
+
+```
+
+#### Component space
+
+```{r pca_2_component_space}
+#| label: fig-3d_component_space
+#| fig-cap: "3D mapping of the three components extracted by the PCA."
+
+df_clustering %>% 
+  plot_ly(
+    x = ~ PC1,
+    y = ~ PC2,
+    z = ~ PC3
+  ) %>% 
+  add_markers(
+    color = ~ aphantasia,
+    colors = ~ c("#E69F00", "#56B4E9"),
+    size = 6
+    ) %>%
+  layout(
+    legend = list(title = list(text = "Aphantasia")),
+    scene = list(
+      xaxis = list(title = "Component 1"),
+      yaxis = list(title = "Component 2"),
+      zaxis = list(title = "Component 3")
+      )
+    )
+```
+
+:::
 
 
 
