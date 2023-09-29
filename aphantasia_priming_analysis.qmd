@@ -77,6 +77,7 @@ shelf(
   mclust,         # mixture clustering
   ggpubr,         # ggplot tools
   ggbeeswarm,     # ggplot tools
+  ggradar,        # gg radar plots
   plotly,         # interactive plots
   viridis,        # ggplot colour-blind friendly palettes
   tidyverse       # the essentials
@@ -246,6 +247,7 @@ pca <-
 ```{r loadings}
 #| label: fig-loadings
 #| fig-cap: "Loadings of each variable on the three components extracted by a PCA."
+#| fig-width: 8
 
 # --- Loadings ---
 pca %>% plot + 
@@ -2506,18 +2508,19 @@ df_preds_congruence_effect <-
 
 ```{r 3d_congruence_effect_explicit}
 #| label: fig-3d_congruence_effect_explicit
-#| fig-cap: "3D mapping of the three variables of interest in the **Explicit** task: Congruence effect, Visual, and Spatial imagery."
+#| fig-cap: "3D mapping of the three variables of interest in the **Explicit** task: Congruence effect, Visual, and Spatial imagery. The plane represents the predictions of a model explaining the Congruence effect with the mental imagery variables."
 
 df_preds_congruence_effect %>% 
   plot_ly(
     x = ~ visual_imagery,
     y = ~ spatial_imagery,
-    z = ~ congruence_effect_explicit
+    z = ~ congruence_effect_explicit,
+    marker = list(size = 5)
   ) %>% 
   add_markers(
     color = ~ aphantasia,
     colors = ~ c("#E69F00", "#56B4E9"),
-    size = 6
+    opacity = .5
     ) %>% 
   add_trace(
     x = ~ visual_imagery,
@@ -2543,18 +2546,19 @@ df_preds_congruence_effect %>%
 
 ```{r 3d_congruence_effect_implicit}
 #| label: fig-3d_congruence_effect_implicit
-#| fig-cap: "3D mapping of the three variables of interest in the **Implicit** task: Congruence effect, Visual and Spatial imagery."
+#| fig-cap: "3D mapping of the three variables of interest in the **Implicit** task: Congruence effect, Visual and Spatial imagery. The plane represents the predictions of a model explaining the Congruence effect with the mental imagery variables."
 
 df_preds_congruence_effect %>% 
   plot_ly(
     x = ~ visual_imagery,
     y = ~ spatial_imagery,
-    z = ~ congruence_effect_implicit
+    z = ~ congruence_effect_implicit,
+    marker = list(size = 5)
   ) %>% 
   add_markers(
     color = ~ aphantasia,
     colors = ~ c("#E69F00", "#56B4E9"),
-    size = 6
+    opacity = .5
     ) %>% 
   add_trace(
     x = ~ visual_imagery,
@@ -2592,23 +2596,25 @@ Although the effects of the mental imagery variables are statistically anecdotal
     
     - The Congruence effect augments with visual imagery for *low spatial imagers*, but stays even across visual imagery for *high spatial imagers* (i.e. comparable dynamics with the Explicit task, although not as extreme).
 
+These model planes seem to suggest that the higher Congruence effects in high visual imagers are not an even phenomenon, but that **the significant effect we observed in the [inferential analyses](#sec-inferential) might be driven by a sub-group of non-aphantasics with low spatial imagery**.
+
 ### Contradictory findings
 
-Once again, while fairly obvious in visual data exploration, these interaction dynamics between variables have shown to be weak and statistically insignificant. This failure to explain continuous data is reminiscent of another earlier finding, that *Visual imagery is not correlated with Congruence effect*, although we clearly showed in @sec-inferential that the global effect of Congruence varied with the Group (i.e. visual imagery group) in both tasks. This reflects the high variability in the sample both in Congruence effect and mental imagery (clearly visible in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]), variance that is only partly explained by the division in two groups based on visual imagery (although this division already yields - very small - significant interaction effects). Said differently, ***the division by the VVIQ (aphantasics/phantasics) is a sufficient model statistically, yet is not satisfying to explain most of the cognitive differences at play in our tasks.***
+Once again, while fairly obvious in visual data exploration, these interaction dynamics between variables have shown to be weak and statistically insignificant. This failure to explain continuous data is reminiscent of another earlier finding, that *Visual imagery is not correlated with the Congruence effect*, although we clearly showed in @sec-inferential that the global effect of Congruence varied with the Group (i.e. visual imagery group) in both tasks. This reflects the high variability in the sample both in Congruence effect and mental imagery (clearly visible in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]), variance that is only partly explained by the division in two groups based on visual imagery (although this division already yields - very small - significant interaction effects). Said differently, ***the division by the VVIQ (aphantasics/phantasics) is a sufficient model statistically, yet is not satisfying to explain most of the cognitive differences at play in our tasks.***
 
 As we can see that the initial model of a division in two VVIQ groups somehow managed to explain some aspects of the data, we can hypothesize that the partition of the sample in several groups has an underlying potential to explain the data. Therefore, one approach we could choose to tackle our problem is a redefinition of this division model, i.e. a **redefinition of the groups**. To that end, we propose to conduct an analysis independent of our initial hypotheses and models through the use of **unsupervised clustering**.
 
 # Even deeper EDA: Unsupervised clustering
 
-## Rationale
+## Feature engineering
 
 ### Variables?
 
-We mentioned that our initial groups were created based on the VVIQ, that is, **one variable**. We then showed that variance in our sample could come from several variables, limiting the explanatory power of this grouping. The clustering approach would consist in accounting for **all of these variables in the grouping**. This is still limited if we ponder about the innumerable reasons in the participants' cognition that could explain variance, but it is an analytic equivalent of "doing our best with what we have". But which variables do we have? Among the continuous within-subject variables, we isolated four, two mental imagery variables and two Congruence effects (one for each task). We could choose to use all four straight away, but that would mean ignoring an important methodological aspect of clustering procedures: as one could theoretically use an infinite number of variables for clustering, it is paramount that this choice be informed by the fact that all variables must be homogeneous in their physical meaning and equally important for classification. In operational terms, that means reducing covariance between variables as much as possible, often through *dimensionality reduction*, e.g., PCA. 
+We mentioned that our initial groups were created based on the VVIQ, that is, **one variable**. We then showed that variance in our sample could come from several variables, limiting the explanatory power of this grouping. The clustering approach would consist in accounting for **all of these variables in the grouping**. This is still limited if we ponder about the innumerable reasons in the participants' cognition that could explain variance, but it is an analytic equivalent of "*doing our best with what we have*". But what variables do we have? Among the continuous within-subject variables, we isolated four, two mental imagery variables and two Congruence effects (one for each task). We could choose to use all four straight away, but that would mean ignoring an important methodological aspect of clustering procedures: as one could theoretically use an infinite number of variables for clustering, it is paramount that this choice be informed by the fact that all variables must be homogeneous in their physical meaning and equally important for classification. In operational terms, that means reducing covariance between variables as much as possible, often through *dimensionality reduction*, e.g., PCA. 
 
-### Dimensionality reductionn, part 2
+### Dimensionality reduction, part 2
 
-The Visual and Spatial imagery variables are already the result of a PCA, thus theoretically two distinct and equally meaningful variables. The question of dimensionality reduction comes from the two Congruence effects: do they represent the same "cognitive features"? To try to answer this question, we will run a second PCA on our four variables.
+The Visual and Spatial imagery variables are already the result of a PCA, thus theoretically two distinct and equally meaningful variables: yet, in our new four-dimensional data, we need to account for their correlations with the two new variables. The question of dimensionality reduction therefore comes from the two Congruence effects: do they represent the same "cognitive features"? How do they associate with each other and mental imagery? To try to answer this question, we will run a second Principal Component Analysis on our four variables.
 
 ```{r pca_part_2}
 #| echo: true
@@ -2619,7 +2625,7 @@ pca_2 <-
   principal_components(
     df_congruence_effect[,3:6],
     n = "max",
-    sort = TRUE
+    sort = FALSE
   )
 ```
 
@@ -2635,7 +2641,12 @@ pca_2 <-
 # --- Loadings ---
 pca_2 %>% 
   plot + 
-  scale_y_discrete(labels = c("Visual imagery", "Congruence explicit", "Spatial imagery", "Congruence implicit")) +
+  scale_y_discrete(labels = c(
+    "Congruence implicit", 
+    "Congruence explicit", 
+    "Spatial imagery", 
+    "Visual imagery"
+    )) +
   scale_fill_viridis(alpha = .6) +
   labs(title = NULL) +
   theme(text = element_text(size = 14))
@@ -2680,12 +2691,13 @@ df_clustering %>%
   plot_ly(
     x = ~ PC1,
     y = ~ PC2,
-    z = ~ PC3
+    z = ~ PC3,
+    marker = list(size = 5)
   ) %>% 
   add_markers(
     color = ~ aphantasia,
     colors = ~ c("#E69F00", "#56B4E9"),
-    size = 6
+    opacity = .7
     ) %>%
   layout(
     legend = list(title = list(text = "Aphantasia")),
@@ -2699,17 +2711,335 @@ df_clustering %>%
 
 :::
 
+This PCA is a bit harder to interpret than the first one. To begin with, we can see the quality of the three components: they all have good Eigenvalues, account for homogeneous amounts of variance, and explain in total 80% of the whole variance. Now for their interpretation, we can use @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit] to ease the understanding: 
+
+- **The first component of the PCA** correlates positively with the implicit Congruence effect and Visual imagery, but negatively with Spatial imagery: this captures the variance reflected by the model plane in @fig-3d_congruence_effect_implicit (the implicit 3D projection), i.e. the diagonal gradient from low Congruence effect / low Visual imagery / high Spatial imagery (darkest purple angle of the plane) to high CE / VI and low SI (brightest yellow angle of the plane). The PCA component 1 denotes the importance of this gradient.
+
+- **The second component of the PCA** correlates negatively with the explicit Congruence effect, but positively with the implicit Congruence effect. This highlights a very interesting dynamic that is hard to notice empirically: if we compare @fig-3d_congruence_effect_explicit (explicit) and @fig-3d_congruence_effect_implicit (implicit), we can notice that the model planes do not have the same surface shape! This affects particularly low Visual imagery (theoretically aphantasics), where a higher Spatial imagery is associated with a higher Congruence effect in the explicit task, but a lower one in the implicit; said differently, the Congruence effect / Spatial imagery relation is inverted at low Visual imagery. This effect is very slight in the model, but still warrants a coherent component according to the (unsupervised) PCA.
+
+- **The third component of the PCA** is basically visual imagery, integrating part of the interaction with spatial imagery in the four-dimensional space.
+
+Now that we have three decorrelated variables explaining meaningful aspects of the data, we can run a clustering analysis on them.
+
+## Cluster analysis
+
+### Method
+
+We will choose a method of clustering based on Gaussian mixture models [^kmeans] (GMM). A Gaussian mixture model is a linear combination of several Gaussian components: it is used when the data cannot be modelled by a simple Gaussian (i.e. a normal distribution). In other words, if the data structure is naturally composed of several clusters, they should be represented by an GMM rather than a simple Gaussian distribution: each distribution then represents a cluster.
+
+[^kmeans]: GMMs are less common in psychology than the commonly used K-Means algorithm, but have several advantages over it, mainly: ($i$) K-Means assumes sphericity and an equivalent cluster size, which is rarely the case in reality; ($ii$) GMMs are probabilistic models (*soft clustering*) that are more parsimonious than the geometric approach (*hard clustering*) of K-Means (see for instance Dalmaijer, 2022).
+
+An GMM will therefore identify normal distributions in the data with different means and covariances corresponding to clusters, as well as probabilities for each observation (in this case, the participants) of belonging to a given cluster. As very little information is known about the possible clusters, their means and covariances for each of the variables, the MMG has to follow several steps: **(i) Estimating the number of clusters** : (ii) The random choice of initial parameters (mean, covariance and weight) for the clusters on each variable; (iii) The use of an "*expectation-maximisation*" algorithm [EM - see Dempster, 1977), an iterative algorithm for determining the parameters of a probabilistic model when it depends on unobservable latent variables. The EM algorithm proceeds in two stages. Step E: calculates the probability of each observation belonging to a cluster; then step M: updates the parameters to maximise these probabilities and approximate the actual distributions of the clusters; finally, returns to step E with the new parameters, and repeats the two steps until the model converges on stable clusters.[^complex]
+    
+[^complex]: The definitions of GMMs and the EM algorithm are extremely simplified, as they are based on complex probabilistic mathematical models, the explanation of which is not really relevant to this report. More details can be found in the article dedicated to the R package used to implement this method (i.e. `Mclust`, see Scrucca, 2016) or on the internet.
+
+### Determining the number of clusters
+
+There are many methods for determining the ideal number of clusters in a data set. The `n_clusters` function from the package `parameters` on R allows you to use 30 unsupervised methods, and to observe their 'consensus' on this number. The results of this analysis are shown in @fig-number_of_clusters. The choice of 2 clusters is supported by 10 methods out of 30 (Elbow, kl, CCC, Duda, Pseudot2, Beale, Mcclain, Mixture (VEE), Mixture (EEE), Mixture (VII)), but the choices of 3 and 4 clusters are also supported by 6 and 7 methods respectively. We are going to compute the three clusterings and examine the results.
+
+```{r number_of_clusters}
+#| label: fig-number_of_clusters
+#| fig-cap: "Consensus of 30 unsupervised indices of the optimal cluster number."
+
+(df_clustering[, 7:9] %>% 
+  n_clusters %>% 
+  summary %>% 
+  ggplot(aes(x = n_Clusters, y = n_Methods, fill = n_Methods)) +
+  geom_col(color = "black", linewidth = .2) +
+  labs(x = "Number of clusters", y = "Number of methods") +
+  scale_fill_viridis(guide = NULL, alpha = .6) +
+  scale_x_continuous(breaks = seq(1,10, by = 1)) +
+  scale_y_continuous(breaks = seq(1,10, by = 1))
+  ) %>% 
+  ggplotly
+```
 
 
+```{r computing_clusters}
+#| echo: true
+#| code-summary: "Computing 2 and 4 clusters"
 
+clustering_2 <- 
+  Mclust(
+    df_clustering[,7:9],
+    G = 2
+  )
 
+clustering_4 <- 
+  Mclust(
+    df_clustering[,7:9],
+    G = 4
+  )
 
+df_clustering <-
+  df_clustering %>% 
+  mutate(
+    clusters_2 = clustering_2$classification,
+    clusters_4 = clustering_4$classification
+  ) %>% 
+  mutate(across(starts_with("clusters"), as.factor))
+```
 
+### Clustering results
 
+We can visualize the results in the three dimensional spaces we examined earlier : the three PCA components, or the three variables.
 
+#### 2-Clusters solution
 
+:::{.panel-tabset}
 
+#### PCA components
 
+```{r 3d_2_clusters_pca_plotly}
+#| label: fig-3d_2_clusters_pca
+#| fig-cap: "3D mapping of the two clusters along the three components extracted by the PCA."
+
+df_clustering %>% 
+  plot_ly(
+    x = ~ PC1,
+    y = ~ PC2,
+    z = ~ PC3,
+    marker = list(size = 5)
+  ) %>% 
+  add_markers(
+    color = ~ clusters_2,
+    colors = ~ c("#009E73", "#F0E442"),
+    opacity = .7
+    ) %>%
+  layout(
+    legend = list(title = list(text = "Cluster")),
+    scene = list(
+      xaxis = list(title = "Component 1"),
+      yaxis = list(title = "Component 2"),
+      zaxis = list(title = "Component 3")
+      )
+    )
+```
+
+#### Congruence Explicit
+
+```{r 3d_2_clusters_explicit_plotly}
+#| label: fig-3d_2_clusters_explicit
+#| fig-cap: "3D mapping of the two clusters along the original variables in the explicit task."
+
+df_clustering %>% 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_explicit,
+    marker = list(size = 5)
+  ) %>% 
+  add_markers(
+    color = ~ clusters_2,
+    colors = ~ c("#009E73", "#F0E442"),
+    opacity = .7
+    ) %>%
+  layout(
+    legend = list(title = list(text = "Cluster")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+#### Congruence Implicit
+
+```{r 3d_2_clusters_implicit_plotly}
+#| label: fig-3d_2_clusters_implicit
+#| fig-cap: "3D mapping of the two clusters along the original variables in the implicit task."
+
+df_clustering %>% 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_implicit,
+    marker = list(size = 5)
+  ) %>% 
+  add_markers(
+    color = ~ clusters_2,
+    colors = ~ c("#009E73", "#F0E442"),
+    opacity = .7
+    ) %>%
+  layout(
+    legend = list(title = list(text = "Cluster")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+#### Cluster repartition
+
+```{r 2_clusters_repartition_plotly}
+#| label: fig-2_clusters_repartition
+#| fig-cap: "Repartition of the original groups in the two clusters."
+
+(df_clustering %>% 
+  mutate(Cluster = clusters_2, .keep = "unused") %>% 
+  ggplot(aes(x = Cluster, fill = aphantasia)) +
+  geom_bar(
+    alpha = .5, 
+    position = position_dodge(), 
+    color = "black", 
+    linewidth = .3
+    ) +
+  labs(x = "Cluster", y = "Number of participants") +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL)) %>% 
+  ggplotly
+```
+
+:::
+
+As we can see from the repartition and 3D projections, the 2-clusters solution essentially captures the obvious split in visual imagery among participants, although in an unsupervised way. This model neglects the rest of the variance but remains the one with the best fit, as the visual imagery split far outclasses the rest of the sources of variability in terms of effect size (by construction of the experiment, through selected recruitment). However, we could argue - as do the 7 indices recommending the 4-cluster solution - that a lot of this "spatial dispersion" of the observations is not accounted for by the model. Thus, we will investigate the results of the 4-clusters solution.
+
+#### 4-Clusters solution
+
+:::{.panel-tabset}
+
+#### PCA components
+
+```{r 3d_4_clusters_pca_plotly}
+#| label: fig-3d_4_clusters_pca
+#| fig-cap: "3D mapping of the four clusters along the three components extracted by the PCA."
+
+df_clustering %>% 
+  plot_ly(
+    x = ~ PC1,
+    y = ~ PC2,
+    z = ~ PC3,
+    marker = list(size = 5)
+  ) %>% 
+  add_markers(
+    color = ~ clusters_4,
+    colors = ~ c("#009E73", "#F0E442", "#D55E00","#CC79A7"),
+    opacity = .7
+    ) %>%
+  layout(
+    legend = list(title = list(text = "Cluster")),
+    scene = list(
+      xaxis = list(title = "Component 1"),
+      yaxis = list(title = "Component 2"),
+      zaxis = list(title = "Component 3")
+      )
+    )
+```
+
+#### Congruence Explicit
+
+```{r 3d_4_clusters_explicit_plotly}
+#| label: fig-3d_4_clusters_explicit
+#| fig-cap: "3D mapping of the four clusters along the original variables in the explicit task."
+
+df_clustering %>% 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_explicit,
+    marker = list(size = 5)
+  ) %>% 
+  add_markers(
+    color = ~ clusters_4,
+    colors = ~ c("#009E73", "#F0E442", "#D55E00","#CC79A7"),
+    opacity = .7
+    ) %>%
+  layout(
+    legend = list(title = list(text = "Cluster")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+#### Congruence Implicit
+
+```{r 3d_4_clusters_implicit_plotly}
+#| label: fig-3d_4_clusters_implicit
+#| fig-cap: "3D mapping of the four clusters along the original variables in the implicit task."
+
+df_clustering %>% 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_implicit,
+    marker = list(size = 5)
+  ) %>% 
+  add_markers(
+    color = ~ clusters_4,
+    colors = ~ c("#009E73", "#F0E442", "#D55E00","#CC79A7"),
+    opacity = .7
+    ) %>%
+  layout(
+    legend = list(title = list(text = "Cluster")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+#### Cluster repartition
+
+```{r 4_clusters_repartition_plotly}
+#| label: fig-4_clusters_repartition
+#| fig-cap: "Repartition of the original groups in the four clusters."
+
+(df_clustering %>% 
+  mutate(Cluster = clusters_4, .keep = "unused") %>% 
+  ggplot(aes(x = Cluster, fill = aphantasia)) +
+  geom_bar(
+    alpha = .5, 
+    position = position_dodge(), 
+    color = "black", 
+    linewidth = .3
+    ) +
+  labs(x = "Cluster", y = "Number of participants") +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL)) %>% 
+  ggplotly
+```
+
+:::
+
+Interestingly, the 4-clusters solution roughly split the two visual imagery groups along the line of high/low spatial imagery. This split does not seem to be associated with a consistent dynamic across both Congruence effects. The clusters have different various combinations of visual imagery, different spatial imagery, and congruence effects. To have an intuitive visualizaton of these mean differences, we will plot them in a radar chart in @fig-4_clusters_radar_chart.
+
+```{r 4_clusters_radar_charts}
+#| label: fig-4_clusters_radar_chart
+#| fig-cap: "Means of the four clusters in the four variables of interest. The axis have been rescaled to the minimum and maximum values of each variable, to 'zoom' on the differences and compensate for the small effect sizes."
+
+(df_clustering %>% 
+  select(clusters_4, visual_imagery:congruence_effect_implicit) %>% 
+  mutate(Cluster = as.character(clusters_4), .keep = "unused") %>% 
+  mutate(across(visual_imagery:congruence_effect_implicit, normalize)) %>% 
+  group_by(Cluster) %>% 
+  summarise(across(everything(), mean)) %>% 
+  ggradar(
+    axis.labels = c(
+      "Visual imagery",
+      "Spatial imagery",
+      "Congruence (Explicit)",
+      "Congruence (Implicit)"
+    ),
+    values.radar = c("0", "Median", "Max"),
+    grid.label.size = 4,
+    label.gridline.min = FALSE,
+    legend.title = "Cluster",
+    background.circle.transparency = .1,
+    group.point.size = 3,
+    group.line.width = .5,
+    axis.label.size = 4
+  ) +
+  scale_color_manual(values = c("#009E73", "#F0E442", "#D55E00","#CC79A7"))) %>% 
+  ggplotly
+
+```
 
 
 
