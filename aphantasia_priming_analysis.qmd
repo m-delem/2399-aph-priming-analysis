@@ -1,5 +1,5 @@
 ---
-title: "Sensory priming in aphantasia - Data analysis"
+title: "Sensory priming in aphantasia - Data analysis report"
 author: "Maël Delem"
 date: 2023-09-13
 date-modified: last-modified
@@ -130,6 +130,21 @@ df_questionnaires <-
 #### Interactive figures
 
 Many figures in this report are interactive: hover over the plots to see some of the tools available. You can select a zone to zoom on a plot, hover over bars to see details about data, select only specific groups in the legend, among many other features.
+
+:::
+
+:::{.callout-important}
+
+#### TL: DR
+
+This report is long. While hoping to have made it organized and user-friendly enough to make people want to read it, here are a few key findings to shorten the process if necessary:
+
+- Mixed models fitted on RTs showed a **significant interaction between Group (Aphantasics/Phantasics) and Congruence**, in both Explicit and Implicit tasks, although **very small in effect size** in either case. Non-aphantasics answer slightly slower in the incongruent condition, which is not the case for aphantasics.
+
+- This continuous "**Congruence effect**", when computed *per subject* as the random parameter for Congruence in the mixed model (i.e. the slope by subject on Congruence), **did not correlate with mental imagery variables**. This contradictory finding might be related to small effect sizes.
+
+- A Gaussian Mixture Model clustering with 4 clusters, computed with the two congruence effects, visual and spatial imagery variables, revealed an interesting structure in the data, linking visual *and* spatial imagery to the congruence effects. While the cluster differences were negligible in the implicit task, the four clusters did manage to explain the variance in the explicit task: the varian
+A specific group of non-aphantasics with high visual imagery and low spatial 
 
 :::
 
