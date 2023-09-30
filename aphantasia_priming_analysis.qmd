@@ -3163,7 +3163,7 @@ linear_reg() %>%
 
 In the end, I interpret the 4-cluster model as saying that low spatial imagery participants tend to have a higher congruence effect than high spatial imagery ones, although this difference is in *relative* terms, not absolute (as the first - aphantasic - cluster has a null congruence effect with low spatial imagery). It appears, with a certain grouping on the basis of visual imagery, that non-aphantasic participants have a slightly higher congruence effect, but I interpret the last model as showing that cluster 2 - 24 non-aphantasics only, with low spatial imagery - is the sub-group driving this effect, whereas the other non-aphantasics (cluster 3 and 4, 32 non-aphantasics total) show the opposite pattern.
 
-I suspect the Gabor orientation factor as being a potential predictor of this importance of spatial imagery, but I also suspect that this influence is very small, so I'll wrap this analysis with this conclusion.
+I suspect the Gabor orientation factor to be a potential predictor of this importance of spatial imagery. However that inquiry would mandate further analysis, and I also suspect that this influence is very small, so I'll wrap up this report with this conclusion.
 
 
 
