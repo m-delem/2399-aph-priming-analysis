@@ -151,7 +151,7 @@ This report is long. While hoping to have made it organized and user-friendly en
 
 3. A **Gaussian Mixture Model clustering** with 4 clusters, computed with the two congruence effects, visual and spatial imagery variables, revealed an interesting structure in the data, linking **visual *and* spatial imagery** to the congruence effects. While the cluster differences were negligible in the implicit task, the four clusters did manage to explain some variability in the explicit task. A specific group of non-aphantasics with high visual imagery and low spatial imagery showed especially high congruence effect, and could be interpreted as driving the effects analysed in (1).
 
-The rest of the report is describing and justifying the choices, transformations and assumptions, and visualizing the analyses.
+The rest of the report is describing the methods and models, justifying the choices, transformations and assumptions, and visualizing the analyses.
 :::
 
 # Exploratory Data Analysis (EDA) {#sec-eda}
@@ -243,7 +243,7 @@ cor_questionnaires %>%
 
 :::
 
-As we can see, while the three visual imagery variables are highly correlated, the association between these visual variables and spatial imagery (OSIQ-S) is inconsistent: VVIQ and OSIQ-S are positively correlated although with anecdotal evidence, SUIS and OSIQ-S have a moderately evidenced positive correlation, while OSIQ-Object and OSIQ-Spatial are negatively correlated. We'll run a Principal Component Analysis to evaluate the possibility of a reduction of dimensions by considering visual imagery as a single variable.
+As we can see, while the three visual imagery variables are highly correlated, the association between these visual variables and spatial imagery (OSIQ-S) is inconsistent: VVIQ and OSIQ-S are positively correlated although with anecdotal evidence, SUIS and OSIQ-S have a moderately evidenced positive correlation, while OSIQ-Object and OSIQ-Spatial are negatively correlated. We'll run a Principal Component Analysis to evaluate the possibility of a dimensionality reduction by considering visual imagery as a single variable.
 
 ### Principal Component Analysis {#sec-pca}
 
