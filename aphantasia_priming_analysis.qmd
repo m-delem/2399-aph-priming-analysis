@@ -37,7 +37,7 @@ The folder containing this HTML file also has a "`data/`" folder, wherein can be
 - `data_per_subject` is a table containing one row per subject with all the associated information, raw or computed:
 
     - visual_/spatial_imagery are the two PCA components calculated in [the analysis of questionnaire data](#sec-pca).
-    - congruence_effect_explicit/_implicit are the "*Congruece effects per subject*", i.e. the slope by-subject on congruence extracted from the multilevel (mixed) models of the [inferential analysis](#sec-inferential).
+    - congruence_effect_explicit/_implicit are the "*Congruence effects per subject*", i.e. the slope by-subject on Congruence extracted from the multilevel (mixed) models of the [inferential analysis](#sec-inferential).
     - PC1/2/3 are the three PCA components calculated before the clustering procedure in @sec-pca2.
     - clusters_2/_4 are the two clustering solutions, respectively with 2 and 4 clusters.
     - explicit/implicit_mean/mad/min/max are the summary statistics of the two main tasks after data tidying and transformation.
@@ -81,11 +81,11 @@ shelf(
   bayesian,       # bayesian modelling with brms and tidymodels
   multilevelmod,  # multilevel modelling with lmer and tidymodels
   mclust,         # mixture clustering
-  ggpubr,         # ggplot tools
-  ggbeeswarm,     # ggplot tools
-  ricardo-bion/ggradar,        # gg radar plots
-  plotly,         # interactive plots
-  viridis,        # ggplot colour-blind friendly palettes
+  ggpubr,                # ggplot tools
+  ggbeeswarm,            # ggplot tools
+  ricardo-bion/ggradar,  # gg radar plots
+  plotly,                # interactive plots
+  viridis,               # ggplot colour-blind friendly palettes
   tidyverse       # the essentials.
 )
 
