@@ -149,7 +149,7 @@ This report is long. While hoping to have made it organized and user-friendly en
 
 2. This "**Congruence effect**", when considered as continuous and computed *per subject* as the random parameter for Congruence in the mixed model (i.e. the slope by subject on Congruence), **did not correlate with mental imagery variables**. This contradictory finding might be related to very small effect sizes.
 
-3. A **Gaussian Mixture Model clustering** with 4 clusters, computed with the two congruence effects, visual and spatial imagery variables, revealed an interesting structure in the data, linking **visual *and* spatial imagery** to the congruence effects. While the cluster differences were negligible in the implicit task, the four clusters did manage to explain some variability in the explicit task. A specific group of non-aphantasics with high visual imagery and low spatial imagery showed especially high congruence effect, and could be interpreted as driving the effects analysed in (1).
+3. A **Gaussian Mixture Model clustering** with 4 clusters, computed with the two congruence effects, visual and spatial imagery variables, revealed an interesting structure in the data, linking **visual *and* spatial imagery** to the congruence effects. While the cluster differences were negligible in the implicit task, the four clusters did manage to explain some variability in the explicit task. A specific group of non-aphantasics with **high visual imagery and low spatial imagery** showed especially high congruence effect, and could be interpreted as driving the effects analysed in (1).
 
 The rest of the report is describing the methods and models, justifying the choices, transformations and assumptions, and visualizing the analyses.
 :::
@@ -992,7 +992,7 @@ df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
 df_rt %>% display
 ```
 
-For a more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). Common thresholds used for outlier detection in Gaussian distributions with MADs are $median \ \pm \ 3 \cdot MAD$ (Hampel filter; see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case of a skewed distribution, as all the participants with fast RT means stay above the $median \ - \ 1.5 \cdot MAD$. As for the high threshold, the choice the $median \ + \ 3 \cdot MAD$ would set a highly conservative maximum (e.g. 1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at $median \ + \ 5 \cdot MAD$ (i.e. 1797ms for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in @fig-rt_per_participant_1 and [-@fig-rt_per_participant_2].
+For a more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). Common thresholds used for outlier detection in Gaussian distributions with MADs are $median \ \pm \ 3 \cdot MAD$ (Hampel filter; see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case of a skewed distribution, as all the participants with fast RT means stay above the $median \ - \ 1.5 \cdot MAD$. As for the high threshold, the choice of the $median \ + \ 3 \cdot MAD$ would set a highly conservative maximum (e.g. 1361ms for the explicit task) and bring the total number of removed trials over 13%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at $median \ + \ 5 \cdot MAD$ (i.e. 1797ms for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in @fig-rt_per_participant_1 and [-@fig-rt_per_participant_2].
 
 <!-- Removing second step RT outlier trials -->
 ```{r removing_second_rt_outliers}
@@ -1115,18 +1115,18 @@ Sub-levels of the responses ("random effects") can also be accounted for:
 
 This structure will be modeled using Multilevel Models (also called hierarchical or mixed models), allowing us to add the sub-levels of the hierarchy within participant measures we described above in the model. **RT data will be transformed using a Box-Cox transformation** to bring the distributions closer to normality and improve the quality of the models.
 
-For a subject $i$ with a given *Group*/visual imagery, in the *Congruence* condition $j$ and the *Color* condition $k$, The maximal model of the resulting response time $RT_{ijk}$ including all the predictors can be specified as such:
+For a subject $i$ with a given *Group*/visual imagery, in the *Congruence* condition $j$ and the *Color* condition $k$, the maximal model of the resulting response time $RT_{ijk}$ including all the predictors can be specified as such:
 
 $$
 \begin{aligned}
 RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\beta_{2} + \beta_{2_{subject[i]}}) \cdot Congruence_{j} \times (\beta_{3} + \beta_{3_{subject[i]}}) \cdot Color_{k}
 \end{aligned}
 $$
-Where $\alpha$ is the global intercept, $\alpha_{subject[i]}$ is a random intercept by subject accounting for the inherent randomness tied to participants, and $\beta_{1/2/3}$ are the parameters representing the effect of each predictor. The "$\times$" signs represent the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope $\beta_{2/3_{subject[i]}}$ by subject can be added to the Congruence or Color parameters to account for this variance.
+Where $\alpha$ is the global intercept, $\alpha_{subject[i]}$ is a random intercept by subject accounting for the inherent randomness tied to participants, and $\beta_{1/2/3}$ are the parameters representing the effect of each predictor. The "$\times$" signs represent all the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope $\beta_{2/3_{subject[i]}}$ by subject can be added to the Congruence or Color parameters to account for this variance.
 
 ### Potential models
 
-**RT data will be standardized before modelling**, therefore the standardized coefficients reported will scale on *standard deviations of the RT variable*. This allows to interpret these parameters (regression coefficients) roughly with the same guidelines as usual indices, e.g., Cohen's *d*. Several models will be fitted in turn. we are not going to fit reduced models that exclude some main effects, as we would like to model all of them in any case to produce inferences (as opposed to raw predictions of future data). We'll specify the following: 
+**RT data will be standardized before modelling**, therefore the standardized coefficients reported will scale on *standard deviations of the RT variable*. This allows to interpret these parameters (regression coefficients) roughly with the same guidelines as usual indices, e.g., Cohen's *d*. Several models will be fitted in turn. We are not going to fit reduced models that exclude some main effects, as we would like to model all of them in any case to produce inferences (as opposed to raw predictions of future data). We'll specify the following: 
 
 1. The minimal model, accounting only for the random effect of subjects, will serve as a comparison baseline: 
 
@@ -2625,7 +2625,7 @@ Once again, while fairly obvious in visual data exploration, these interaction d
 
 As we can see that the initial model of a division in two VVIQ groups somehow managed to explain some aspects of the data, we can hypothesize that the partition of the sample in several groups has an underlying potential to explain the data. Therefore, one approach we could choose to tackle our problem is a redefinition of this division model, i.e. a **redefinition of the groups**. To that end, we propose to conduct an analysis independent of our initial hypotheses and models through the use of **unsupervised clustering**.
 
-# Even deeper EDA: Unsupervised clustering
+# Unsupervised Cluster Analysis
 
 ## Feature engineering
 
@@ -3169,18 +3169,25 @@ linear_reg() %>%
 
 In the end, I interpret the 4-cluster model as saying that low spatial imagery participants tend to have a higher congruence effect than high spatial imagery ones, although this difference is in *relative* terms, not absolute (as the first - aphantasic - cluster has a null congruence effect with low spatial imagery). It appears, with a certain grouping on the basis of visual imagery, that non-aphantasic participants have a slightly higher congruence effect, but I interpret the last model as showing that cluster 2 - 24 non-aphantasics only, with low spatial imagery - is the sub-group driving this effect, whereas the other non-aphantasics (cluster 3 and 4, 32 non-aphantasics total) show the opposite pattern.
 
-I suspect the Gabor orientation factor to be a potential predictor of this importance of spatial imagery. However that inquiry would mandate further analysis, and I also suspect that this influence is very small, so I'll wrap up this report with this conclusion.
+I suspect the Gabor orientation factor to be a potential predictor of this importance of spatial imagery. However that inquiry would mandate further analysis, and I also suspect that this influence is very small, so I'll wrap up this report with this conclusion for the time being.
+
+:::{.callout-note collapse="true"}
+
+#### R Session information
 
 ```{r session_information}
-#| echo: true
-#| code-summary: "R Session information"
- 
 report_system()
+```
+The following packages were used:
+
+```{r packages}
 report_packages(
   session = sessionInfo(),
   include_R = FALSE
   )
 ```
+
+:::
 
 ```{r exporting_processed_data}
 
