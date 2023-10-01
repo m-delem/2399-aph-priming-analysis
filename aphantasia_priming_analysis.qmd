@@ -34,7 +34,13 @@ The folder containing this HTML file also has a "`data/`" folder, wherein can be
 
 - `data_asso`/`_implicit`/`_explicit`/`_rotation`/`_questionnaires` are raw datasheets retrieved from old Excels and cleaned up
 
-- `data_processed_explicit`/`_implicit` are the datasets of the two main tasks after being processed here and in their final state after [exploratory analysis](#sec-eda), and before the [inferential analyses conducted afterwards](#sec-inferential).
+- `data_per_subject` is a table containing one row per subject with all the associated information, raw or computed:
+
+    - visual_/spatial_imagery are the two PCA components calculated in [the analysis ot questionnaire data](#sec-pca).
+    - congruence_effect_explicit/_implicit are the "*Congruece effects per subject*", i.e. the slope by-subject on congruence extracted from the multilevel (mixed) models of the [inferential analysis](#sec-inferential).
+    - PC1/2/3 are the three PCA components calculated before the clustering procedure in @sec-pca2.
+    - clusters_2/_4 are the two clustering solutions, respectively with 2 and 4 clusters.
+    - explicit/implicit_mean/mad/min/max are the summary statistics of the two main tasks.
 
 The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the `aphantasia_priming_analysis.qmd` file, for which the best reading software are coding Integrated Development Environments (IDE) like [RStudio](https://posit.co/download/rstudio-desktop/) or [Visual Studio Code](https://code.visualstudio.com/). The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.
 
@@ -77,10 +83,10 @@ shelf(
   mclust,         # mixture clustering
   ggpubr,         # ggplot tools
   ggbeeswarm,     # ggplot tools
-  ggradar,        # gg radar plots
+  ricardo-bion/ggradar,        # gg radar plots
   plotly,         # interactive plots
   viridis,        # ggplot colour-blind friendly palettes
-  tidyverse       # the essentials
+  tidyverse       # the essentials.
 )
 
 # --- Global cosmetic theme ---
@@ -133,19 +139,19 @@ Many figures in this report are interactive: hover over the plots to see some of
 
 :::
 
-:::{.callout-important}
+:::{.callout-caution}
 
 #### TL: DR
 
 This report is long. While hoping to have made it organized and user-friendly enough to make people want to read it, here are a few key findings to shorten the process if necessary:
 
-- Mixed models fitted on RTs showed a **significant interaction between Group (Aphantasics/Phantasics) and Congruence**, in both Explicit and Implicit tasks, although **very small in effect size** in either case. Non-aphantasics answer slightly slower in the incongruent condition, which is not the case for aphantasics.
+1. Mixed models fitted on RTs showed a **significant interaction between Group (Aphantasics/Phantasics) and Congruence**, in both Explicit and Implicit tasks, although **very small in effect size** in either case. Non-aphantasics answer slightly slower in the incongruent condition, which is not the case for aphantasics.
 
-- This continuous "**Congruence effect**", when computed *per subject* as the random parameter for Congruence in the mixed model (i.e. the slope by subject on Congruence), **did not correlate with mental imagery variables**. This contradictory finding might be related to small effect sizes.
+2. This "**Congruence effect**", when considered as continuous and computed *per subject* as the random parameter for Congruence in the mixed model (i.e. the slope by subject on Congruence), **did not correlate with mental imagery variables**. This contradictory finding might be related to very small effect sizes.
 
-- A Gaussian Mixture Model clustering with 4 clusters, computed with the two congruence effects, visual and spatial imagery variables, revealed an interesting structure in the data, linking visual *and* spatial imagery to the congruence effects. While the cluster differences were negligible in the implicit task, the four clusters did manage to explain the variance in the explicit task: the varian
-A specific group of non-aphantasics with high visual imagery and low spatial 
+3. A **Gaussian Mixture Model clustering** with 4 clusters, computed with the two congruence effects, visual and spatial imagery variables, revealed an interesting structure in the data, linking **visual *and* spatial imagery** to the congruence effects. While the cluster differences were negligible in the implicit task, the four clusters did manage to explain some variability in the explicit task. A specific group of non-aphantasics with high visual imagery and low spatial imagery showed especially high congruence effect, and could be interpreted as driving the effects analysed in (1).
 
+The rest of the report is describing and justifying the choices, transformations and assumptions, and visualizing the analyses.
 :::
 
 # Exploratory Data Analysis (EDA) {#sec-eda}
@@ -239,7 +245,7 @@ cor_questionnaires %>%
 
 As we can see, while the three visual imagery variables are highly correlated, the association between these visual variables and spatial imagery (OSIQ-S) is inconsistent: VVIQ and OSIQ-S are positively correlated although with anecdotal evidence, SUIS and OSIQ-S have a moderately evidenced positive correlation, while OSIQ-Object and OSIQ-Spatial are negatively correlated. We'll run a Principal Component Analysis to evaluate the possibility of a reduction of dimensions by considering visual imagery as a single variable.
 
-### Principal Component Analysis
+### Principal Component Analysis {#sec-pca}
 
 ```{r pca}
 #| code-summary: "Computing the PCA"
@@ -2627,7 +2633,7 @@ As we can see that the initial model of a division in two VVIQ groups somehow ma
 
 We mentioned that our initial groups were created based on the VVIQ, that is, **one variable**. We then showed that variance in our sample could come from several variables, limiting the explanatory power of this grouping. The clustering approach would consist in accounting for **all of these variables in the grouping**. This is still limited if we ponder about the innumerable reasons in the participants' cognition that could explain variance, but it is an analytic equivalent of "*doing our best with what we have*". But what variables do we have? Among the continuous within-subject variables, we isolated four, two mental imagery variables and two Congruence effects (one for each task). We could choose to use all four straight away, but that would mean ignoring an important methodological aspect of clustering procedures: as one could theoretically use an infinite number of variables for clustering, it is paramount that this choice be informed by the fact that all variables must be homogeneous in their physical meaning and equally important for classification. In operational terms, that means reducing covariance between variables as much as possible, often through *dimensionality reduction*, e.g., PCA. 
 
-### Dimensionality reduction, part 2
+### Dimensionality reduction, part 2 {#sec-pca2}
 
 The Visual and Spatial imagery variables are already the result of a PCA, thus theoretically two distinct and equally meaningful variables: yet, in our new four-dimensional data, we need to account for their correlations with the two new variables. The question of dimensionality reduction therefore comes from the two Congruence effects: do they represent the same "cognitive features"? How do they associate with each other and mental imagery? To try to answer this question, we will run a second Principal Component Analysis on our four variables.
 
@@ -3164,6 +3170,71 @@ linear_reg() %>%
 In the end, I interpret the 4-cluster model as saying that low spatial imagery participants tend to have a higher congruence effect than high spatial imagery ones, although this difference is in *relative* terms, not absolute (as the first - aphantasic - cluster has a null congruence effect with low spatial imagery). It appears, with a certain grouping on the basis of visual imagery, that non-aphantasic participants have a slightly higher congruence effect, but I interpret the last model as showing that cluster 2 - 24 non-aphantasics only, with low spatial imagery - is the sub-group driving this effect, whereas the other non-aphantasics (cluster 3 and 4, 32 non-aphantasics total) show the opposite pattern.
 
 I suspect the Gabor orientation factor to be a potential predictor of this importance of spatial imagery. However that inquiry would mandate further analysis, and I also suspect that this influence is very small, so I'll wrap up this report with this conclusion.
+
+```{r session_information}
+#| echo: true
+#| code-summary: "R Session information"
+ 
+report_system()
+report_packages(
+  session = sessionInfo(),
+  include_R = FALSE
+  )
+```
+
+```{r exporting_processed_data}
+
+# df_per_subject <-
+#   df_questionnaires %>%
+#   left_join(
+#     df_clustering %>% select(1,5:11),
+#     by = "subjectid"
+#     )
+# 
+# df_per_subject <-
+#   df_per_subject %>%
+#   left_join(
+#     df_explicit %>%
+#   group_by(subjectid) %>%
+#   # filtering out extreme RTs
+#   filter(rt_explicit > 300 & rt_explicit < 1797) %>%
+#   summarise(
+#     explicit_mean_rt = mean(rt_explicit),
+#     explicit_mad_rt = mad(rt_explicit),
+#     explicit_min_rt = min(rt_explicit),
+#     explicit_max_rt = max(rt_explicit)
+#   ),
+#     by = "subjectid"
+#     )
+# 
+# df_per_subject <-
+#   df_per_subject %>%
+#   left_join(
+#     df_implicit %>%
+#   filter(rt_implicit > 300 & rt_implicit < 1386) %>%
+#   group_by(subjectid) %>%
+#   summarise(
+#     implicit_mean_rt = mean(rt_implicit),
+#     implicit_mad_rt = mad(rt_implicit),
+#     implicit_min_rt = min(rt_implicit),
+#     implicit_max_rt = max(rt_implicit)
+#   ),
+#     by = "subjectid"
+#     )
+# 
+# df_per_subject <- df_per_subject %>% filter(!is.na(congruence_effect_explicit))
+# 
+# saving in the xlsx
+# write.xlsx(
+#   list("data_per_subject" = df_per_subject),
+#   "data/aphantasia_per_subject_data.xlsx",
+#   asTable = TRUE,
+#   colNames = TRUE,
+#   colWidths = "auto",
+#   borders = "all",
+#   tableStyle = "TableStyleMedium16"
+# )
+```
 
 
 
