@@ -36,11 +36,11 @@ The folder containing this HTML file also has a "`data/`" folder, wherein can be
 
 - `data_per_subject` is a table containing one row per subject with all the associated information, raw or computed:
 
-    - visual_/spatial_imagery are the two PCA components calculated in [the analysis ot questionnaire data](#sec-pca).
+    - visual_/spatial_imagery are the two PCA components calculated in [the analysis of questionnaire data](#sec-pca).
     - congruence_effect_explicit/_implicit are the "*Congruece effects per subject*", i.e. the slope by-subject on congruence extracted from the multilevel (mixed) models of the [inferential analysis](#sec-inferential).
     - PC1/2/3 are the three PCA components calculated before the clustering procedure in @sec-pca2.
     - clusters_2/_4 are the two clustering solutions, respectively with 2 and 4 clusters.
-    - explicit/implicit_mean/mad/min/max are the summary statistics of the two main tasks.
+    - explicit/implicit_mean/mad/min/max are the summary statistics of the two main tasks after data tidying and transformation.
 
 The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the `aphantasia_priming_analysis.qmd` file, for which the best reading software are coding Integrated Development Environments (IDE) like [RStudio](https://posit.co/download/rstudio-desktop/) or [Visual Studio Code](https://code.visualstudio.com/). The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.
 
