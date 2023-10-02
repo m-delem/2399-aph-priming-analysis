@@ -2237,7 +2237,7 @@ In sum, we kept four variables: the Congruence effect in the Explicit and Implic
 
 ```{r congruence_effect_explicit_distribution}
 #| label: fig-congruence_effect_explicit
-#| fig-cap: "Distribution of the *Explicit task Congruence effect* in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
+#| fig-cap: "Distribution of the **Explicit task Congruence effect** in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
 
 (df_congruence_effect %>%
    ggplot(aes(x = congruence_effect_explicit)) +
@@ -2266,7 +2266,7 @@ In sum, we kept four variables: the Congruence effect in the Explicit and Implic
 
 ```{r congruence_effect_implicit_distribution}
 #| label: fig-congruence_effect_implicit
-#| fig-cap: "Distribution of the *Implicit task Congruence effect* in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
+#| fig-cap: "Distribution of the **Implicit task Congruence effect** in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
 
 (df_congruence_effect %>%
    ggplot(aes(x = congruence_effect_implicit)) +
@@ -2295,7 +2295,7 @@ In sum, we kept four variables: the Congruence effect in the Explicit and Implic
 
 ```{r visual_imagery_distribution}
 #| label: fig-visual_imagery
-#| fig-cap: "Distribution of *Visual Imagery* in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
+#| fig-cap: "Distribution of **Visual Imagery** in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
 
 (df_congruence_effect %>%
    ggplot(aes(x = visual_imagery)) +
@@ -2324,7 +2324,7 @@ In sum, we kept four variables: the Congruence effect in the Explicit and Implic
 
 ```{r spatial_imagery_distribution}
 #| label: fig-spatial_imagery
-#| fig-cap: "Distribution of *Spatial Imagery* in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
+#| fig-cap: "Distribution of **Spatial Imagery** in the whole sample (red dotted line), aphantasia and non-aphantasia groups."
 
 (df_congruence_effect %>%
    ggplot(aes(x = spatial_imagery)) +
@@ -2631,7 +2631,7 @@ As we can see that the initial model of a division in two VVIQ groups somehow ma
 
 ### Variables?
 
-We mentioned that our initial groups were created based on the VVIQ, that is, **one variable**. We then showed that variance in our sample could come from several variables, limiting the explanatory power of this grouping. The clustering approach would consist in accounting for **all of these variables in the grouping**. This is still limited if we ponder about the innumerable reasons in the participants' cognition that could explain variance, but it is an analytic equivalent of "*doing our best with what we have*". But what variables do we have? Among the continuous within-subject variables, we isolated four, two mental imagery variables and two Congruence effects (one for each task). We could choose to use all four straight away, but that would mean ignoring an important methodological aspect of clustering procedures: as one could theoretically use an infinite number of variables for clustering, it is paramount that this choice be informed by the fact that all variables must be homogeneous in their physical meaning and equally important for classification. In operational terms, that means reducing covariance between variables as much as possible, often through *dimensionality reduction*, e.g., PCA. 
+We mentioned that our initial groups were created based on the VVIQ, that is, **one variable**. We then showed that variance in our sample could come from several variables, limiting the explanatory power of this grouping. The clustering approach would consist in accounting for **all of these variables in the grouping**. This is still limited if we ponder about the innumerable reasons in the participants' cognition that could explain variance, but it is an analytical equivalent of "*doing our best with what we have*". But what variables do we have? Among the continuous within-subject variables, we isolated four, two mental imagery variables and two Congruence effects (one for each task). We could choose to use all four straight away, but that would mean ignoring an important methodological aspect of clustering procedures: as one could theoretically use an infinite number of variables for clustering, it is paramount that this choice be informed by the fact that all variables must be homogeneous in their physical meaning and equally important for classification. In operational terms, that means reducing covariance between variables as much as possible, often through *dimensionality reduction*, e.g., PCA. 
 
 ### Dimensionality reduction, part 2 {#sec-pca2}
 
@@ -2740,7 +2740,7 @@ This PCA is a bit harder to interpret than the first one. To begin with, we can 
 
 - **The third component of the PCA** is basically visual imagery, integrating part of the interaction with spatial imagery in the four-dimensional space.
 
-Now that we have three decorrelated variables explaining meaningful aspects of the data, we can run a clustering analysis on them.
+Now that we have three decorrelated variables explaining meaningful aspects of the data, we can run a cluster analysis on them.
 
 ## Cluster analysis
 
@@ -2750,13 +2750,15 @@ We will choose a method of clustering based on Gaussian mixture models [^kmeans]
 
 [^kmeans]: GMMs are less common in psychology than the commonly used K-Means algorithm, but have several advantages over it, mainly: ($i$) K-Means assumes sphericity and an equivalent cluster size, which is rarely the case in reality; ($ii$) GMMs are probabilistic models (*soft clustering*) that are more parsimonious than the geometric approach (*hard clustering*) of K-Means (see for instance Dalmaijer, 2022).
 
-An GMM will therefore identify normal distributions in the data with different means and covariances corresponding to clusters, as well as probabilities for each observation (in this case, the participants) of belonging to a given cluster. As very little information is known about the possible clusters, their means and covariances for each of the variables, the MMG has to follow several steps: **(i) Estimating the number of clusters** : (ii) The random choice of initial parameters (mean, covariance and weight) for the clusters on each variable; (iii) The use of an "*expectation-maximisation*" algorithm [EM - see Dempster, 1977), an iterative algorithm for determining the parameters of a probabilistic model when it depends on unobservable latent variables. The EM algorithm proceeds in two stages. Step E: calculates the probability of each observation belonging to a cluster; then step M: updates the parameters to maximise these probabilities and approximate the actual distributions of the clusters; finally, returns to step E with the new parameters, and repeats the two steps until the model converges on stable clusters.[^complex]
+A GMM will therefore identify normal distributions in the data with different means and covariances corresponding to clusters, as well as probabilities for each observation (in this case, the participants) of belonging to a given cluster. As very little information is known about the possible clusters, their means and covariances for each of the variables, the GMM has to follow several steps: (i) Estimating the number of clusters; (ii) The random choice of initial parameters (mean, covariance and weight) for the clusters on each variable; (iii) The use of an "*expectation-maximisation*" algorithm (EM - see Dempster, 1977), an iterative algorithm for determining the parameters of a probabilistic model when it depends on unobservable latent variables. The EM algorithm proceeds in two stages. Step E: calculates the probability of each observation belonging to a cluster; then step M: updates the parameters to maximise these probabilities and approximate the actual distributions of the clusters; finally, returns to step E with the new parameters, and repeats the two steps until the model converges on stable clusters.[^complex]
     
 [^complex]: The definitions of GMMs and the EM algorithm are extremely simplified, as they are based on complex probabilistic mathematical models, the explanation of which is not really relevant to this report. More details can be found in the article dedicated to the R package used to implement this method (i.e. `Mclust`, see Scrucca, 2016) or on the internet.
 
 ### Determining the number of clusters
 
-There are many methods for determining the ideal number of clusters in a data set. The `n_clusters` function from the package `parameters` on R allows you to use 30 unsupervised methods, and to observe their 'consensus' on this number. The results of this analysis are shown in @fig-number_of_clusters. The choice of 2 clusters is supported by 10 methods out of 30 (Elbow, kl, CCC, Duda, Pseudot2, Beale, Mcclain, Mixture (VEE), Mixture (EEE), Mixture (VII)), but the choices of 3 and 4 clusters are also supported by 6 and 7 methods respectively. We are going to compute the three clusterings and examine the results.
+There are many methods for determining the ideal number of clusters in a data set. The `n_clusters` function from the package `parameters` on R allows you to use 30 unsupervised methods, and to observe their 'consensus' on this number. The results of this analysis are shown in @fig-number_of_clusters. The choice of 2 clusters is supported by 10 methods out of 30 (Elbow, kl, CCC, Duda, Pseudot2, Beale, Mcclain, Mixture (VEE), Mixture (EEE), Mixture (VII)), but the choices of 3 and 4 clusters are also supported by 6 and 7 methods respectively. We are going to compute the 2 and 4-cluster solutions[^simplicity] and examine the results.
+
+[^simplicity]: We did not show the analysis of the 3-solution solely for the sake of simplicity, as it wasn't very "interpretable" and only highlighted the ambiguity of the procedure, which we do not ignore.
 
 ```{r number_of_clusters}
 #| label: fig-number_of_clusters
@@ -2916,7 +2918,9 @@ df_clustering %>%
 
 :::
 
-As we can see from the repartition and 3D projections, the 2-clusters solution essentially captures the obvious split in visual imagery among participants, although in an unsupervised way. This model neglects the rest of the variance but remains the one with the best fit, as the visual imagery split far outclasses the rest of the sources of variability in terms of effect size (by construction of the experiment, through selected recruitment). However, we could argue - as do the 7 indices recommending the 4-cluster solution - that a lot of this "spatial dispersion" of the observations is not accounted for by the model. Thus, we will investigate the results of the 4-clusters solution.
+As we can see from the repartition and 3D projections, the 2-clusters solution essentially captures the obvious split in visual imagery among participants, although in an unsupervised way[^mix]. This model neglects the rest of the variance but remains the one with the best fit, as the visual imagery split far outclasses the rest of the sources of variability in terms of effect size (by construction of the experiment, through selected recruitment). However, we could argue - as do the 7 indices recommending the 4-cluster solution - that a lot of this "spatial dispersion" of the observations is not accounted for by the model. Thus, we will investigate the results of the 4-clusters solution.
+
+[^mix]: The mix of some "non-aphantasics" in the low imagery cluster (and vice-versa) comes from the fact that VVIQ was not the sole component of the Visual imagery variable. Admittedly, if we were to use additional questionnaires to "screen" aphantasia, some people in the "ambiguous" zone could move from one group to the other.
 
 #### 4-Clusters solution
 
@@ -3029,7 +3033,7 @@ df_clustering %>%
 
 :::
 
-Interestingly, the 4-clusters solution roughly split the two visual imagery groups along the line of high/low spatial imagery. This split does not seem to be associated with a consistent dynamic across both Congruence effects. The clusters have different various combinations of visual imagery, different spatial imagery, and congruence effects. To have an intuitive visualization of these mean differences, we will plot them in a radar chart in @fig-4_clusters_radar_chart.
+Interestingly, the 4-clusters solution roughly split the two visual imagery groups along the line of high/low spatial imagery. This split does not seem to be associated with a consistent dynamic across both Congruence effects. The clusters have different combinations of visual imagery, spatial imagery, and congruence effects. To have an intuitive visualization of these mean differences, we will plot them in a radar chart in @fig-4_clusters_radar_chart.
 
 ```{r 4_clusters_radar_charts}
 #| label: fig-4_clusters_radar_chart
@@ -3072,13 +3076,13 @@ This (admittedly slightly crowded) plot shows several tendencies:
     
     - Cluster 1 has an average Congruence effect: it is characterized by **low visual** and **low spatial imagery**.
     
-    - Cluster 3 and 4 have below average (i.e., inverted) Congruence effect: the two clusters are on opposite sides of the visual imagery continuum, but have in common a **high spatial imagery**
+    - Cluster 3 and 4 have below average (i.e., inverted) Congruence effect: the two clusters are on opposite sides of the visual imagery continuum, but have in common a **high spatial imagery**.
     
 The means displayed in the radar chart are rescaled on the minimums and maximums of each variable in our data, therefore the effect sizes might be disproportionately exaggerated. Therefore, let's conclude this analysis with a final model to analyse the actual numerical dynamics. 
 
 ### Coming full circle: 4-cluster models and end notes
 
-First, we will explain the rationale behind this conclusion. In the beginning, we created two groups based on the VVIQ, then tried to explain RTs in the task with this partition. Then, as we demonstrated a varying congruence effect between the groups, we analysed the congruence effect as a continuum varying in light of mental imagery. We did not find statistically significant (linear) trends, but we described tendencies by examining the distributions visually. We tried to explain these trends by fitting a new unsupervised GMM clustering, that eventually found four interesting groups with differences *both* in (explicit) congruence effect and mental imageries, bringing us full circle to a new group partition, this time not based on the sole VVIQ, but that encapsulates both Visual *and* Spatial imagery. Thus, we will go back to our initial objective, i.e. examining the Congruence effect in light of a group partition. We'll fit the simplest model we've seen so far:
+First, we will explain the rationale behind this conclusion. In the beginning, we created two groups based on the VVIQ, then tried to explain RTs in the task with this partition. Then, as we demonstrated a different congruence effect between the groups, we analysed the congruence effect as a continuum varying in light of mental imagery. We did not find statistically significant (linear) trends, but we described tendencies by examining the distributions visually. We tried to explain these trends by fitting a new unsupervised GMM clustering, that eventually found four interesting groups with differences *both* in (explicit) congruence effect and mental imageries, bringing us full circle to a new group partition, this time not based on the sole VVIQ, but that encapsulates both Visual *and* Spatial imagery. Thus, we will go back to our initial objective, i.e. examining the Congruence effect in light of a group partition. We'll fit the simplest model we've seen so far:
 
 $$
 Congruence \ effect = \beta_{1} \cdot Cluster
