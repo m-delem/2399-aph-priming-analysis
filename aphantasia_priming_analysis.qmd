@@ -80,6 +80,7 @@ shelf(
   tidymodels,     # collection of packages for a tidy modelling workflow
   bayesian,       # bayesian modelling with brms and tidymodels
   multilevelmod,  # multilevel modelling with lmer and tidymodels
+  tidybayes,
   mclust,         # mixture clustering
   ggpubr,                # ggplot tools
   ggbeeswarm,            # ggplot tools
@@ -1240,6 +1241,11 @@ workflow_implicit <- workflow() %>% add_recipe(recipe_implicit)
 mod_0_lmer <-
   linear_reg() %>% 
   set_engine("lmer")
+
+# --- bayesian hierarchical models ---
+# mod_0_bayes <-
+#   linear_reg() %>% 
+#   set_engine("stan_glmer")
 ```
 
 ```{r model_specifications}
@@ -1335,6 +1341,25 @@ mod_implicit_6 <-
       (1 + congruence|subjectid) + (1 + color|subjectid)
   )
 ```
+
+```{r model_bayes_test}
+# model 4 bayesian
+# mod_explicit_bayes <-
+#   workflow_explicit %>% add_model(
+#     mod_0_bayes,
+#     formula = rt_explicit ~ aphantasia * congruence * color + (1 + congruence|subjectid)
+#   )
+# 
+# fit_bayes <- mod_explicit_bayes %>% fit(data = df_explicit_rt)
+# fit_bayes %>%
+#   extract_fit_engine %>%
+  # broom.mixed::tidy()
+  # bayesfactor_parameters
+  # model_performance
+  # model_parameters
+  # describe_posterior(test = c("pd", "bf"))
+```
+
 
 ```{r model_fitting}
 
