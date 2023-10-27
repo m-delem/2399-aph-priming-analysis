@@ -8,7 +8,7 @@ format: html
 execute: 
   echo: false
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 toc: true
 toc-depth: 3
 toc-expand: 2
@@ -64,6 +64,8 @@ I left this (usually hidden) step here for reference of the tools used in a view
 #| echo: true
 #| code-summary: "Packages"
 
+# ═══ Packages ═════════════════════════════════════════════════════════════════
+
 # The package `librairian` will ease the package management with the "shelf" 
 # function, which automatically: 
 # 1) checks if a package is installed 
@@ -74,27 +76,46 @@ library(librarian)
 
 # now putting packages on our library's shelves:
 shelf(
-  rstatix,        # ggplot stat tools
-  readxl,         # Excel files management
-  openxlsx,       # Excel files management
-  easystats,      # collection of data analysis packages
-  tidymodels,     # collection of packages for a tidy modelling workflow
-  bayesian,       # bayesian modelling with brms and tidymodels
+  # ─── essential package collections ───
+  tidyverse,      # modern R ecosystem
+  easystats,      # data analysis framework
+  tidymodels,     # modelling framework
+  
+  # ─── tidymodels friends ──────────────
+  corrr,          # correlational analyses
+  tidybayes,      # bayesian inference
   multilevelmod,  # multilevel modelling with lmer and tidymodels
-  tidybayes,
+  
+  # ─── modelling ───────────────────────
+  lme4,           # mixed models
   mclust,         # mixture clustering
-  ggpubr,                # ggplot tools
-  ggbeeswarm,            # ggplot tools
-  ricardo-bion/ggradar,  # gg radar plots
-  plotly,                # interactive plots
-  viridis,               # ggplot colour-blind friendly palettes
-  tidyverse       # the essentials.
+  rstanarm,       # bayesian models
+  BayesFactor,    # BFs
+  
+  # ─── data management ─────────────────
+  readxl,         # importing xlsx
+  openxlsx,       # exporting xlsx
+  
+  #  data visualization ──────────────
+  # plot types and geoms
+  ricardo-bion/ggradar,  # radar plots
+  ggbeeswarm,            # scatter violin plots
+  GGally,         # complex plots
+  # layout and options
+  ggpubr,         # publication plots
+  patchwork,      # layout control
+  rstatix,        # ggplot stat tools
+  # palettes
+  ggsci,          # scientific palettes
+  viridis,        # colour-blind friendly palettes
+  # interactive
+  plotly         # interactive plots
 )
 
-# --- Global cosmetic theme ---
+# ─── Global cosmetic theme ───
 theme_set(theme_bw(base_size = 14))
 
-# --- Fixing a seed for reproducibility ---
+# ─── Fixing a seed for reproducibility ───
 set.seed(14051998)
 ```
 
@@ -1285,7 +1306,7 @@ all_models_parameters <-
 
 ```{r model_explicit_contrasts}
 
-# model 4 contrasts between aphantasia and congruence levels
+# model 5 contrasts between aphantasia and congruence levels
 c_ex_gcn <-
   all_models_fitted[[1]][[5]] %>% 
   estimate_contrasts(
@@ -1296,7 +1317,7 @@ c_ex_gcn <-
   ) %>% 
   mutate(across(where(is.numeric), ~ round(.x, digits = 2)))
 
-# model 4 contrasts between color levels
+# model 5 contrasts between color levels
 c_ex_col <-
   all_models_fitted[[1]][[5]] %>% 
   estimate_contrasts(
@@ -1329,7 +1350,7 @@ dw <- .75
 # stat text size
 st <- 7
 # legend and axis text size
-txt <- 22
+txt <- 32
 ```
 
 <!-- GCN -->
@@ -1391,12 +1412,12 @@ p_mod_ex_gcn_full <-
     ) +
   
   # participant points
-  geom_beeswarm(
-    cex = .5,
-    dodge.width = dw,
-    alpha = 0.25,
-    size = .5
-  ) +
+  # geom_beeswarm(
+  #   cex = .5,
+  #   dodge.width = dw,
+  #   alpha = 0.25,
+  #   size = .5
+  # ) +
 
   # linear modelling of the differences
   geom_line(
@@ -1450,7 +1471,7 @@ p_mod_ex_gcn_full <-
     axis.ticks.x = element_blank(),
     axis.text.x = element_blank(),
     legend.title = element_text(size = txt),
-    legend.text = element_text(size = 18)
+    legend.text = element_text(size = txt)
     )
 ```
 
@@ -1470,7 +1491,7 @@ p_mod_ex_gcn_zoom <-
   
   # group violin distributions with quantiles
   geom_violin(
-    alpha = .2,
+    alpha = .1,
     trim = FALSE,
     adjust = .6,
     scale = "count",
@@ -1480,12 +1501,12 @@ p_mod_ex_gcn_zoom <-
     ) +
   
   # participant points
-  geom_beeswarm(
-    cex = .5,
-    dodge.width = dw,
-    alpha = 0.25,
-    size = .5
-  ) +
+  # geom_beeswarm(
+  #   cex = .5,
+  #   dodge.width = dw,
+  #   alpha = 0.25,
+  #   size = .5
+  # ) +
 
   # linear modelling of the differences
   geom_line(
@@ -1545,7 +1566,7 @@ p_mod_ex_gcn_zoom <-
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
     axis.text.x = element_text(size = txt),
-    legend.text = element_text(size = 18),
+    legend.text = element_text(size = txt),
     # axis.title.x = element_text(size = 18, vjust = -.5),
     legend.title = element_text(size = txt)
     )
@@ -1609,12 +1630,12 @@ p_mod_ex_gcol_full <-
     ) +
   
   # participant points
-  geom_beeswarm(
-    cex = .5,
-    dodge.width = .8,
-    alpha = 0.25,
-    size = .5
-  ) +
+  # geom_beeswarm(
+  #   cex = .5,
+  #   dodge.width = .8,
+  #   alpha = 0.25,
+  #   size = .5
+  # ) +
 
   # linear modelling of the differences
   geom_line(
@@ -1668,7 +1689,7 @@ p_mod_ex_gcol_full <-
     axis.ticks.x = element_blank(),
     axis.text.x = element_blank(),
     legend.title = element_text(size = txt),
-    legend.text = element_text(size = 18)
+    legend.text = element_text(size = txt)
     )
 ```
 
@@ -1688,7 +1709,7 @@ p_mod_ex_gcol_zoom <-
   
   # group violin distributions with quantiles
   geom_violin(
-    alpha = .2,
+    alpha = .1,
     trim = FALSE,
     adjust = .6,
     scale = "count",
@@ -1698,12 +1719,12 @@ p_mod_ex_gcol_zoom <-
     ) +
   
   # participant points
-  geom_beeswarm(
-    cex = .5,
-    dodge.width = .8,
-    alpha = 0.25,
-    size = .5
-  ) +
+  # geom_beeswarm(
+  #   cex = .5,
+  #   dodge.width = .8,
+  #   alpha = 0.25,
+  #   size = .5
+  # ) +
 
   # linear modelling of the differences
   geom_line(
@@ -1763,7 +1784,7 @@ p_mod_ex_gcol_zoom <-
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
     axis.text.x = element_text(size = txt),
-    legend.text = element_text(size = 18),
+    legend.text = element_text(size = txt),
     # axis.title.x = element_text(size = 18, vjust = -.5),
     legend.title = element_text(size = txt)
     )
@@ -1786,14 +1807,16 @@ p_mod_explicit_ggarrange <-
     p_mod_ex_gcn_zoom,
     p_mod_ex_gcol_zoom,
     labels = c("Congruence", "Color"),
-    label.x = c(-.1,.75),
-    vjust = -.1,
-    font.label = list(size = 26),
+    label.x = c(-.1,.7),
+    vjust = -.2,
+    font.label = list(size = 38),
     common.legend = TRUE,
     legend = "top",
     ncol = 2,
-    nrow = 2
-  ) %>% 
+    nrow = 2,
+    heights = c(1.2,1),
+    align = "v"
+  ) %>%
   annotate_figure(
     left = text_grob("Response time (standardized)", size = txt, rot = 90)
     )
@@ -1807,11 +1830,22 @@ p_mod_explicit_ggarrange
 
 ```{r model_implicit_contrasts}
 
-# model 3 contrasts between aphantasia and congruence levels
+# model 4 contrasts between aphantasia and congruence levels
 c_im_gcn <-
   all_models_fitted[[2]][[4]] %>% 
   estimate_contrasts(
     contrast = c("aphantasia", "congruence"), 
+    lmerTest.limit = 9000, 
+    pbkrtest.limit = 9000,
+    p_adjust = "fdr"
+  ) %>% 
+  mutate(across(where(is.numeric), ~ round(.x, digits = 2)))
+
+# model 4 contrasts between group levels
+# c_im_group <-
+  all_models_fitted[[2]][[4]] %>% 
+  estimate_contrasts(
+    contrast = c("aphantasia"), 
     lmerTest.limit = 9000, 
     pbkrtest.limit = 9000,
     p_adjust = "fdr"
@@ -1832,10 +1866,11 @@ all_models_parameters[["implicit_mods"]][["mod_implicit_4"]]
 
 :::
 
-<!-- Implicit model group and congruence means -->
+<!-- Implicit model stats -->
 ```{r model_implicit_gcn_plot_stats}
 
 # model 3 marginal means predictions
+# interaction ______________________________
 preds_mod_3_fixed_congruence <- 
   all_models_fitted[[2]][[4]] %>% 
   estimate_means(
@@ -1844,6 +1879,61 @@ preds_mod_3_fixed_congruence <-
     pbkrtest.limit = 9000,
     p_adjust = "fdr"
   )
+
+# group ________________________________
+preds_mod_3_fixed_group <- 
+  all_models_fitted[[2]][[4]] %>% 
+  estimate_means(
+    at = c("aphantasia"), 
+    lmerTest.limit = 9000, 
+    pbkrtest.limit = 9000,
+    p_adjust = "fdr"
+  )
+
+# stats for the gcn interaction _________________________________________
+
+# controls comparisons between conditions on full plot
+stats_mod_3_g_cng_full <-
+  df_implicit_rt %>% 
+  standardize(rt_implicit) %>% 
+  group_by(aphantasia) %>% 
+  pairwise_wilcox_test(rt_implicit ~ congruence) %>% 
+  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) %>% 
+  mutate(y.position = 3.6) %>% 
+  filter(aphantasia == "no")
+
+# controls and aph comparisons between conditions on zoomed plot
+stats_mod_3_g_cng_zoom <-
+  df_implicit_rt %>% 
+  standardize(rt_implicit) %>% 
+  group_by(aphantasia) %>% 
+  pairwise_wilcox_test(rt_implicit ~ congruence) %>% 
+  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) %>% 
+  mutate(y.position = c(.28, .2))
+
+stats_mod_3_g_cng_full2 <-
+  df_implicit_rt %>% 
+  standardize(rt_implicit) %>% 
+  group_by(congruence) %>% 
+  pairwise_wilcox_test(rt_implicit ~ aphantasia) %>% 
+  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) %>% 
+  mutate(y.position = 3.2)
+
+# stats for group _____________________________________________
+stats_mod_3_group_full <-
+  df_implicit_rt %>% 
+  standardize(rt_implicit) %>%
+  group_by(congruence) |> 
+  pairwise_wilcox_test(rt_implicit ~ aphantasia) %>% 
+  add_xy_position(x = "aphantasia", dodge = dw) %>% 
+  mutate(y.position = 3.2)
+
+stats_mod_3_group_zoom <-
+  df_implicit_rt %>% 
+  standardize(rt_implicit) %>%
+  pairwise_wilcox_test(rt_implicit ~ aphantasia) %>% 
+  add_xy_position(x = "aphantasia", dodge = dw) %>% 
+  mutate(y.position = .2)
 ```
 
 <!-- Implicit model full group and congruence plot -->
@@ -1854,14 +1944,15 @@ p_mod_im_gcn_full <-
   bake(df_implicit_rt) %>%
   ggplot(aes(
     x = congruence,
-    y = rt_implicit,
-    fill = aphantasia,
-    color = aphantasia
+    y = rt_implicit
     )
   ) +
   
   # group violin distributions with quantiles
   geom_violin(
+    aes(
+    fill = aphantasia,
+    color = aphantasia),
     alpha = .2,
     trim = FALSE,
     adjust = .6,
@@ -1872,19 +1963,20 @@ p_mod_im_gcn_full <-
     ) +
   
   # participant points
-  geom_beeswarm(
-    cex = .5,
-    dodge.width = dw,
-    alpha = 0.25,
-    size = .5
-  ) +
+  # geom_beeswarm(
+  #   cex = .5,
+  #   dodge.width = dw,
+  #   alpha = 0.25,
+  #   size = .5
+  # ) +
 
   # linear modelling of the differences
   geom_line(
     data = preds_mod_3_fixed_congruence,
     aes(
       y = Mean,
-      group = aphantasia
+      group = aphantasia,
+      color = aphantasia
     ),
     position = position_dodge(width = dw),
     linewidth = 1,
@@ -1912,6 +2004,22 @@ p_mod_im_gcn_full <-
   # intercept at 0
   geom_hline(yintercept = 0, linewidth = .05, linetype = 2, alpha = .5) +
   
+  # stats display
+  stat_pvalue_manual(
+    stats_mod_3_g_cng_full, 
+    label = "p.adj.signif", 
+    # tip.length = 0,
+    size = st
+    ) +
+  
+  # stats display
+  stat_pvalue_manual(
+    stats_mod_3_g_cng_full2, 
+    label = "p.adj.signif", 
+    # tip.length = 0,
+    size = st
+    ) +
+  
   # color_palettes and options
   labs(x = NULL, y = NULL) +
   # scale_x_discrete(labels = c("Congruent", "Incongruent")) +
@@ -1921,7 +2029,9 @@ p_mod_im_gcn_full <-
   theme(
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
-    axis.text.x = element_blank()
+    axis.text.x = element_blank(),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt)
     )
 ```
 
@@ -1941,7 +2051,7 @@ p_mod_im_gcn_interaction_zoom <-
   
   # group violin distributions with quantiles
   geom_violin(
-    alpha = .2,
+    alpha = .1,
     trim = FALSE,
     adjust = .6,
     scale = "count",
@@ -1951,12 +2061,12 @@ p_mod_im_gcn_interaction_zoom <-
     ) +
   
   # participant points
-  geom_beeswarm(
-    cex = .5,
-    dodge.width = dw,
-    alpha = 0.25,
-    size = .5
-  ) +
+  # geom_beeswarm(
+  #   cex = .5,
+  #   dodge.width = dw,
+  #   alpha = 0.25,
+  #   size = .5
+  # ) +
 
   # linear modelling of the differences
   geom_line(
@@ -1991,6 +2101,14 @@ p_mod_im_gcn_interaction_zoom <-
   # intercept at 0
   geom_hline(yintercept = 0, linetype = 2) +
   
+  # stats display
+  stat_pvalue_manual(
+    stats_mod_3_g_cng_zoom, 
+    label = "p.adj.signif", 
+    tip.length = 0,
+    size = st
+    ) +
+  
   # zoom on a shorter y range
   coord_cartesian(ylim = c(-.3,.3)) +
   
@@ -2003,7 +2121,195 @@ p_mod_im_gcn_interaction_zoom <-
   theme(
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
-    axis.text.x = element_text(size = 18)
+    axis.text.x = element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt)
+    )
+```
+
+<!-- Implicit model full group plot -->
+```{r model_implicit_group_full_plot}
+p_mod_im_group_full <-
+  recipe_implicit %>% 
+  prep() %>% 
+  bake(df_implicit_rt) %>%
+  ggplot(aes(
+    x = aphantasia,
+    y = rt_implicit
+    )
+  ) +
+  
+  # group violin distributions with quantiles
+  geom_violin(
+    aes(
+    fill = aphantasia,
+    color = aphantasia
+    ),
+    alpha = .2,
+    trim = FALSE,
+    adjust = .6,
+    scale = "count",
+    draw_quantiles = c(.25,.5,.75),
+    position = position_dodge(width = dw),
+    linewidth = .6
+    ) +
+  
+  # participant points
+  # geom_beeswarm(
+  #   cex = .5,
+  #   dodge.width = dw,
+  #   alpha = 0.25,
+  #   size = .5
+  # ) +
+
+  # linear modelling of the differences
+  geom_line(
+    data = preds_mod_3_fixed_group,
+    aes(
+      y = Mean,
+      group = 1
+    ),
+    color = "black",
+    position = position_dodge(width = dw),
+    linewidth = 1,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+   
+  # predicted means of the model
+  geom_pointrange2(
+    data = preds_mod_3_fixed_group,
+    aes(
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = 1
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = .75,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  
+  # intercept at 0
+  geom_hline(yintercept = 0, linewidth = .05, linetype = 2, alpha = .5) +
+  
+  # stats display
+  stat_pvalue_manual(
+    stats_mod_3_group_full, 
+    label = "p.adj.signif", 
+    # tip.length = 0,
+    size = st
+    ) +
+  
+  # color_palettes and options
+  labs(x = NULL, y = NULL) +
+  # scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_y_continuous(breaks = breaks_pretty(10)) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank(),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt)
+    )
+```
+
+<!-- Implicit model zoomed groupplot -->
+```{r model_implicit_group_zoomed_plot}
+p_mod_im_group_zoom <-
+  recipe_implicit %>% 
+  prep() %>% 
+  bake(df_implicit_rt) %>%
+  ggplot(aes(
+    x = aphantasia,
+    y = rt_implicit
+    )
+  ) +
+  
+  # group violin distributions with quantiles
+  geom_violin(
+    aes(
+    fill = aphantasia,
+    color = aphantasia
+    ),
+    alpha = .1,
+    trim = FALSE,
+    adjust = .6,
+    scale = "count",
+    draw_quantiles = c(.25,.5,.75),
+    position = position_dodge(width = dw),
+    linewidth = .6
+    ) +
+  
+  # participant points
+  # geom_beeswarm(
+  #   cex = .5,
+  #   dodge.width = dw,
+  #   alpha = 0.25,
+  #   size = .5
+  # ) +
+
+  # linear modelling of the differences
+  geom_line(
+    data = preds_mod_3_fixed_group,
+    aes(
+      y = Mean,
+      group = 1
+    ),
+    color = "black",
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+   
+  # predicted means of the model
+  geom_pointrange2(
+    data = preds_mod_3_fixed_group,
+    aes(
+      x = aphantasia,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = 1
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  
+  # intercept at 0
+  geom_hline(yintercept = 0, linetype = 2) +
+  
+  # stats display
+  stat_pvalue_manual(
+    stats_mod_3_group_zoom, 
+    label = "p.adj.signif", 
+    tip.length = 0,
+    size = st
+    ) +
+  
+  # zoom on a shorter y range
+  coord_cartesian(ylim = c(-.26,.26)) +
+  
+  # color_palettes and options
+  labs(x = NULL, y = NULL) +
+scale_x_discrete(labels = c("Aphantasics", "Controls")) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt)
     )
 ```
 
@@ -2018,17 +2324,28 @@ p_mod_im_gcn_interaction_zoom <-
 
 p_mod_implicit_ggarrange <-
   ggarrange(
+    p_mod_im_group_full,
     p_mod_im_gcn_full,
+    p_mod_im_group_zoom,
     p_mod_im_gcn_interaction_zoom,
+    ncol = 2,
+    nrow = 2,
+    labels = c("Group", "Interaction"),
+    label.x = c(-.03,.5),
+    vjust = -.2,
+    font.label = list(size = 38),
     common.legend = TRUE,
-    ncol = 1
+    legend = "top",
+    heights = c(1.2,1),
+    align = "v"
   ) %>% 
   annotate_figure(
-    left = text_grob("Response time (standardized)", size = 18, rot = 90),
-    bottom = text_grob("Congruence condition", size = 20)
+    left = text_grob("Response time (standardized)", size = txt, rot = 90)
     )
 
 p_mod_implicit_ggarrange
+
+# ggexport(p_mod_implicit_ggarrange, filename = "plots/model_explicit.png", width = 1300, height = 800)
 ```
 
 :::
