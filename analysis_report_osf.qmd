@@ -8,7 +8,7 @@ format: html
 execute: 
   echo: false
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 toc: true
 toc-depth: 3
 toc-expand: 2
@@ -2509,6 +2509,7 @@ p_b_mod_ex_vicng <-
   scale_color_lancet(name = "Congruence") +
   theme(
     title = element_text(size = txt),
+    axis.text = element_text(size = txt/2),
     legend.text = element_text(size = txt),
     legend.title = element_text(size = txt)
     )
@@ -2525,7 +2526,8 @@ vizdata_vi_si_explicit$predicted <-
     all_b_models_fitted[["explicit_b_mods"]][["mod_explicit_5b"]], 
     vizdata_vi_si_explicit
     )
-p_b_mod_ex_visi <- 
+
+p_b_mod_ex_visi <-
   df_explicit_recipe_b |> 
   ggplot(aes(
     x = visual_imagery,
@@ -2544,13 +2546,19 @@ p_b_mod_ex_visi <-
       ),
     size = 1
   ) +
+  coord_cartesian(
+    ylim = c(-3.5,1)
+  ) +
   labs(
+    title = "Explicit task",
     x = "",
     y = ""
     ) +
   scale_color_viridis(name = "Spatial imagery") +
   theme(
-    legend.text = element_text(size = txt),
+    title = element_text(size = txt),
+    axis.text = element_text(size = txt/2),
+    legend.text = element_text(size = txt/2),
     legend.title = element_text(size = txt)
     )
 ```
@@ -2625,6 +2633,7 @@ p_b_mod_im_vicng <-
   theme(
     plot.title = element_text(hjust = 1),
     title = element_text(size = txt),
+    axis.text = element_text(size = txt/2),
     legend.text = element_text(size = txt),
     legend.title = element_text(size = txt)
     )
@@ -2638,7 +2647,7 @@ vizdata_implicit <-
 
 vizdata_implicit$predicted <- insight::get_predicted(all_b_models_fitted[["explicit_b_mods"]][["mod_explicit_5b"]], vizdata_implicit)
 
-p_b_mod_im_visi <- 
+p_b_mod_im_visi <-
   df_implicit_recipe_b |> 
   ggplot(aes(
     x = visual_imagery,
@@ -2657,17 +2666,23 @@ p_b_mod_im_visi <-
       ),
     size = 1
   ) +
+  coord_cartesian(
+    ylim = c(-3.5,1)
+  ) +
   labs(
+    title = "Implicit task",
     x = "",
     y = ""
     ) +
   scale_color_viridis(name = "Spatial imagery") +
   theme(
+    plot.title = element_text(hjust = 1),
+    title = element_text(size = txt),
+    axis.text = element_text(size = txt/2),
     legend.text = element_text(size = txt/2),
-    legend.title = element_text(size = txt/2)
+    legend.title = element_text(size = txt)
     )
 ```
-
 
 ```{r b_models_ggarrange}
 p_b_mods_vicng_ggarrange <-
@@ -2691,6 +2706,42 @@ p_b_mods_vicng_ggarrange <-
       vjust = .05
       )
     )
+
+p_b_mods_visi_ggarrange <-
+  ggarrange(
+    p_b_mod_ex_visi,
+    p_b_mod_im_visi,
+    common.legend = TRUE,
+    legend = "top",
+    ncol = 2,
+    align = "v"
+  ) |> 
+  annotate_figure(
+    left = text_grob(
+      "Response time (standardized)", 
+      size = txt, 
+      rot = 90
+      ),
+    bottom = text_grob(
+      "Visual imagery (standardized PCA variable)", 
+      size = txt,
+      vjust = .05
+      )
+    )
+
+ggexport(
+  p_b_mods_vicng_ggarrange, 
+  filename = "plots/model_continuous_vicng.png",
+  width = 1600,
+  height = 800
+  )
+
+ggexport(
+  p_b_mods_visi_ggarrange, 
+  filename = "plots/model_continuous_visi.png",
+  width = 1600,
+  height = 800
+  )
 ```
 
 
