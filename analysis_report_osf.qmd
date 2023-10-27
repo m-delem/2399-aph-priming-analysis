@@ -8,7 +8,7 @@ format: html
 execute: 
   echo: false
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 toc: true
 toc-depth: 3
 toc-expand: 2
@@ -2219,7 +2219,7 @@ RT_{ijk} = \alpha + \alpha_{i} + \beta_{1} \cdot \ VI_{i} \times \beta_{2} \cdot
 \end{aligned}
 $$
 
-Where $\alpha$ is the global intercept, $\alpha_{i}$ is a random intercept by subject accounting for the inherent randomness tied to participants, and $\beta_{1/2/3/4}$ are the parameters representing the effect of each predictor. The "$\times$" signs represent all the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope $\beta_{3i/4i}$ by subject can be added to the Congruence or Color parameters to account for this variance. Likewise, several models will be fitted in turn with the same pattern as above. In a view of parcimony, models including only two-way interactions between the four factors will be considered.
+Where $\alpha$ is the global intercept, $\alpha_{i}$ is a random intercept by subject accounting for the inherent randomness tied to participants, and $\beta_{1/2/3/4}$ are the parameters representing the effect of each predictor. The "$\times$" signs represent all the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope $\beta_{3i/4i}$ by subject can be added to the Congruence or Color parameters to account for this variance. Likewise, several models will be fitted in turn with the same pattern as above. Only models including only two-way interactions between the four factors have been kept, as three and four-way interactions were not improving the quality of the models in any way.
 
 ```{r new_recipes_workflows_and_engines}
 # --- explicit data ---
@@ -2292,35 +2292,35 @@ mod_explicit_1b <-
 mod_explicit_2b <-
   workflow_explicit_b %>% add_model(
     mod_0_lmer,
-    formula = rt_explicit ~ visual_imagery + spatial_imagery + congruence + color + (1|subjectid)
+    formula = rt_explicit ~ (visual_imagery + spatial_imagery + congruence + color)^3 + (1 + color|subjectid)
   )
 
 # model 3: interactions
 mod_explicit_3b <- 
   workflow_explicit_b %>% add_model(
     mod_0_lmer,
-    formula = rt_explicit ~ visual_imagery * spatial_imagery * congruence * color + (1|subjectid)
+    formula = rt_explicit ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (1|subjectid)
   )
 
 # model 4: slope by subject on congruence
 mod_explicit_4b <-
   workflow_explicit_b %>% add_model(
     mod_0_lmer,
-    formula = rt_explicit ~ visual_imagery * spatial_imagery * congruence * color + (1 + congruence|subjectid)
+    formula = rt_explicit ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (1 + congruence|subjectid)
   )
 
 # model 5: slope by subject on color
 mod_explicit_5b <-
   workflow_explicit_b %>% add_model(
     mod_0_lmer,
-    formula = rt_explicit ~ visual_imagery * spatial_imagery * congruence * color + (1 + color|subjectid)
+    formula = rt_explicit ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (1 + color|subjectid)
   )
 
 # model 6: maximal model
 mod_explicit_6b <-
   workflow_explicit_b %>% add_model(
     mod_0_lmer,
-    formula = rt_explicit ~ visual_imagery * spatial_imagery * congruence * color + 
+    formula = rt_explicit ~ (visual_imagery + spatial_imagery + congruence + color)^2 + 
       (1 + congruence|subjectid) + (1 + color|subjectid)
   )
 
@@ -2337,35 +2337,35 @@ mod_implicit_1b <-
 mod_implicit_2b <-
   workflow_implicit_b %>% add_model(
     mod_0_lmer,
-    formula = rt_implicit ~ visual_imagery + spatial_imagery + congruence + color + (1|subjectid)
+    formula = rt_implicit ~ (visual_imagery + spatial_imagery + congruence + color)^3 + (1 + congruence|subjectid)
   )
 
 # model 3: congruence effect
 mod_implicit_3b <- 
   workflow_implicit_b %>% add_model(
     mod_0_lmer,
-    formula = rt_implicit ~ visual_imagery * spatial_imagery * congruence * color + (1|subjectid)
+    formula = rt_implicit ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (1|subjectid)
   )
 
 # model 4: color effect
 mod_implicit_4b <-
   workflow_implicit_b %>% add_model(
     mod_0_lmer,
-    formula = rt_implicit ~ visual_imagery * spatial_imagery * congruence * color + (1 + congruence|subjectid)
+    formula = rt_implicit ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (1 + congruence|subjectid)
   )
 
 # model 5: slope by subject on color
 mod_implicit_5b <-
   workflow_implicit_b %>% add_model(
     mod_0_lmer,
-    formula = rt_implicit ~ visual_imagery * spatial_imagery * congruence * color + (1 + color|subjectid)
+    formula = rt_implicit ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (1 + color|subjectid)
   )
 
 # model 6: maximal model
 mod_implicit_6b <-
   workflow_implicit_b %>% add_model(
     mod_0_lmer,
-    formula = rt_implicit ~ visual_imagery * spatial_imagery * congruence * color + 
+    formula = rt_implicit ~ (visual_imagery + spatial_imagery + congruence + color)^2 + 
       (1 + congruence|subjectid) + (1 + color|subjectid)
   )
 ```
@@ -2378,7 +2378,7 @@ mod_implicit_6b <-
 fit_explicit_b_mods <-
   list(
     mod_explicit_1b = mod_explicit_1b, 
-    # mod_explicit_2b = mod_explicit_2b, 
+    mod_explicit_2b = mod_explicit_2b,
     mod_explicit_3b = mod_explicit_3b,
     mod_explicit_4b = mod_explicit_4b,
     mod_explicit_5b = mod_explicit_5b#,
@@ -2390,7 +2390,7 @@ fit_explicit_b_mods <-
 fit_implicit_b_mods <-
   list(
     mod_implicit_1b = mod_implicit_1b,
-    # mod_implicit_2b = mod_implicit_2b,
+    mod_implicit_2b = mod_implicit_2b,
     mod_implicit_3b = mod_implicit_3b,
     mod_implicit_4b = mod_implicit_4b,
     mod_implicit_5b = mod_implicit_5b#,
@@ -2412,7 +2412,7 @@ all_b_models_fitted <-
 #| tbl-subcap: 
 #|   - "**Explicit** task models."
 #|   - "**Implicit** task models."
-#| layout-ncol: 1
+#| layout-ncol: 2
 
 # --- Performance of the models ---
 all_b_models_performances <- 
@@ -2420,8 +2420,8 @@ all_b_models_performances <-
   imap(
     ~ .x %>% 
       compare_performance(metrics = c("AIC", "AICc")) %>% 
-      select(-Model) #%>%
-      # display
+      select(-Model) %>%
+      display
     )
 
 all_b_models_performances[["explicit_b_mods"]]
@@ -2431,10 +2431,7 @@ all_b_models_performances[["implicit_b_mods"]]
 
 ```
 
-The fifth model including a slope by subject on Congruence is the most supported for the **explicit task**, while the fourth model including only an intercept by subject has the best performance among models for the **implicit task**. The parameters of these two models will be analysed in the following.
-
 ```{r new_model_parameters}
-
 # --- Parameter estimations ---
 all_b_models_parameters <-
   all_b_models_fitted %>% 
@@ -2448,19 +2445,262 @@ all_b_models_parameters <-
     )
 ```
 
+## Explicit task results
+
+The best model for the RTs in the explicit task included a random intercept and slope by participant on the Color condition (AIC = 19,474, cAIC = 19,474, null model AIC = 19,582), and had a substantial explanatory power (conditional $R^{2}$ = .53). The parameters of this model are displayed in Table \ref{tbl:model_b_explicit}. The significant parameters in this task are the Congruence, the Color, the interaction between VI and SI and the interaction between VI and Congruence. The main effect of Congruence and Color indicate that participants responded overall slower in the incongruent condition ($\beta$  = 0.06,  95\% CI [0.02, 0.11], \textit{t}(8888) = 3.09, p = .002) and in the uncolored condition ($\beta$  = 0.13,  95\% CI [0.09, 0.18], \textit{t}(8888) = 6.06, p $<$ .001). The interaction between VI and SI ($\beta$ = 0.08, 95\% CI [0.01, 0.16], \textit{t}(8891) = 2.28, p = .023) reveals that RTs are longer with higher VI and SI. Finally, the interaction between VI and Congruence ($\beta$ = 0.03, 95\% CI [0.00, 0.04], \textit{t}(8888) = 2.14, p = .003) reveals that a higher VI leads to slower RTs in the incongruent condition. These effects are represented in Figure \ref{fig:model_b_explicit}. All estimates are $< 0.2$, which denotes a small effect sizes.
+
 ```{r new_model_explicit_params_table}
 #| label: tbl-new_model_explicit_params_table
-#| tbl-cap: "Parameters of the optimal model for the explicit task including a random intercept and slope by subject on Congruence."
+#| tbl-cap: "Parameters of the optimal model for the explicit task including a random intercept and slope by subject on Color."
 
 all_b_models_parameters[["explicit_b_mods"]][["mod_explicit_5b"]]
 ```
 
-```{r new_model_implicit_params_table}
-#| label: tbl-new_model_explicit_params_table
-#| tbl-cap: "Parameters of the optimal model for the explicit task including a random intercept and slope by subject on Congruence."
+```{r plot_vi_congruence_explicit}
+df_explicit_recipe_b <- 
+  recipe_explicit_b |> 
+  prep() |> 
+  bake(df_explicit_rt) 
 
-all_b_models_parameters[["implicit_b_mods"]][["mod_implicit_5b"]]
+vizdata_vi_cng_explicit <- 
+  df_explicit_recipe_b |> 
+  visualisation_matrix(
+    at = c("visual_imagery", "congruence"),
+    length = 100,
+    preserve_range = TRUE
+)
+
+vizdata_vi_cng_explicit <- 
+  vizdata_vi_cng_explicit |> 
+  mutate(predicted = insight::get_predicted(
+    all_b_models_fitted[["explicit_b_mods"]][["mod_explicit_5b"]], 
+    vizdata_vi_cng_explicit
+    )) |> 
+  mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent"))
+
+p_b_mod_ex_vicng <-
+  df_explicit_recipe_b |> 
+  mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent")) |>  
+  ggplot(aes(
+    x = visual_imagery,
+    y = rt_explicit,
+    color = congruence
+  )) +
+  geom_point(
+    size = 1,
+    alpha = .2
+  ) +
+  geom_line(
+    data = vizdata_vi_cng_explicit,
+    aes(
+      y = predicted,
+      group = congruence
+    ),
+    size = 1.5
+  ) +
+  coord_cartesian(
+    ylim = c(-2,-.7)
+  ) +
+  labs(
+    title = "Explicit task",
+    x = "",
+    y = ""
+    ) +
+  scale_color_lancet(name = "Congruence") +
+  theme(
+    title = element_text(size = txt),
+    legend.text = element_text(size = txt),
+    legend.title = element_text(size = txt)
+    )
 ```
+
+```{r plot_vi_si_explicit}
+vizdata_vi_si_explicit <-
+  df_explicit_recipe_b |> 
+  visualisation_matrix(c("visual_imagery", "spatial_imagery"), length = 100) |> 
+  visualisation_matrix("visual_imagery", length = 15, numerics = "all") 
+
+vizdata_vi_si_explicit$predicted <- 
+  insight::get_predicted(
+    all_b_models_fitted[["explicit_b_mods"]][["mod_explicit_5b"]], 
+    vizdata_vi_si_explicit
+    )
+p_b_mod_ex_visi <- 
+  df_explicit_recipe_b |> 
+  ggplot(aes(
+    x = visual_imagery,
+    y = rt_explicit,
+    color = spatial_imagery
+    )) +
+  geom_point(
+    size = 1,
+    alpha = .1
+  ) +
+  geom_line(
+    data = vizdata_vi_si_explicit,
+    aes(
+      y = predicted,
+      group = spatial_imagery
+      ),
+    size = 1
+  ) +
+  labs(
+    x = "",
+    y = ""
+    ) +
+  scale_color_viridis(name = "Spatial imagery") +
+  theme(
+    legend.text = element_text(size = txt),
+    legend.title = element_text(size = txt)
+    )
+```
+
+
+## Implicit task results
+
+The best model for the RTs in the implicit task included a random intercept and slope by participant on the Congruence condition (AIC = 22,109, cAIC = 22,109, null model AIC = 22,116), and had a substantial explanatory power (conditional $R^{2}$ = .35). The parameters of this model are displayed in Table \ref{tbl:model_b_implicit}. The significant parameters in this task are the interaction between VI and Congruence, along with a trend towards an interaction between VI and SI.
+
+The interaction between VI and Congruence shows that a higher VI is associated with slower responses in the incongruence condition ($\beta$  = 0.03, SE = 0.01, 95\% CI [0.01, 0.05], t(8874) = 2.58, p = .01). The trend interaction between VI and SI ($\beta$  = 0.06, SE = 0.03, 95\% CI [0.00, 0.12], t(8874) = 1.83, p = .067) once again shows
+
+($\beta$ = 0.3, SE = 0.01, 95\% CI [0.05, .26], t(8877) = 2.91, p = .004) also indicates that controls responded slower in the incongruent condition, this contrast being the only significant one in this interaction (marginal contrast (controls congruent $RT_{std}$ - incongruent $RT_{std}$) = -0.11, CI = [-0.19; -0.02], SE = 0.03, p = .01). These effects are represented in Figure \ref{fig:model_b_implicit}. Both estimates are close to 0.2, which denotes a small effect size.
+
+```{r new_model_implicit_params_table}
+#| label: tbl-new_model_implicit_params_table
+#| tbl-cap: "Parameters of the optimal model for the implicit task including a random intercept and slope by subject on Congruence."
+
+all_b_models_parameters[["implicit_b_mods"]][["mod_implicit_4b"]]
+```
+
+```{r plot_vi_congruence_implicit}
+df_implicit_recipe_b <- 
+  recipe_implicit_b |> 
+  prep() |> 
+  bake(df_implicit_rt) 
+
+vizdata_vi_cng_implicit <- 
+  df_implicit_recipe_b |> 
+  visualisation_matrix(
+    at = c("visual_imagery", "congruence"),
+    length = 100,
+    preserve_range = TRUE
+)
+
+vizdata_vi_cng_implicit <- 
+  vizdata_vi_cng_implicit |> 
+  mutate(predicted = insight::get_predicted(
+    all_b_models_fitted[["explicit_b_mods"]][["mod_explicit_5b"]], 
+    vizdata_vi_cng_implicit
+    )) |> 
+  mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent"))
+
+p_b_mod_im_vicng <-
+  df_implicit_recipe_b |> 
+  mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent")) |> 
+  ggplot(aes(
+    x = visual_imagery,
+    y = rt_implicit,
+    color = congruence
+  )) +
+  geom_point(
+    size = 1,
+    alpha = .2
+  ) +
+  geom_line(
+    data = vizdata_vi_cng_implicit,
+    aes(
+      y = predicted,
+      group = congruence
+    ),
+    size = 1.5
+  ) +
+  coord_cartesian(
+    ylim = c(-2,-.7)
+  ) +
+  labs(
+    title = "Implicit task",
+    x = "",
+    y = ""
+    ) +
+  scale_color_lancet(name = "Congruence") +
+  theme(
+    plot.title = element_text(hjust = 1),
+    title = element_text(size = txt),
+    legend.text = element_text(size = txt),
+    legend.title = element_text(size = txt)
+    )
+```
+
+```{r plot_vi_si_implicit}
+vizdata_implicit <-
+  df_implicit_recipe_b |> 
+  visualisation_matrix(c("visual_imagery", "spatial_imagery"), length = 100) |> 
+  visualisation_matrix("visual_imagery", length = 15, numerics = "all") 
+
+vizdata_implicit$predicted <- insight::get_predicted(all_b_models_fitted[["explicit_b_mods"]][["mod_explicit_5b"]], vizdata_implicit)
+
+p_b_mod_im_visi <- 
+  df_implicit_recipe_b |> 
+  ggplot(aes(
+    x = visual_imagery,
+    y = rt_implicit,
+    color = spatial_imagery
+    )) +
+  geom_point(
+    size = 1,
+    alpha = .1
+  ) +
+  geom_line(
+    data = vizdata_implicit,
+    aes(
+      y = predicted,
+      group = spatial_imagery
+      ),
+    size = 1
+  ) +
+  labs(
+    x = "",
+    y = ""
+    ) +
+  scale_color_viridis(name = "Spatial imagery") +
+  theme(
+    legend.text = element_text(size = txt/2),
+    legend.title = element_text(size = txt/2)
+    )
+```
+
+
+```{r b_models_ggarrange}
+p_b_mods_vicng_ggarrange <-
+  ggarrange(
+    p_b_mod_ex_vicng,
+    p_b_mod_im_vicng,
+    common.legend = TRUE,
+    legend = "top",
+    ncol = 2,
+    align = "v"
+  ) |> 
+  annotate_figure(
+    left = text_grob(
+      "Response time (standardized)", 
+      size = txt, 
+      rot = 90
+      ),
+    bottom = text_grob(
+      "Visual imagery (standardized PCA variable)", 
+      size = txt,
+      vjust = .05
+      )
+    )
+```
+
+
+
+
+
+
+
+
+
 
 <!-- The End -->
 :::{.callout-note collapse="true" appearance="simple"}
