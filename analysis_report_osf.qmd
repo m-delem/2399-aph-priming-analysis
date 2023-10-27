@@ -8,7 +8,7 @@ format: html
 execute: 
   echo: false
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 toc: true
 toc-depth: 3
 toc-expand: 2
@@ -166,6 +166,7 @@ df_explicit <- dfs$explicit_task
 df_rotation <- dfs$rotation_task
 rm(dfs)
 ```
+
 :::
 
 :::{.callout-tip collapse="true" appearance="simple"}
@@ -2076,6 +2077,392 @@ p_mod_implicit_ggarrange
 
 :::
 
+# Further EDA: continuous analyses
+
+## Continuous predictors: PCA
+
+Theoretically, the four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - could be used as predictors (independent variables) for the RT outcomes (dependent variable) of the experiment. Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: yet here we only modeled the VVIQ as representative of visual imagery, what's more as a categorical predictor by dividing two groups based on it. In order to explore the potential of all these scales, we are going to run a Principal Component Analysis (PCA) on the four questionnaires' standardized scores to evaluate how many different constructs they represent. The suitability of the data for a PCA was assessed with Bartlett's test of sphericity (Bartlett, 1951), suggesting there was sufficient correlation in the data ($\chi^{2}$(55) = 408.01, p < .001) and the KMO measure of sampling adequacy (KMO = 0.73; see Kaiser, H. F., & Rice, J. (1974)). The Eigenvalues and variance explained by the PCA components computed, along with the loadings of each score on them, are displayed in @tbl-pca_tables.
+
+<!-- Bartlett, M. S. (1951). The effect of standardization on a Chi-square approximation in factor analysis. Biometrika, 38(3/4), 337-344. -->
+
+<!-- Kaiser, H. F., & Rice, J. (1974). Little jiffy, mark IV. Educational and psychological measurement, 34(1), 111-117. -->
+
+```{r pca}
+#| code-summary: "Computing the PCA"
+#| echo: true
+
+# ─── Principal Component Analysis ───
+pca <- 
+  principal_components(
+    df_questionnaires[,4:7],
+    n = "max",
+    sort = TRUE,
+    standardize = TRUE
+    )
+```
+
+```{r pca_tables}
+#| label: tbl-pca_tables
+#| tbl-cap: "Results of the Principal Components Analysis."
+#| tbl-subcap: 
+#|   - "Loadings of each variable on the three components extracted by the PCA."
+#|   - "Eigenvalues and variance explained by the three components extracted by the PCA."
+#| layout-ncol: 2
+
+# ─── Loadings ───
+pca |> 
+  as.data.frame() |>  
+  mutate(Variable = case_when(
+    Variable == "suis60" ~ "SUIS",
+    Variable == "vviq80" ~ "VVIQ",
+    Variable == "osiq_o75" ~ "OSIQ-O",
+    Variable == "osiq_s75" ~ "OSIQ-S",
+    TRUE ~ Variable
+  )) |> 
+  display()
+
+# ─── Eigenvalues and variance ───
+pca |> 
+  summary() |> 
+  as.data.frame() |>
+  display()
+```
+
+The two first components (PC1 and PC2) explained 95% of the variance of the sample on the four scores (PC1 Eigenvalue = 2.84, 71% of the total variance explained, PC2 = 0.97, 24% of the total variance explained) and are the only meaningful ones in the PCA (PC3 explains 3% of variance). PC1 correlates highly with the VVIQ, OSIQ-Object and SUIS: this component can logically be interpreted as representing visual imagery (VI variable). PC2 also explains a significant part of variance, and correlates highly with the OSIQ-Spatial: we chose to interpret this component as representing spatial imagery (SI variable). These two variables, decorrelated by the PCA, are represented together in @fig-vi_si_corr.
+
+```{r pca_data}
+#| code-summary: "Adding the predicted PCA components to the data"
+#| echo: true
+
+# ─── Adding components to the data ───
+pca_components <- pca |> predict()
+
+df_questionnaires <-
+  bind_cols(df_questionnaires[,1:8], pca_components[,1:2]) %>% 
+  mutate(PC2 = -PC2) %>% 
+  rename(
+    "visual_imagery" = PC1,
+    "spatial_imagery" = PC2
+    )
+
+# updating all the dataframes with the imagery variables
+dfs <- 
+  list( 
+    implicit_task = df_implicit_rt, 
+    explicit_task = df_explicit_rt
+    ) %>%
+  # adding the new variables to each dataframe
+  imap(~left_join(
+    .x |> select(-c(rt_mean, rt_mad)), 
+    df_questionnaires %>% 
+      select(
+        # column to match with the correct participants
+        subjectid, 
+        # new variables to add
+        visual_imagery, 
+        spatial_imagery), 
+    by = "subjectid") %>% 
+      # reordering the final dfs
+      select(
+        subjectid, 
+        age, aphantasia,
+        visual_imagery, spatial_imagery,
+        everything())
+    )
+
+df_implicit_rt <- dfs$implicit_task
+df_explicit_rt <- dfs$explicit_task
+rm(dfs)
+```
+
+```{r plot_vi_si_corr}
+#| label: fig-vi_si_corr
+#| fig-cap: "Correlation between the visual imagery PCA component and the spatial imagery one."
+#| out-width: 100%
+
+# --- correlation between visual and spatial ---
+(df_questionnaires %>% 
+  mutate(
+    visual_imagery = rescale(visual_imagery),
+    spatial_imagery = rescale(spatial_imagery),
+    aphantasia = fct_relevel(aphantasia, "yes", "no")
+    ) %>%
+  ggplot(aes(x = visual_imagery, y = spatial_imagery)) +
+  geom_point(aes(color = aphantasia)) +
+  scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  geom_smooth(
+    aes(x = visual_imagery, y = spatial_imagery), 
+    color = "black", 
+    method = "lm", 
+    stat = "smooth") +
+  # stat_cor(
+  #   aes(x = visual_imagery,
+  #       y = spatial_imagery),
+  #   inherit.aes = FALSE,
+  #   cor.coef.name = "r",
+  #   label.x.npc = .5,
+  #   label.y.npc = .7) +
+  labs(x = "Visual Imagery",
+       y = "Spatial Imagery")) %>% 
+  ggplotly
+```
+
+## Modelling RTs with continuous predictors
+
+Now that we have two new theoretically meaningful variables to explain our data, we can go back to model RTs again using these new predictors. 
+
+For a subject $i$ with a given visual and spatial imagery (*VI* and *SI*), in the *Congruence* condition $j$ and the *Color* condition $k$, the new maximal model of the resulting response time $RT_{ijk}$ including all the predictors can be specified as such:
+
+$$
+\begin{aligned}
+RT_{ijk} = \alpha + \alpha_{i} + \beta_{1} \cdot \ VI_{i} \times \beta_{2} \cdot \ SI_{i} \times (\beta_{3} + \beta_{3i}) \cdot Congruence_{j} \times (\beta_{4} + \beta_{4i}) \cdot Color_{k}
+\end{aligned}
+$$
+
+Where $\alpha$ is the global intercept, $\alpha_{i}$ is a random intercept by subject accounting for the inherent randomness tied to participants, and $\beta_{1/2/3/4}$ are the parameters representing the effect of each predictor. The "$\times$" signs represent all the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope $\beta_{3i/4i}$ by subject can be added to the Congruence or Color parameters to account for this variance. Likewise, several models will be fitted in turn with the same pattern as above. In a view of parcimony, models including only two-way interactions between the four factors will be considered.
+
+```{r new_recipes_workflows_and_engines}
+# --- explicit data ---
+recipe_explicit_b <- 
+  df_explicit_rt %>%
+  recipe %>%
+  update_role(
+    rt_explicit, 
+    new_role = "outcome"
+    ) %>%
+  update_role(
+    subjectid, age,
+    aphantasia,
+    visual_imagery, spatial_imagery,
+    color, congruence,
+    new_role = "predictor"
+    ) %>%
+  add_role(
+    subjectid, 
+    new_role = "group"
+    ) %>%
+  step_BoxCox(rt_explicit) %>% 
+  step_normalize(rt_explicit, age)
+
+# --- implicit data ---
+recipe_implicit_b <- 
+  df_implicit_rt %>%
+  recipe %>%
+  update_role(
+    rt_implicit, 
+    new_role = "outcome"
+    ) %>%
+  update_role(
+    subjectid, age,
+    aphantasia,
+    visual_imagery, spatial_imagery,
+    color, congruence,
+    new_role = "predictor"
+    ) %>%
+  add_role(
+    subjectid,
+    new_role = "group"
+    ) %>%
+  step_BoxCox(rt_implicit) %>% 
+  step_normalize(rt_implicit, age)
+
+# --- workflows ---
+workflow_explicit_b <- workflow() %>% add_recipe(recipe_explicit_b)
+workflow_implicit_b <- workflow() %>% add_recipe(recipe_implicit_b)
+
+# --- mixed models to be fitted ---
+mod_0_lmer <-
+  linear_reg() %>% 
+  set_engine("lmer")
+```
+
+```{r new_model_specifications}
+# --- Specifying all models ---
+
+# --- Explicit task ---
+
+# model 1: intercepts only
+mod_explicit_1b <-
+  workflow_explicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_explicit ~ (1|subjectid)
+    )
+
+# model 2: fixed effects
+mod_explicit_2b <-
+  workflow_explicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_explicit ~ visual_imagery + spatial_imagery + congruence + color + (1|subjectid)
+  )
+
+# model 3: interactions
+mod_explicit_3b <- 
+  workflow_explicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_explicit ~ visual_imagery * spatial_imagery * congruence * color + (1|subjectid)
+  )
+
+# model 4: slope by subject on congruence
+mod_explicit_4b <-
+  workflow_explicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_explicit ~ visual_imagery * spatial_imagery * congruence * color + (1 + congruence|subjectid)
+  )
+
+# model 5: slope by subject on color
+mod_explicit_5b <-
+  workflow_explicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_explicit ~ visual_imagery * spatial_imagery * congruence * color + (1 + color|subjectid)
+  )
+
+# model 6: maximal model
+mod_explicit_6b <-
+  workflow_explicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_explicit ~ visual_imagery * spatial_imagery * congruence * color + 
+      (1 + congruence|subjectid) + (1 + color|subjectid)
+  )
+
+# --- Implicit task ---
+
+# model 1: intercepts only
+mod_implicit_1b <-
+  workflow_implicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_implicit ~ (1|subjectid)
+    )
+
+# model 2: group effect
+mod_implicit_2b <-
+  workflow_implicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_implicit ~ visual_imagery + spatial_imagery + congruence + color + (1|subjectid)
+  )
+
+# model 3: congruence effect
+mod_implicit_3b <- 
+  workflow_implicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_implicit ~ visual_imagery * spatial_imagery * congruence * color + (1|subjectid)
+  )
+
+# model 4: color effect
+mod_implicit_4b <-
+  workflow_implicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_implicit ~ visual_imagery * spatial_imagery * congruence * color + (1 + congruence|subjectid)
+  )
+
+# model 5: slope by subject on color
+mod_implicit_5b <-
+  workflow_implicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_implicit ~ visual_imagery * spatial_imagery * congruence * color + (1 + color|subjectid)
+  )
+
+# model 6: maximal model
+mod_implicit_6b <-
+  workflow_implicit_b %>% add_model(
+    mod_0_lmer,
+    formula = rt_implicit ~ visual_imagery * spatial_imagery * congruence * color + 
+      (1 + congruence|subjectid) + (1 + color|subjectid)
+  )
+```
+
+```{r new_model_fitting}
+
+# --- Fitting all models ---
+
+# --- Explicit task ---
+fit_explicit_b_mods <-
+  list(
+    mod_explicit_1b = mod_explicit_1b, 
+    # mod_explicit_2b = mod_explicit_2b, 
+    mod_explicit_3b = mod_explicit_3b,
+    mod_explicit_4b = mod_explicit_4b,
+    mod_explicit_5b = mod_explicit_5b#,
+    # mod_explicit_6b= mod_explicit_6b
+    ) %>% 
+  imap(~ .x %>% fit(data = df_explicit_rt) %>% extract_fit_engine())
+
+# --- Implicit task ---
+fit_implicit_b_mods <-
+  list(
+    mod_implicit_1b = mod_implicit_1b,
+    # mod_implicit_2b = mod_implicit_2b,
+    mod_implicit_3b = mod_implicit_3b,
+    mod_implicit_4b = mod_implicit_4b,
+    mod_implicit_5b = mod_implicit_5b#,
+    # mod_implicit_6b = mod_implicit_6b
+    ) %>%
+  imap(~ .x %>% fit(data = df_implicit_rt) %>% extract_fit_engine())
+
+# --- nested list of all the lists of models ---
+all_b_models_fitted <-
+  list(
+    explicit_b_mods = fit_explicit_b_mods,
+    implicit_b_mods = fit_implicit_b_mods
+    )
+```
+
+```{r new_model_performances}
+#| label: tbl-new_model_perfs
+#| tbl-cap: "Performances of the new fitted models with continuous predictors for both tasks."
+#| tbl-subcap: 
+#|   - "**Explicit** task models."
+#|   - "**Implicit** task models."
+#| layout-ncol: 1
+
+# --- Performance of the models ---
+all_b_models_performances <- 
+  all_b_models_fitted %>% 
+  imap(
+    ~ .x %>% 
+      compare_performance(metrics = c("AIC", "AICc")) %>% 
+      select(-Model) #%>%
+      # display
+    )
+
+all_b_models_performances[["explicit_b_mods"]]
+
+all_b_models_performances[["implicit_b_mods"]]
+
+
+```
+
+The fifth model including a slope by subject on Congruence is the most supported for the **explicit task**, while the fourth model including only an intercept by subject has the best performance among models for the **implicit task**. The parameters of these two models will be analysed in the following.
+
+```{r new_model_parameters}
+
+# --- Parameter estimations ---
+all_b_models_parameters <-
+  all_b_models_fitted %>% 
+  imap(
+    ~ .x %>%
+      imap(
+        ~ .x %>% 
+          model_parameters(effects = "fixed") #%>%
+          # display
+        )
+    )
+```
+
+```{r new_model_explicit_params_table}
+#| label: tbl-new_model_explicit_params_table
+#| tbl-cap: "Parameters of the optimal model for the explicit task including a random intercept and slope by subject on Congruence."
+
+all_b_models_parameters[["explicit_b_mods"]][["mod_explicit_5b"]]
+```
+
+```{r new_model_implicit_params_table}
+#| label: tbl-new_model_explicit_params_table
+#| tbl-cap: "Parameters of the optimal model for the explicit task including a random intercept and slope by subject on Congruence."
+
+all_b_models_parameters[["implicit_b_mods"]][["mod_implicit_5b"]]
+```
+
+<!-- The End -->
 :::{.callout-note collapse="true" appearance="simple"}
 
 #### R Session information
