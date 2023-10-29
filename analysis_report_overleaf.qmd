@@ -495,7 +495,6 @@ df_rt <-
 
 df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
 df_rt %>% display
-
 ```
 
 :::
@@ -2083,10 +2082,6 @@ p_mod_implicit_ggarrange
 
 Theoretically, the four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - could be used as predictors (independent variables) for the RT outcomes (dependent variable) of the experiment. Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: yet here we only modeled the VVIQ as representative of visual imagery, what's more as a categorical predictor by dividing two groups based on it. In order to explore the potential of all these scales, we are going to run a Principal Component Analysis (PCA) on the four questionnaires' standardized scores to evaluate how many different constructs they represent. The suitability of the data for a PCA was assessed with Bartlett's test of sphericity (Bartlett, 1951), suggesting there was sufficient correlation in the data ($\chi^{2}$(55) = 408.01, p < .001) and the KMO measure of sampling adequacy (KMO = 0.73; see Kaiser, H. F., & Rice, J. (1974)). The Eigenvalues and variance explained by the PCA components computed, along with the loadings of each score on them, are displayed in @tbl-pca_tables.
 
-<!-- Bartlett, M. S. (1951). The effect of standardization on a Chi-square approximation in factor analysis. Biometrika, 38(3/4), 337-344. -->
-
-<!-- Kaiser, H. F., & Rice, J. (1974). Little jiffy, mark IV. Educational and psychological measurement, 34(1), 111-117. -->
-
 ```{r pca}
 #| code-summary: "Computing the PCA"
 #| echo: true
@@ -2205,6 +2200,31 @@ rm(dfs)
   labs(x = "Visual Imagery",
        y = "Spatial Imagery")) %>% 
   ggplotly
+
+p_vi_si_corr <- 
+  df_questionnaires %>% 
+  mutate(
+    visual_imagery = rescale(visual_imagery),
+    spatial_imagery = rescale(spatial_imagery),
+    aphantasia = fct_relevel(aphantasia, "yes", "no")
+    ) %>%
+  ggplot(aes(x = visual_imagery, y = spatial_imagery)) +
+  geom_point(aes(color = aphantasia)) +
+  scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  geom_smooth(
+    aes(x = visual_imagery, y = spatial_imagery), 
+    color = "black", 
+    method = "lm", 
+    stat = "smooth") +
+  # stat_cor(
+  #   aes(x = visual_imagery,
+  #       y = spatial_imagery),
+  #   inherit.aes = FALSE,
+  #   cor.coef.name = "r",
+  #   label.x.npc = .5,
+  #   label.y.npc = .7) +
+  labs(x = "Visual Imagery",
+       y = "Spatial Imagery")
 ```
 
 ## Modelling RTs with continuous predictors
@@ -2219,7 +2239,7 @@ RT_{ijk} = \alpha + \alpha_{i} + \beta_{1} \cdot \ VI_{i} \times \beta_{2} \cdot
 \end{aligned}
 $$
 
-Where $\alpha$ is the global intercept, $\alpha_{i}$ is a random intercept by subject accounting for the inherent randomness tied to participants, and $\beta_{1/2/3/4}$ are the parameters representing the effect of each predictor. The "$\times$" signs represent all the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope $\beta_{3i/4i}$ by subject can be added to the Congruence or Color parameters to account for this variance. Likewise, several models will be fitted in turn with the same pattern as above. Only models including only two-way interactions between the four factors have been kept, as three and four-way interactions were not improving the quality of the models in any way.
+Where $\alpha$ is the global intercept, $\alpha_{i}$ is a random intercept by subject accounting for the inherent randomness tied to participants, and $\beta_{1/2/3/4}$ are the parameters representing the effect of each predictor. The "$\times$" signs represent all the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope $\beta_{3i/4i}$ by subject can be added to the Congruence or Color parameters to account for this variance. Likewise, several models will be fitted in turn with the same pattern as above. Only models including two-way interactions between the four factors have been kept, as three and four-way interactions were not improving the quality of the models in any way.
 
 ```{r new_recipes_workflows_and_engines}
 # --- explicit data ---
@@ -2498,6 +2518,7 @@ p_b_mod_ex_vicng <-
     ),
     size = 1.5
   ) +
+  geom_vline(xintercept = 0, linetype = 2) +
   coord_cartesian(
     ylim = c(-2,-.7)
   ) +
@@ -2546,6 +2567,7 @@ p_b_mod_ex_visi <-
       ),
     size = 1
   ) +
+  geom_vline(xintercept = 0, linetype = 2) +
   coord_cartesian(
     ylim = c(-3.5,1)
   ) +
@@ -2566,11 +2588,7 @@ p_b_mod_ex_visi <-
 
 ## Implicit task results
 
-The best model for the RTs in the implicit task included a random intercept and slope by participant on the Congruence condition (AIC = 22,109, cAIC = 22,109, null model AIC = 22,116), and had a substantial explanatory power (conditional $R^{2}$ = .35). The parameters of this model are displayed in Table \ref{tbl:model_b_implicit}. The significant parameters in this task are the interaction between VI and Congruence, along with a trend towards an interaction between VI and SI.
-
-The interaction between VI and Congruence shows that a higher VI is associated with slower responses in the incongruence condition ($\beta$  = 0.03, SE = 0.01, 95\% CI [0.01, 0.05], t(8874) = 2.58, p = .01). The trend interaction between VI and SI ($\beta$  = 0.06, SE = 0.03, 95\% CI [0.00, 0.12], t(8874) = 1.83, p = .067) once again shows
-
-($\beta$ = 0.3, SE = 0.01, 95\% CI [0.05, .26], t(8877) = 2.91, p = .004) also indicates that controls responded slower in the incongruent condition, this contrast being the only significant one in this interaction (marginal contrast (controls congruent $RT_{std}$ - incongruent $RT_{std}$) = -0.11, CI = [-0.19; -0.02], SE = 0.03, p = .01). These effects are represented in Figure \ref{fig:model_b_implicit}. Both estimates are close to 0.2, which denotes a small effect size.
+The best model for the RTs in the implicit task included a random intercept and slope by participant on the Congruence condition (AIC = 22,109, cAIC = 22,109, null model AIC = 22,116), and had a substantial explanatory power (conditional $R^{2}$ = .35). The parameters of this model are displayed in Table \ref{tbl:model_b_implicit}. The significant parameters in this task are the interaction between VI and Congruence, along with a trend towards an interaction between VI and SI. The interaction between VI and Congruence shows that a higher VI is associated with slower responses in the incongruent condition ($\beta$  = 0.03, SE = 0.01, 95\% CI [0.01, 0.05], t(8874) = 2.58, \textit{p} = .01). The trend interaction between VI and SI ($\beta$  = 0.06, SE = 0.03, 95\% CI [0.00, 0.12], t(8874) = 1.83, \textit{p} = .067) reveals that RTs are longer with a higher VI and SI. The two new interaction effects tied to the continuous variables are represented in Figure \ref{fig:model_continuous_vicng} and \ref{fig:model_continuous_visi}. All estimates are $< 0.2$, which denotes small effect sizes.
 
 ```{r new_model_implicit_params_table}
 #| label: tbl-new_model_implicit_params_table
@@ -2621,6 +2639,7 @@ p_b_mod_im_vicng <-
     ),
     size = 1.5
   ) +
+  geom_vline(xintercept = 0, linetype = 2) +
   coord_cartesian(
     ylim = c(-2,-.7)
   ) +
@@ -2666,6 +2685,7 @@ p_b_mod_im_visi <-
       ),
     size = 1
   ) +
+  geom_vline(xintercept = 0, linetype = 2) +
   coord_cartesian(
     ylim = c(-3.5,1)
   ) +
