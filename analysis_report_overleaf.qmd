@@ -1,6 +1,6 @@
 ---
 title: "Sensory priming in aphantasia - Data analysis report"
-author: "Maël Delem, Eddy Cavalli, Gaën Plancher"
+author: "Maël Delem"
 date: 2023-09-13
 date-modified: last-modified
 date-format: "D/MM/YYYY"
@@ -424,7 +424,7 @@ df_implicit_rt <-
 # 9017 left, 647 = 6.7% removed
 ```
 
-:::{.panel-tabset .column-page-inset-right}
+:::{.panel-tabset}
 
 #### Explicit task
 <!-- RT means -->
@@ -2467,13 +2467,15 @@ all_b_models_parameters <-
 
 ## Explicit task results
 
-The best model for the RTs in the explicit task included a random intercept and slope by participant on the Color condition (AIC = 19,474, cAIC = 19,474, null model AIC = 19,582), and had a substantial explanatory power (conditional $R^{2}$ = .53). The parameters of this model are displayed in Table \ref{tbl:model_b_explicit}. The significant parameters in this task are the Congruence, the Color, the interaction between VI and SI and the interaction between VI and Congruence. The main effect of Congruence and Color indicate that participants responded overall slower in the incongruent condition ($\beta$  = 0.06,  95\% CI [0.02, 0.11], \textit{t}(8888) = 3.09, p = .002) and in the uncolored condition ($\beta$  = 0.13,  95\% CI [0.09, 0.18], \textit{t}(8888) = 6.06, p $<$ .001). The interaction between VI and SI ($\beta$ = 0.08, 95\% CI [0.01, 0.16], \textit{t}(8891) = 2.28, p = .023) reveals that RTs are longer with higher VI and SI. Finally, the interaction between VI and Congruence ($\beta$ = 0.03, 95\% CI [0.00, 0.04], \textit{t}(8888) = 2.14, p = .003) reveals that a higher VI leads to slower RTs in the incongruent condition. These effects are represented in Figure \ref{fig:model_b_explicit}. All estimates are $< 0.2$, which denotes a small effect sizes.
+The best model for the RTs in the explicit task included a random intercept and slope by participant on the Color condition (AIC = 19,474, cAIC = 19,474, null model AIC = 19,582), and had a substantial explanatory power (conditional $R^{2}$ = .53). The parameters of this model are displayed in @tbl-new_model_explicit_params_table The significant parameters in this task are the Congruence, the Color, the interaction between VI and SI and the interaction between VI and Congruence. The main effect of Congruence and Color indicate that participants responded overall slower in the incongruent condition ($\beta$  = 0.06,  95\% CI [0.02, 0.11], *t*(8888) = 3.09, *p* = .002) and in the uncolored condition ($\beta$  = 0.13,  95\% CI [0.09, 0.18], *t*(8888) = 6.06, *p* $<$ .001). The interaction between VI and SI ($\beta$ = 0.08, 95\% CI [0.01, 0.16], *t*(8891) = 2.28, *p* = .023) reveals that RTs are longer with higher VI and SI. Finally, the interaction between VI and Congruence ($\beta$ = 0.03, 95\% CI [0.00, 0.04], *t*(8888) = 2.14, *p* = .003) reveals that a higher VI leads to slower RTs in the incongruent condition. The two new interaction effects tied to the continuous variables are represented in @fig-models_continuous. All estimates are $< 0.2$, which denotes small effect sizes.
 
-```{r new_model_explicit_params_table}
+```{r tbl-}
 #| label: tbl-new_model_explicit_params_table
 #| tbl-cap: "Parameters of the optimal model for the explicit task including a random intercept and slope by subject on Color."
 
-all_b_models_parameters[["explicit_b_mods"]][["mod_explicit_5b"]]
+all_b_models_parameters[["explicit_b_mods"]][["mod_explicit_5b"]] |> 
+  format() |>
+  display()
 ```
 
 ```{r plot_vi_congruence_explicit}
@@ -2588,13 +2590,15 @@ p_b_mod_ex_visi <-
 
 ## Implicit task results
 
-The best model for the RTs in the implicit task included a random intercept and slope by participant on the Congruence condition (AIC = 22,109, cAIC = 22,109, null model AIC = 22,116), and had a substantial explanatory power (conditional $R^{2}$ = .35). The parameters of this model are displayed in Table \ref{tbl:model_b_implicit}. The significant parameters in this task are the interaction between VI and Congruence, along with a trend towards an interaction between VI and SI. The interaction between VI and Congruence shows that a higher VI is associated with slower responses in the incongruent condition ($\beta$  = 0.03, SE = 0.01, 95\% CI [0.01, 0.05], t(8874) = 2.58, \textit{p} = .01). The trend interaction between VI and SI ($\beta$  = 0.06, SE = 0.03, 95\% CI [0.00, 0.12], t(8874) = 1.83, \textit{p} = .067) reveals that RTs are longer with a higher VI and SI. The two new interaction effects tied to the continuous variables are represented in Figure \ref{fig:model_continuous_vicng} and \ref{fig:model_continuous_visi}. All estimates are $< 0.2$, which denotes small effect sizes.
+The best model for the RTs in the implicit task included a random intercept and slope by participant on the Congruence condition (AIC = 22,109, cAIC = 22,109, null model AIC = 22,116), and had a substantial explanatory power (conditional $R^{2}$ = .35). The parameters of this model are displayed in @tbl-new_model_implicit_params_table. The significant parameters in this task are the interaction between VI and Congruence, along with a trend towards an interaction between VI and SI. The interaction between VI and Congruence shows that a higher VI is associated with slower responses in the incongruent condition ($\beta$  = 0.03, SE = 0.01, 95\% CI [0.01, 0.05], *t*(8874) = 2.58, *p* = .01). The trend interaction between VI and SI ($\beta$  = 0.06, SE = 0.03, 95\% CI [0.00, 0.12], *t*(8874) = 1.83, *p* = .067) reveals that RTs are longer with a higher VI and SI. The two new interaction effects tied to the continuous variables are represented in @fig-models_continuous. All estimates are $< 0.2$, which denotes small effect sizes.
 
 ```{r new_model_implicit_params_table}
 #| label: tbl-new_model_implicit_params_table
 #| tbl-cap: "Parameters of the optimal model for the implicit task including a random intercept and slope by subject on Congruence."
 
-all_b_models_parameters[["implicit_b_mods"]][["mod_implicit_4b"]]
+all_b_models_parameters[["implicit_b_mods"]][["mod_implicit_4b"]] |> 
+  format() |>
+  display()
 ```
 
 ```{r plot_vi_congruence_implicit}
@@ -2705,6 +2709,15 @@ p_b_mod_im_visi <-
 ```
 
 ```{r b_models_ggarrange}
+#| label: fig-models_continuous
+#| fig-cap: "Visualization of the variables in the optimal models for the RTs in both tasks. The black dotted vertical line is at 0, the mean of the standard VI variable."
+#| fig-subcap: 
+#|   - "Visualization of the VI and Congruence variables. The straight lines represent the model at each level of the Congruence variable to illustrate the interaction between VI and Congruence, while transparent dots represent individual trials' standardized RTs."
+#|   - "Visualization of the VI and SI variables. The straight lines represent the model at fixed levels of the continuous SI variable to illustrate the interaction between VI and SI, while transparent dots represent individual trials' standardized RTs."
+#| fig-width: 16
+#| fig-height: 8
+#| column: page-inset-right
+
 p_b_mods_vicng_ggarrange <-
   ggarrange(
     p_b_mod_ex_vicng,
@@ -2749,19 +2762,23 @@ p_b_mods_visi_ggarrange <-
       )
     )
 
-ggexport(
-  p_b_mods_vicng_ggarrange, 
-  filename = "plots/model_continuous_vicng.png",
-  width = 1600,
-  height = 800
-  )
+p_b_mods_vicng_ggarrange
 
-ggexport(
-  p_b_mods_visi_ggarrange, 
-  filename = "plots/model_continuous_visi.png",
-  width = 1600,
-  height = 800
-  )
+p_b_mods_visi_ggarrange
+
+# ggexport(
+#   p_b_mods_vicng_ggarrange, 
+#   filename = "plots/model_continuous_vicng.png",
+#   width = 1600,
+#   height = 800
+#   )
+# 
+# ggexport(
+#   p_b_mods_visi_ggarrange, 
+#   filename = "plots/model_continuous_visi.png",
+#   width = 1600,
+#   height = 800
+#   )
 ```
 
 
@@ -2864,39 +2881,86 @@ inner_join(
   mutate(across(c(visual_imagery:congruence_eff_im_mb), ~as.numeric(.x))) 
 ```
 
+:::{.panel-tabset}
+
+#### Explicit effect - correlation
+
 ```{r explicit_empirical_vs_modelbased_corr}
+#| label: fig-explicit_empirical_vs_modelbased_corr
+#| fig-cap: "Comparison of the manually calculated congruence effect against the model-based one in the explicit task."
+#| fig-width: 8
+#| fig-height: 4
+
 df_congruence_effect |> 
   ggplot(aes(
     x = congruence_eff_ex_emp,
     y = congruence_eff_ex_mb
   )) +
   geom_point(aes(color = aphantasia)) + 
-  scale_color_okabeito()
+  labs(
+    x = "Empirical Congruence Effect",
+    y = "Model-based Congruence Effect"
+  ) +
+  scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
 ```
 
+#### Implicit effect - correlation
+
 ```{r implicit_empirical_vs_modelbased_corr}
+#| label: fig-implicit_empirical_vs_modelbased_corr
+#| fig-cap: "Comparison of the manually calculated congruence effect against the model-based one in the implicit task."
+#| fig-width: 8
+#| fig-height: 4
+
 df_congruence_effect |> 
   ggplot(aes(
     x = congruence_eff_im_emp,
     y = congruence_eff_im_mb
   )) +
-  geom_point(aes(color = aphantasia)) + 
-  scale_color_okabeito()
+  geom_point(aes(color = aphantasia)) +  
+  labs(
+    x = "Empirical Congruence Effect",
+    y = "Model-based Congruence Effect"
+  ) +
+  scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
 ```
 
+#### Explicit effect - distribution
+
 ```{r explicit_empirical_vs_modelbased_distrib}
+#| label: fig-explicit_empirical_vs_modelbased_distrib
+#| fig-cap: "Distributions of the manually calculated congruence effect (red distribution) against the model-based one (blue distribution) in the explicit task."
+#| fig-width: 8
+#| fig-height: 4
 df_congruence_effect |> 
   ggplot() +
   geom_density(aes(x = congruence_eff_ex_emp), color = "coral", fill = "coral", alpha = .2) +
-  geom_density(aes(x = congruence_eff_ex_mb), color = "aquamarine", fill = "aquamarine", alpha = .2)
+  geom_density(aes(x = congruence_eff_ex_mb), color = "aquamarine", fill = "aquamarine", alpha = .2) + 
+  labs(
+    x = "Congruence Effect",
+    y = "Density"
+  )
 ```
 
+#### Implicit effect - distribution
+
 ```{r implicit_empirical_vs_modelbased_distrib}
+#| label: fig-implicit_empirical_vs_modelbased_distrib
+#| fig-cap: "Distributions of the manually calculated congruence effect (red distribution) against the model-based one (blue distribution) in the implicit task."
+#| fig-width: 8
+#| fig-height: 4
+
 df_congruence_effect |> 
   ggplot() +
   geom_density(aes(x = congruence_eff_im_emp), color = "coral", fill = "coral", alpha = .2) +
-  geom_density(aes(x = congruence_eff_im_mb), color = "aquamarine", fill = "aquamarine", alpha = .2)
+  geom_density(aes(x = congruence_eff_im_mb), color = "aquamarine", fill = "aquamarine", alpha = .2) + 
+  labs(
+    x = "Congruence Effect",
+    y = "Density"
+  )
 ```
+
+:::
 
 We can see that both methods are very convergent. This confirms that the model-based approach is targeting the correct parameter: as of now, for precision purposes (as we can see from the spread of the distributions), this is the value that will be kept for the Congruence effect.
 
@@ -2988,7 +3052,7 @@ df_preds_congruence_effect <-
   select(4,5,1,6,7,8,3,2)
 ```
 
-:::{.panel-tabset}
+:::{.panel-tabset .column-page-inset-right}
 
 #### Explicit task model
 
@@ -3098,7 +3162,8 @@ A GMM will therefore identify normal distributions in the data with different me
 
 df_congruence[, 3:6] |> 
   n_clusters_elbow() |> 
-  plot() 
+  plot() +
+  geom_vline(xintercept = 3, linetype = 3)
 
 df_congruence[, 3:6] |>
   mclustBIC() |> 
@@ -3307,9 +3372,82 @@ df_clustering |>
 
 :::
 
+To have an intuitive visualization of the mean differences, we will plot them in radar charts in @fig-2_clusters_radar_chart and @fig-3_clusters_radar_chart.
 
+:::{.panel-tabset .column-page-inset-right}
 
-# ══════════════════════════════════════════════════════════════════════════════
+#### 2-Cluster solution
+
+```{r 2_clusters_radar_charts}
+#| label: fig-2_clusters_radar_chart
+#| fig-cap: "Means of the four clusters in the four variables of interest. The axis have been rescaled to the minimum and maximum values of each variable, to 'zoom' on the differences and compensate for the small effect sizes. Feel free to **click on the legend to see specific clusters**."
+
+(df_clustering %>% 
+  ungroup() |> 
+  select(clusters_2, visual_imagery:congruence_effect_implicit) %>% 
+  mutate(Cluster = as.character(clusters_2), .keep = "unused") %>% 
+  mutate(across(visual_imagery:congruence_effect_implicit, normalize)) %>% 
+  group_by(Cluster) %>% 
+  summarise(across(everything(), mean)) %>% 
+  ggradar(
+    axis.labels = c(
+      "Visual imagery",
+      "Spatial imagery",
+      "Congruence (Explicit)",
+      "Congruence (Implicit)"
+    ),
+    values.radar = c("0", "Median", "Max"),
+    grid.label.size = 4,
+    label.gridline.min = FALSE,
+    legend.title = "Cluster",
+    background.circle.transparency = .1,
+    group.point.size = 3,
+    group.line.width = .5,
+    axis.label.size = 4
+  ) +
+  scale_color_manual(values = c("#009E73", "#F0E442"))) %>% 
+  ggplotly
+```
+
+#### 3-Cluster solution
+
+```{r 3_clusters_radar_charts}
+#| label: fig-3_clusters_radar_chart
+#| fig-cap: "Means of the four clusters in the four variables of interest. The axis have been rescaled to the minimum and maximum values of each variable, to 'zoom' on the differences and compensate for the small effect sizes. Feel free to **click on the legend to see specific clusters**."
+
+(df_clustering %>% 
+  ungroup() |> 
+  select(clusters_3, visual_imagery:congruence_effect_implicit) %>% 
+  mutate(Cluster = as.character(clusters_3), .keep = "unused") %>% 
+  mutate(across(visual_imagery:congruence_effect_implicit, normalize)) %>% 
+  group_by(Cluster) %>% 
+  summarise(across(everything(), mean)) %>% 
+  ggradar(
+    axis.labels = c(
+      "Visual imagery",
+      "Spatial imagery",
+      "Congruence (Explicit)",
+      "Congruence (Implicit)"
+    ),
+    values.radar = c("0", "Median", "Max"),
+    grid.label.size = 4,
+    label.gridline.min = FALSE,
+    legend.title = "Cluster",
+    background.circle.transparency = .1,
+    group.point.size = 3,
+    group.line.width = .5,
+    axis.label.size = 4
+  ) +
+  scale_color_manual(values = c("#009E73", "#F0E442", "#D55E00"))) %>% 
+  ggplotly
+
+```
+
+:::
+
+We can see that the clusterings highlight various visual/spatial imagery profiles, but do not help in understanding congruence effect differences between the participants. As such, I did not include this analysis in the manuscript for now.
+
+<!-- # ═════════════════════════════════════════════════════════════════════ -->
 
 <!-- The End -->
 :::{.callout-note collapse="true" appearance="simple"}
