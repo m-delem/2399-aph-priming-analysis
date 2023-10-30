@@ -2586,7 +2586,8 @@ We want to characterize the Congruence effect with imagery variables. Thus, we w
 #| code-summary: "Computing correlations"
 #| echo: true
 
-# --- Bayesian partial correlations ---
+# ═══ Bayesian partial correlations ════════════════════════════════════════════
+
 congruence_correlations_explicit <-
   df_congruence_effect %>%
   select(-congruence_effect_implicit) %>% 
@@ -2606,80 +2607,7 @@ congruence_correlations_implicit <-
     partial_bayesian = TRUE,
     bayesian_test = "bf"
     )
-
 ```
-
-<!-- :::{.panel-tabset} -->
-
-<!-- #### Explicit task -->
-
-<!-- ```{r cor_matrix_congruence_explicit} -->
-<!-- #| label: fig-cor_matrix_congruence_explicit -->
-<!-- #| fig-cap: "Correlation matrix with the Congruence effect in the explicit task. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence." -->
-
-<!-- congruence_correlations_explicit %>% -->
-<!--   mutate(across(c(Parameter1, Parameter2), -->
-<!--     ~ case_when( -->
-<!--     .x == "visual_imagery" ~ "Visual imagery", -->
-<!--     .x == "spatial_imagery" ~ "Spatial imagery", -->
-<!--     .x == "congruence_effect_explicit" ~ "Congruence effect", -->
-<!--     TRUE ~ .x)) -->
-<!--     ) %>%  -->
-<!--   summary(digits = 2) %>%  -->
-<!--   plot( -->
-<!--     text = list(size = 5), -->
-<!--     labs = list(title = "") -->
-<!--     ) + -->
-<!--   scale_fill_viridis( -->
-<!--     option = "D", -->
-<!--     guide = NULL, -->
-<!--     # name = expression(rho), -->
-<!--     alpha = .6, -->
-<!--     direction = 1, -->
-<!--     limits = c(-1,1) -->
-<!--     ) + -->
-<!--   theme_bw() + -->
-<!--   theme( -->
-<!--     panel.grid = element_blank(), -->
-<!--     axis.text = element_text(size = 14) -->
-<!--     ) -->
-<!-- ``` -->
-
-<!-- #### Implicit task -->
-
-<!-- ```{r cor_matrix_congruence_implicit} -->
-<!-- #| label: fig-cor_matrix_congruence_implicit -->
-<!-- #| fig-cap: "Correlation matrix with the Congruence effect in the implicit task. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence." -->
-
-<!-- congruence_correlations_implicit %>% -->
-<!--   mutate(across(c(Parameter1, Parameter2), -->
-<!--     ~ case_when( -->
-<!--     .x == "visual_imagery" ~ "Visual imagery", -->
-<!--     .x == "spatial_imagery" ~ "Spatial imagery", -->
-<!--     .x == "congruence_effect_implicit" ~ "Congruence effect", -->
-<!--     TRUE ~ .x)) -->
-<!--     ) %>%  -->
-<!--   summary(digits = 2) %>% -->
-<!--   plot( -->
-<!--     text = list(size = 5), -->
-<!--     labs = list(title = "") -->
-<!--     ) + -->
-<!--   scale_fill_viridis( -->
-<!--     option = "D", -->
-<!--     guide = NULL, -->
-<!--     # name = expression(rho), -->
-<!--     alpha = .6, -->
-<!--     direction = 1, -->
-<!--     limits = c(-1,1) -->
-<!--     ) + -->
-<!--   theme_bw() + -->
-<!--   theme( -->
-<!--     panel.grid = element_blank(), -->
-<!--     axis.text = element_text(size = 14) -->
-<!--     ) -->
-<!-- ``` -->
-
-<!-- ::: -->
 
 :::{.column-page-inset-right}
 
@@ -2793,7 +2721,7 @@ mod_cng_effect_implicit %>%
 
 ```
 
-We can visualize these models interactively by plotting the  151 participants in a space defined by the three variables: such projections are presented in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]. The predictions of our model are represented as a plane that associates, for each Visual imagery value $x$ and Spatial imagery value $y$, a predicted value $z$ (the "*Predicted effect*"): the model's plane is the collection of those points (it is colored by a gradient to ease the reading of a high/low predicted Congruence effect).
+We can visualize these models interactively by plotting the  151 participants in a space defined by the three variables: such projections are presented in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]. The predictions of our model are represented as a plane that associates, for each Visual imagery value $x$ and Spatial imagery value $y$, a predicted value $z$ (the "*Predicted congruence effect*"): the model's plane is the collection of those points (it is colored by a gradient to ease the reading of a high/low predicted Congruence effect).
 
 ```{r model_predictions_congruence_effect}
 
@@ -3045,9 +2973,9 @@ Now that we have three decorrelated variables explaining meaningful aspects of t
 
 We will choose a method of clustering based on Gaussian mixture models [^kmeans] (GMM). A Gaussian mixture model is a linear combination of several Gaussian components: it is used when the data cannot be modelled by a simple Gaussian (i.e. a normal distribution). In other words, if the data structure is naturally composed of several clusters, they should be represented by an GMM rather than a simple Gaussian distribution: each distribution then represents a cluster.
 
-[^kmeans]: GMMs are less common in psychology than the commonly used K-Means algorithm, but have several advantages over it, mainly: ($i$) K-Means assumes sphericity and an equivalent cluster size, which is rarely the case in reality; ($ii$) GMMs are probabilistic models (*soft clustering*) that are more parsimonious than the geometric approach (*hard clustering*) of K-Means (see for instance Dalmaijer, 2022).
+[^kmeans]: GMMs are less common in psychology than the widely used K-Means algorithm, but have several advantages over it, mainly: ($i$) K-Means assumes sphericity and an equivalent cluster size, which is rarely the case in reality; ($ii$) GMMs are probabilistic models (*soft clustering*) that are more parsimonious than the geometric approach (*hard clustering*) of K-Means (see for instance Dalmaijer, 2022).
 
-A GMM will therefore identify normal distributions in the data with different means and covariances corresponding to clusters, as well as probabilities for each observation (in this case, the participants) of belonging to a given cluster. As very little information is known about the possible clusters, their means and covariances for each of the variables, the GMM has to follow several steps: (i) Estimating the number of clusters; (ii) The random choice of initial parameters (mean, covariance and weight) for the clusters on each variable; (iii) The use of an "*expectation-maximisation*" algorithm (EM - see Dempster, 1977), an iterative algorithm for determining the parameters of a probabilistic model when it depends on unobservable latent variables. The EM algorithm proceeds in two stages. Step E: calculates the probability of each observation belonging to a cluster; then step M: updates the parameters to maximise these probabilities and approximate the actual distributions of the clusters; finally, returns to step E with the new parameters, and repeats the two steps until the model converges on stable clusters.[^complex]
+A GMM will therefore identify normal distributions in the data with different means and covariances corresponding to clusters, as well as probabilities for each observation (in this case, the participants) of belonging to a given cluster. As very little information is known about the possible clusters, their means and covariances for each of the variables, the GMM has to follow several steps: (i) Estimating the number of clusters; (ii) The random choice of initial parameters (mean, covariance and weight) for the clusters on each variable; (iii) The use of an "*expectation-maximisation*" algorithm (EM - see Dempster, 1977), an iterative algorithm for determining the parameters of a probabilistic model when it depends on unobservable latent variables. The EM algorithm proceeds in two stages. Step E: calculates the probability of each observation belonging to a cluster; then step M: updates the parameters to maximize these probabilities and approximate the actual distributions of the clusters; finally, returns to step E with the new parameters, and repeats the two steps until the model converges on stable clusters.[^complex]
     
 [^complex]: The definitions of GMMs and the EM algorithm are extremely simplified, as they are based on complex probabilistic mathematical models, the explanation of which is not really relevant to this report. More details can be found in the article dedicated to the R package used to implement this method (i.e. `Mclust`, see Scrucca, 2016) or on the internet.
 

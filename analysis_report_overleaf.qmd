@@ -2890,6 +2890,7 @@ df_congruence_effect |>
   geom_density(aes(x = congruence_eff_ex_emp), color = "coral", fill = "coral", alpha = .2) +
   geom_density(aes(x = congruence_eff_ex_mb), color = "aquamarine", fill = "aquamarine", alpha = .2)
 ```
+
 ```{r implicit_empirical_vs_modelbased_distrib}
 df_congruence_effect |> 
   ggplot() +
@@ -2900,10 +2901,415 @@ df_congruence_effect |>
 We can see that both methods are very convergent. This confirms that the model-based approach is targeting the correct parameter: as of now, for precision purposes (as we can see from the spread of the distributions), this is the value that will be kept for the Congruence effect.
 
 ```{r selecting_mb_congruence_effect}
-df_clustering <- df_congruence_effect |> select(subjectid:spatial_imagery, 6, 8)
+df_congruence <- 
+  df_congruence_effect |> 
+  select(subjectid:spatial_imagery, 6, 8) |> 
+  rename(
+    "congruence_effect_explicit" = congruence_eff_ex_mb,
+    "congruence_effect_implicit" = congruence_eff_im_mb
+  )
 ```
 
+### Modeling the Congruence effect
 
+We will fit a simple model to investigate the effect:
+
+$$
+Congruence \ effect = \beta_{1} \cdot Visual \ imagery \times \beta_{2} \cdot Spatial \ imagery
+$$
+
+The parameters of this model for each task are shown in @tbl-model_congruence_effect-1 and @tbl-model_congruence_effect-2. The estimates are negligible and far from significance.
+
+```{r model_congruence_effect}
+#| label: tbl-model_congruence_effect
+#| tbl-cap: "Parameters of the models fitted on the Congruence effect in both tasks."
+#| tbl-subcap: 
+#|   - "Parameters of the **Explicit task** model."
+#|   - "Parameters of the **Implicit task** model."
+
+# ═══ Modelling the congruence effect ══════════════════════════════════════════
+
+mod_cng_effect_explicit <-
+  linear_reg() |>  
+  set_engine("lm") |> 
+  set_mode("regression") |> 
+  fit(congruence_effect_explicit ~ visual_imagery * spatial_imagery,data = df_congruence) |> 
+  extract_fit_engine()
+
+mod_cng_effect_implicit <-
+  linear_reg() |> 
+  set_engine("lm") |> 
+  set_mode("regression") |> 
+  fit(congruence_effect_implicit ~ visual_imagery * spatial_imagery,data = df_congruence) |> 
+  extract_fit_engine()
+
+mod_cng_effect_explicit |> 
+  model_parameters() |> 
+  rename("*p*" = p) |> 
+  display()
+
+mod_cng_effect_implicit |> 
+  model_parameters() |> 
+  rename("*p*" = p) |> 
+  display()
+
+```
+
+We can visualize these models interactively by plotting the  151 participants in a space defined by the three variables: such projections are presented in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]. The predictions of our model are represented as a plane that associates, for each Visual imagery value $x$ and Spatial imagery value $y$, a predicted value $z$ (the "*Predicted congruence effect*"): the model's plane is the collection of those points (it is colored by a gradient to ease the reading of a high/low predicted Congruence effect).
+
+```{r model_predictions_congruence_effect}
+
+# ═══ Model predictions ════════════════════════════════════════════════════════
+
+preds_explicit_congruence_effect <- 
+  estimate_expectation(mod_cng_effect_explicit) %>%
+  select(1,3) %>%
+  as.data.frame() |> 
+  mutate(across(everything(), ~as.numeric(.x))) |> 
+  rename("predicted_explicit" = Predicted)
+
+preds_implicit_congruence_effect <- 
+  estimate_expectation(mod_cng_effect_implicit) %>%
+  select(1,3) %>%
+  as.data.frame() |> 
+  mutate(across(everything(), ~as.numeric(.x))) |> 
+  rename("predicted_implicit" = Predicted) 
+
+df_preds_congruence_effect <-
+  inner_join(
+    preds_explicit_congruence_effect,
+    preds_implicit_congruence_effect,
+    by = "visual_imagery"
+  ) |> 
+  inner_join(
+    df_congruence,
+    by = "visual_imagery"
+  ) |> 
+  select(4,5,1,6,7,8,3,2)
+```
+
+:::{.panel-tabset}
+
+#### Explicit task model
+
+```{r 3d_congruence_effect_explicit}
+#| label: fig-3d_congruence_effect_explicit
+#| fig-cap: "3D mapping of the three variables of interest in the **Explicit** task: Congruence effect, Visual, and Spatial imagery. The plane represents the predictions of a model explaining the Congruence effect with the mental imagery variables."
+
+# ═══ 3D Variable space - Explicit task ════════════════════════════════════════
+
+df_preds_congruence_effect %>% 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_explicit,
+    marker = list(size = 5)
+  ) %>% 
+  add_markers(
+    color = ~ aphantasia,
+    colors = ~ c("#E69F00", "#56B4E9"),
+    opacity = .5
+    ) %>% 
+  add_trace(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ predicted_explicit,
+    type = "mesh3d",
+    intensity = ~ predicted_explicit, 
+    colorscale = "Viridis",
+    colorbar = list(title = list(text = "Predicted congruence effect")),
+    hovertext = "z = Predicted effect"
+    ) %>% 
+  layout(
+    legend = list(title = list(text = "Aphantasia")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+#### Implicit task model
+
+```{r 3d_congruence_effect_implicit}
+#| label: fig-3d_congruence_effect_implicit
+#| fig-cap: "3D mapping of the three variables of interest in the **Implicit** task: Congruence effect, Visual and Spatial imagery. The plane represents the predictions of a model explaining the Congruence effect with the mental imagery variables."
+
+# ═══ 3D Variable space - Implicit task ════════════════════════════════════════
+
+df_preds_congruence_effect %>% 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_implicit,
+    marker = list(size = 5)
+  ) %>% 
+  add_markers(
+    color = ~ aphantasia,
+    colors = ~ c("#E69F00", "#56B4E9"),
+    opacity = .5
+    ) %>% 
+  add_trace(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ predicted_implicit,
+    type = "mesh3d",
+    intensity = ~ predicted_implicit, 
+    colorscale = "Viridis",
+    colorbar = list(title = list(text = "Predicted congruence effect")),
+    hovertext = "z = Predicted effect"
+    ) %>% 
+  layout(
+    legend = list(title = list(text = "Aphantasia")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+:::
+
+Although the effects of the mental imagery variables are statistically anecdotal, this method of visualization shows that the model's planes are not flat, reflecting the interaction dynamics between visual and spatial imagery, and allows us to intuitively understand this interaction. These model planes seem to suggest that the higher Congruence effects in high visual imagers are not an even phenomenon, but that **the significant effect we observed in the [inferential analyses](#sec-inferential) might be driven by a sub-groups of non-aphantasics with varying spatial imageries**.
+
+### Contradictory findings
+
+Once again, while fairly obvious in visual data exploration, these interaction dynamics between variables have shown to be weak and statistically insignificant. This failure to explain continuous data is reminiscent of another earlier finding, that *Visual imagery is not correlated with the Congruence effect*, although we clearly showed in @sec-inferential that the global effect of Congruence varied with the Group (i.e. visual imagery group) in both tasks. This reflects the high variability in the sample both in Congruence effect and mental imagery (clearly visible in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]), variance that is only partly explained by the division in two groups based on visual imagery (although this division already yields - very small - significant interaction effects). Said differently, ***the division by the VVIQ (aphantasics/phantasics) is a sufficient model statistically, yet is not satisfying to explain most of the cognitive differences at play in our tasks.***
+
+As we can see that the initial model of a division in two VVIQ groups somehow managed to explain some aspects of the data, we can hypothesize that the partition of the sample in several groups has an underlying potential to explain the data. Therefore, one approach we could choose to tackle our problem is a redefinition of this division model, i.e. a **redefinition of the groups**. To that end, we propose to conduct an analysis independent of our initial hypotheses and models through the use of **unsupervised clustering**.
+
+## Cluster analysis
+
+### Method
+
+We will choose a method of clustering based on Gaussian mixture models [^kmeans] (GMM). A Gaussian mixture model is a linear combination of several Gaussian components: it is used when the data cannot be modelled by a simple Gaussian (i.e. a normal distribution). In other words, if the data structure is naturally composed of several clusters, they should be represented by an GMM rather than a simple Gaussian distribution: each distribution then represents a cluster.
+
+[^kmeans]: GMMs are less common in psychology than the widely used K-Means algorithm, but have several advantages over it, mainly: ($i$) K-Means assumes sphericity and an equivalent cluster size, which is rarely the case in reality; ($ii$) GMMs are probabilistic models (*soft clustering*) that are more parsimonious than the geometric approach (*hard clustering*) of K-Means (see for instance Dalmaijer, 2022).
+
+A GMM will therefore identify normal distributions in the data with different means and covariances corresponding to clusters, as well as probabilities for each observation (in this case, the participants) of belonging to a given cluster. As very little information is known about the possible clusters, their means and covariances for each of the variables, the GMM has to follow several steps: (i) Estimating the number of clusters; (ii) The random choice of initial parameters (mean, covariance and weight) for the clusters on each variable; (iii) The use of an "*expectation-maximisation*" algorithm (EM - see Dempster, 1977), an iterative algorithm for determining the parameters of a probabilistic model when it depends on unobservable latent variables. The EM algorithm proceeds in two stages. Step E: calculates the probability of each observation belonging to a cluster; then step M: updates the parameters to maximize these probabilities and approximate the actual distributions of the clusters; finally, returns to step E with the new parameters, and repeats the two steps until the model converges on stable clusters.[^complex] We determined the ideal number of clusters by way of BIC indices and Elbow method. The most supported number was two clusters, although a three cluster solution was also suggested. We computed both clusterings and analysed the results.
+    
+[^complex]: The definitions of GMMs and the EM algorithm are extremely simplified, as they are based on complex probabilistic mathematical models, the explanation of which is not really relevant to this report. More details can be found in the article dedicated to the R package used to implement this method (i.e. `Mclust`, see Scrucca, 2016) or on the internet.
+
+```{r number_of_clusters}
+#| label: fig-number_of_clusters
+#| fig-cap: "Elbow and BIC methods to determine the optimal cluster number."
+
+df_congruence[, 3:6] |> 
+  n_clusters_elbow() |> 
+  plot() 
+
+df_congruence[, 3:6] |>
+  mclustBIC() |> 
+  plot()
+
+df_congruence[, 3:6] |>
+  mclustBIC() |> 
+  summary()
+```
+
+```{r computing_clusters}
+clustering_2 <- 
+  df_congruence[, 3:6] |> 
+  cluster_analysis(
+    method = "mixture",
+    n = 2
+  ) |> 
+  predict()
+
+clustering_3 <-
+  df_congruence[, 3:6] |> 
+  cluster_analysis(
+    method = "mixture",
+    n = 3
+  ) |> 
+  predict()
+
+df_clustering <-
+  df_congruence |>
+  bind_cols(clustering_2) |> 
+  bind_cols(clustering_3) |> 
+  rename(
+    "clusters_2" = "...7",
+    "clusters_3" = "...8"
+    ) |> 
+  mutate(across(starts_with("clusters"), as.factor))
+```
+
+### Clustering results
+
+We can visualize the results in the three dimensional spaces we examined earlier : the three PCA components, or the three variables.
+
+#### 2-Clusters solution
+
+:::{.panel-tabset .column-page-inset-right}
+
+#### Congruence Explicit
+
+```{r 3d_2_clusters_explicit_plotly}
+#| label: fig-3d_2_clusters_explicit
+#| fig-cap: "3D mapping of the two clusters along the original variables in the explicit task."
+
+df_clustering |> 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_explicit,
+    marker = list(size = 5)
+  ) |> 
+  add_markers(
+    color = ~ clusters_2,
+    colors = ~ c("#009E73", "#F0E442"),
+    opacity = .7
+    ) |> 
+  layout(
+    legend = list(title = list(text = "Cluster")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+#### Congruence Implicit
+
+```{r 3d_2_clusters_implicit_plotly}
+#| label: fig-3d_2_clusters_implicit
+#| fig-cap: "3D mapping of the two clusters along the original variables in the implicit task."
+
+df_clustering |> 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_implicit,
+    marker = list(size = 5)
+  ) |> 
+  add_markers(
+    color = ~ clusters_2,
+    colors = ~ c("#009E73", "#F0E442"),
+    opacity = .7
+    ) |> 
+  layout(
+    legend = list(title = list(text = "Cluster")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+#### Cluster repartition
+
+```{r 2_clusters_repartition_plotly}
+#| label: fig-2_clusters_repartition
+#| fig-cap: "Repartition of the original groups in the two clusters."
+
+(df_clustering |> 
+  mutate(Cluster = clusters_2, .keep = "unused") |> 
+  ggplot(aes(x = Cluster, fill = aphantasia)) +
+  geom_bar(
+    alpha = .5, 
+    position = position_dodge(), 
+    color = "black", 
+    linewidth = .3
+    ) +
+  labs(x = "Cluster", y = "Number of participants") +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL)) |> 
+  ggplotly()
+```
+
+:::
+
+#### 3-Clusters solution
+
+:::{.panel-tabset .column-page-inset-right}
+
+#### Congruence Explicit
+
+```{r 3d_3_clusters_explicit_plotly}
+#| label: fig-3d_3_clusters_explicit
+#| fig-cap: "3D mapping of the two clusters along the original variables in the explicit task."
+
+df_clustering |> 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_explicit,
+    marker = list(size = 5)
+  ) |> 
+  add_markers(
+    color = ~ clusters_3,
+    colors = ~ c("#009E73", "#F0E442"),
+    opacity = .7
+    ) |> 
+  layout(
+    legend = list(title = list(text = "Cluster")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+#### Congruence Implicit
+
+```{r 3d_3_clusters_implicit_plotly}
+#| label: fig-3d_3_clusters_implicit
+#| fig-cap: "3D mapping of the two clusters along the original variables in the implicit task."
+
+df_clustering |> 
+  plot_ly(
+    x = ~ visual_imagery,
+    y = ~ spatial_imagery,
+    z = ~ congruence_effect_implicit,
+    marker = list(size = 5)
+  ) |> 
+  add_markers(
+    color = ~ clusters_3,
+    colors = ~ c("#009E73", "#F0E442"),
+    opacity = .7
+    ) |> 
+  layout(
+    legend = list(title = list(text = "Cluster")),
+    scene = list(
+      xaxis = list(title = "Visual imagery"),
+      yaxis = list(title = "Spatial imagery"),
+      zaxis = list(title = "Congruence effect")
+      )
+    )
+```
+
+#### Cluster repartition
+
+```{r 3_clusters_repartition_plotly}
+#| label: fig-3_clusters_repartition
+#| fig-cap: "Repartition of the original groups in the two clusters."
+
+(df_clustering |> 
+  mutate(Cluster = clusters_3, .keep = "unused") |> 
+  ggplot(aes(x = Cluster, fill = aphantasia)) +
+  geom_bar(
+    alpha = .5, 
+    position = position_dodge(), 
+    color = "black", 
+    linewidth = .3
+    ) +
+  labs(x = "Cluster", y = "Number of participants") +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL)) |> 
+  ggplotly()
+```
+
+:::
+
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 
 <!-- The End -->
 :::{.callout-note collapse="true" appearance="simple"}
