@@ -1,12 +1,11 @@
 format: 
   html:
     code-fold: true
+    echo: false
     warning: false
     error: false
     message: false
     cap-location: bottom
-    editor_options: 
-      chunk_output_type: console
   pdf:
     pdf-engine: pdflatex
     documentclass: article

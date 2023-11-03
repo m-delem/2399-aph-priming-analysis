@@ -1,5 +1,6 @@
 data/
 docs/
+old_reports/
 .Rproj.user
 
 /.quarto/
