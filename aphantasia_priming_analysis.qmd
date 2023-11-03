@@ -8,7 +8,7 @@ format: html
 execute: 
   echo: false
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 toc: true
 toc-depth: 3
 toc-expand: 2
@@ -3400,6 +3400,120 @@ linear_reg() %>%
 In the end, I interpret the 4-cluster model as saying that low spatial imagery participants tend to have a higher congruence effect than high spatial imagery ones, although this difference is in *relative* terms, not absolute (as the first - aphantasic - cluster has a null congruence effect with low spatial imagery). It appears, with a certain grouping on the basis of visual imagery, that non-aphantasic participants have a slightly higher congruence effect, but I interpret the last model as showing that cluster 2 - 24 non-aphantasics only, with low spatial imagery - is the sub-group driving this effect, whereas the other non-aphantasics (cluster 3 and 4, 32 non-aphantasics total) show the opposite pattern.
 
 I suspect the Gabor orientation factor to be a potential predictor of this importance of spatial imagery. However that inquiry would mandate further analysis, and I also suspect that this influence is very small, so I'll wrap up this report with this conclusion for the time being.
+
+
+
+# Inferential exploration
+
+## Model check-ups
+
+```{r}
+all_models_fitted[["explicit_mods"]][["mod_explicit_4"]] |> 
+  check_model(
+    check = "linearity", 
+    dot_alpha = .2,
+    colors = c("#3aaf85", "#1b6ca8", "#cd201f")
+    )
+all_models_fitted[["explicit_mods"]][["mod_explicit_4"]] |> check_model(check = "pp_check", dot_alpha = .2)
+all_models_fitted[["explicit_mods"]][["mod_explicit_4"]] |> check_model(check = "homogeneity", dot_alpha = .2)
+```
+
+## Generalized Linear Mixed Models
+
+```{r glmm_workflows}
+#| fig-width: 10
+#| fig-height: 10
+
+# --- preprocessing recipe for explicit data, no Box-Cox ---
+recipe_explicit_glmm <- 
+  df_explicit_rt %>%
+  recipe() %>%
+  update_role(
+    rt_explicit, 
+    new_role = "outcome"
+    ) %>%
+  update_role(
+    subjectid, age,
+    aphantasia, visual_imagery, spatial_imagery,
+    color, congruence,
+    new_role = "predictor"
+    ) %>%
+  add_role(
+    subjectid, 
+    new_role = "group"
+    )
+
+# --- preprocessing recipe for implicit data, no Box-Cox  ---
+recipe_implicit_glmm <-
+  df_implicit_rt %>%
+  recipe() %>%
+  update_role(
+    rt_implicit, 
+    new_role = "outcome"
+    ) %>%
+  update_role(
+    subjectid, age,
+    aphantasia, visual_imagery, spatial_imagery,
+    color, congruence,
+    new_role = "predictor"
+    ) %>%
+  add_role(
+    subjectid,
+    new_role = "group"
+    )
+
+# --- workflows ---
+workflow_explicit_glmm <- workflow() %>% add_recipe(recipe_explicit_glmm)
+workflow_implicit_glmm <- workflow() %>% add_recipe(recipe_implicit_glmm)
+
+# --- generalized linear mixed models ---
+mod_glmer <-
+  linear_reg() %>%
+  set_engine(
+    "glmer",
+    family = Gamma(link = "identity")
+    )
+
+# maximal glmm
+glmm_explicit <-
+  workflow_explicit_glmm |> 
+  add_model(
+    mod_glmer,
+    formula = rt_explicit ~ aphantasia * congruence * color + 
+      (congruence|subjectid)
+  )
+
+# fitting
+glmm_explicit_fit <-
+  glmm_explicit |> 
+  fit(data = df_explicit_rt |> 
+  filter(rt_explicit <= 1500))
+
+glmm_explicit_fit |> 
+  extract_fit_engine() |> 
+  model_parameters()
+  # check_model()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 :::{.callout-note collapse="true"}
 
