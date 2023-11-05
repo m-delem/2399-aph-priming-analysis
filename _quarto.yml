@@ -1,3 +1,5 @@
+crossref: 
+  chapters: true
 format: 
   html:
     code-fold: true
