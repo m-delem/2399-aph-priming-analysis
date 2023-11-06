@@ -5,7 +5,9 @@ date: 2023-11-03
 date-modified: last-modified
 date-format: "D/MM/YYYY"
 format: html
+editor: visual
 editor_options: 
+  
   chunk_output_type: inline
 toc: true
 toc-depth: 3
@@ -304,26 +306,35 @@ df_explicit_rt <-
     correct_explicit == 1 &
     # participants identified with with high error rates
     !(subjectid %in% c( 
-      "aknezevic", 
-      "lbrunie",  
+      "aknezevic",
+      "bdispaux", 
+      "lbrunie", 
+      "eleveque", 
       "agayou", 
       "bluciani",
-      "ldossantos"))
+      "ldossantos", 
+      "aleclaire", 
+      "dchimenton"))
     ) |>  
   # removing irrelevant variables
   select(-c(sex, vviq80, orientation, response, correct_explicit))
 
 # percentage of trials removed in the explicit task
 (count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
-# 9091 trials left, 573 = 5.9% removed
+# 8842 trials left = 8.5% removed
 
 df_implicit_rt <- 
   df_implicit |>  
   filter(
     correct_implicit == 1 &
-    !(subjectid %in% c(
+    !(subjectid %in% c( 
+      "aknezevic",
       "bdispaux", 
+      "lbrunie", 
       "eleveque", 
+      "agayou", 
+      "bluciani",
+      "ldossantos", 
       "aleclaire", 
       "dchimenton"))
       ) |>  
@@ -331,7 +342,7 @@ df_implicit_rt <-
 
 # percentage of trials removed in the implicit task
 (count(df_implicit) - count(df_implicit_rt)) / count(df_implicit) 
-# 9078 trials left, 586 = 6% removed
+# 8765 trials left = 9.3% removed
 ```
 
 ## Response times
@@ -353,16 +364,16 @@ df_explicit_rt <-
   filter(rt > 300 & rt < 3000)
 
 # total percentage of trials removed in the explicit task
-# (count(df_explicit) - count(df_explicit_rt)) / count(df_explicit) 
-# 9000 trials left, 664 = 6.9% removed
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
+# 8753 trials left = 9.4% removed
 
 df_implicit_rt <- 
   df_implicit_rt |>  
   filter(rt > 300 & rt < 3000)
 
 # total percentage of trials removed in the implicit task
-# (count(df_implicit) - count(df_implicit_rt)) / count(df_implicit) 
-# 9017 left, 647 = 6.7% removed
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit)
+# 8706 left = 9.9% removed
 ```
 
 The removal of accuracy outliers, incorrect trials and extreme RTs amounted to 6.9% of trials in the explicit and 6.7 in the implicit task.
@@ -462,7 +473,7 @@ df_explicit_rt |>
   group_by(subjectid) |> 
   summarise(mean_rt_explicit = mean(rt)) |> 
   ungroup() |> 
-  filter(mean_rt_explicit > 1384) |> 
+  filter(mean_rt_explicit > 1373) |> 
   arrange(desc(mean_rt_explicit))
 # 7 outliers in the explicit task
 
@@ -480,34 +491,41 @@ df_explicit_rt <-
   df_explicit_rt |> 
   filter(
     !(subjectid %in% c(
-      "dchimenton",
       "fc",
       "mbilodeau",
       "llhermitte",
       "hmassot",
       "mbillon",
-      "nnguyenphuoc"
+      "nnguyenphuoc",
+      "rcarnez",
+      "cbertrand",
+      "omeyer"
     ))
   )
 
-# 139 participants and 8603 trials left
-# (9664-8603)/9664 # 11% out
-# alternative point of view: 12 participants excluded in the explicit task due to high error rates or overall abnormally slow RTs.
+# 133 participants and 8229 trials left
+# (9664-8229)/9664 # 14.8% out
+# alternative point of view: 18 participants excluded in the explicit task due to high error rates or overall abnormally slow RTs.
 
 df_implicit_rt <-
   df_implicit_rt |> 
   filter(
     !(subjectid %in% c(
+      "fc",
       "mbilodeau",
+      "llhermitte",
+      "hmassot",
+      "mbillon",
+      "nnguyenphuoc",
+      "rcarnez",
       "cbertrand",
-      "omeyer",
-      "rcarnez"
+      "omeyer"
     ))
   )
 
-# 143 partcipants and 8777 trials left
-# (9664-8777)/9664 # 9.2% out
-# alternative point of view: 8 participants excluded in the implicit task due to high error rates or overall abnormally slow RTs.
+# 133 partcipants and 8166 trials left
+# (9664-8166)/9664 # 15.5% out
+# alternative point of view: 18 participants excluded in the implicit task due to high error rates or overall abnormally slow RTs.
 ```
 
 At this step, 12 participants in the explicit task and 8 participants in the implicit task have been excluded due to high error rates or overall abnormally slow RTs. Let's visualize the RT means distributions again in @fig-rt_means3 and [-@fig-rt_means4].
@@ -638,7 +656,7 @@ As expected, most of the participants have a small amount of very slow outlier t
 # ═══ By-participant MAD outlier detection ═════════════════════════════════════
 
 # ─── Explicit task: ───
-# From 8603 observations
+# From 8229 observations
 # 3 MADs threshold
 df_explicit_rt <-
   df_explicit_rt |> 
@@ -652,11 +670,11 @@ df_explicit_rt <-
     rt > rt_median - 3 * rt_mad
   ) |>
   ungroup()
-# 8072 trials left
-# (8603-8072)/8603 # 6.2% trials out
+# 7710 trials left
+# (8229-7710)/8229 # 6.3% trials out
 
 # ─── Implicit task: ───
-# From 8777 observations
+# From 8166 observations
 # 3 MADs threshold
 df_implicit_rt <-
   df_implicit_rt |> 
@@ -670,8 +688,8 @@ df_implicit_rt <-
     rt > rt_median - 3 * rt_mad
   ) |>
   ungroup()
-# 8110 trials left
-# (8777-8110)/8777 # 7.6% trials out
+# 7550 trials left
+# (8166-7550)/8166 # 7.5% trials out
 ```
 
 The range defined by $\pm 3 \times MAD$ resulted in a deletion of 6.2% of trials in the explicit task and 7.6% of trials in the implicit task. Let's visualize the final distribution of RTs for each participant in @fig-rt_per_participant_3 and [-@fig-rt_per_participant_4]
@@ -752,14 +770,14 @@ Alternatively, we could also transform our data using a Box-Cox transformation t
 
 Only two-way interactions between the three factors have been kept, as three-way interactions were not improving the quality of the models, and were sometimes even preventing the models from converging at all.
 
-```{r fitting_glmms}
-#| code-summary: "Fitting all the models (Warning: long code chunk)"
+```{r fitting_glmms_and_lmms}
+#| code-summary: "Fitting all the models with `tidymodels` (Warning: long code chunk)"
 #| echo: true
 #| output: false
  
-# ═══ Fitting Generalized Linear Mixed Models ══════════════════════════════════
+# ═══ Fitting (Generalized) Linear Mixed Models ════════════════════════════════
 
-# ─── Preparing variable roles ──────────────────────────────────
+# ─── Preparing variable roles ─────────────────────────────────────────────────
 glmm_recipe_ex <- 
   df_explicit_rt |> 
   recipe() |> 
@@ -780,15 +798,50 @@ glmm_recipe_im <-
   ) |> 
   add_role(subjectid, new_role = "group")
 
-# ─── Specifying the type and distribution for the models ───────
-glmm_model <-
+# Adding pre-processing steps to Box-Cox and normalize RTs in LMMs
+lmm_recipe_ex <- 
+  glmm_recipe_ex |> 
+  step_BoxCox(rt) |> 
+  step_normalize(rt)
+
+lmm_recipe_im <- 
+  glmm_recipe_im |> 
+  step_BoxCox(rt) |> 
+  step_normalize(rt)
+
+# ─── Specifying the types and distributions for the models ────────────────────
+
+# GLMM, Inverse Gaussian distribution, identity link
+glmm_inverse_id <-
   linear_reg() |> 
   set_engine(
     "glmer",
-    family = Gamma(link = "identity")
+    family = inverse.gaussian(link = "identity")
   )
 
-# ─── Writing down the formulas of our models ───────────────────
+# GLMM, Inverse Gaussian distribution, log link
+glmm_inverse_log <-
+  linear_reg() |> 
+  set_engine(
+    "glmer",
+    family = inverse.gaussian(link = "log")
+  )
+
+# LMM (i.e. GLMM with a Gaussian distribution)
+lmm_gauss <-
+  linear_reg() |> 
+  set_engine("lmer")
+
+# Listing these models
+# GLMMs
+model_specs_glmm <- list(
+  glmm_inverse_id = glmm_inverse_id,
+  glmm_inverse_log = glmm_inverse_log
+)
+# LMM
+model_spec_lmm <- list(lmm_gauss = lmm_model)
+
+# ─── Writing down the formulas of our models ──────────────────────────────────
 # null model
 formula_0 <- rt ~ (1|subjectid)
 # intercept by-participant
@@ -800,151 +853,411 @@ formula_3 <- rt ~ (aphantasia + congruence + color)^2 + (color|subjectid)
 # intercept and slope on congruence and color by-participant
 formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
 
-# ─── Combing formulas and model specs in workflows ─────────────
-# the null model workflows
-glmm_wf0_ex <- 
-  workflow() |> 
-  add_recipe(glmm_recipe_ex) |> 
-  add_model(glmm_model, formula = formula_0)
-
-glmm_wf0_im <- 
-  workflow() |> 
-  add_recipe(glmm_recipe_im) |> 
-  add_model(glmm_model, formula = formula_0)
-
-# using the first workflow to derive all the others
-# explicit task
-glmm_wf1_ex <- glmm_wf0_ex |> update_model(glmm_model, formula = formula_1)
-glmm_wf2_ex <- glmm_wf0_ex |> update_model(glmm_model, formula = formula_2)
-glmm_wf3_ex <- glmm_wf0_ex |> update_model(glmm_model, formula = formula_3)
-glmm_wf4_ex <- glmm_wf0_ex |> update_model(glmm_model, formula = formula_4)
-# implicit task
-glmm_wf1_im <- glmm_wf0_im |> update_model(glmm_model, formula = formula_1)
-glmm_wf2_im <- glmm_wf0_im |> update_model(glmm_model, formula = formula_2)
-glmm_wf3_im <- glmm_wf0_im |> update_model(glmm_model, formula = formula_3)
-glmm_wf4_im <- glmm_wf0_im |> update_model(glmm_model, formula = formula_4)
-
-# ─── Fitting all models at once ────────────────────────────────
-# explicit
-glmm_fit_ex <-
-  list(
-    glmm_ex_0 = glmm_wf0_ex,
-    glmm_ex_1 = glmm_wf1_ex,
-    glmm_ex_2 = glmm_wf2_ex,
-    glmm_ex_3 = glmm_wf3_ex,
-    glmm_ex_4 = glmm_wf4_ex
-  ) |> 
-  imap(~ .x |> fit(data = df_explicit_rt) |> extract_fit_engine())
-
-# implicit
-glmm_fit_im <-
-  list(
-    glmm_im_0 = glmm_wf0_im,
-    glmm_im_1 = glmm_wf1_im,
-    glmm_im_2 = glmm_wf2_im,
-    glmm_im_3 = glmm_wf3_im,
-    glmm_im_4 = glmm_wf4_im
-  ) |> 
-  imap(~ .x |> fit(data = df_implicit_rt) |> extract_fit_engine())
-
-# ═══ Fitting Linear Mixed Models ══════════════════════════════════════════════
-
-# ─── Adding pre-processing steps to Box-Cox and normalize RTs ──
-lmm_recipe_ex <- 
-  glmm_recipe_ex |> 
-  step_BoxCox(rt) |> 
-  step_normalize(rt)
-
-lmm_recipe_im <- 
-  glmm_recipe_im |> 
-  step_BoxCox(rt) |> 
-  step_normalize(rt)
-
-# ─── Specifying the type of the models ─────────────────────────
-lmm_model <-
-  linear_reg() |> 
-  set_engine("lmer")
-
-# ─── Combing formulas and model specs in workflows ─────────────
-# the null model workflows
-lmm_wf0_ex <- 
-  workflow() |> 
-  add_recipe(lmm_recipe_ex) |> 
-  add_model(lmm_model, formula = formula_0)
-
-lmm_wf0_im <- 
-  workflow() |> 
-  add_recipe(lmm_recipe_im) |> 
-  add_model(lmm_model, formula = formula_0)
-
-# using the first workflow to derive all the others
-# explicit task
-lmm_wf1_ex <- lmm_wf0_ex |> update_model(lmm_model, formula = formula_1)
-lmm_wf2_ex <- lmm_wf0_ex |> update_model(lmm_model, formula = formula_2)
-lmm_wf3_ex <- lmm_wf0_ex |> update_model(lmm_model, formula = formula_3)
-lmm_wf4_ex <- lmm_wf0_ex |> update_model(lmm_model, formula = formula_4)
-# implicit task
-lmm_wf1_im <- lmm_wf0_im |> update_model(lmm_model, formula = formula_1)
-lmm_wf2_im <- lmm_wf0_im |> update_model(lmm_model, formula = formula_2)
-lmm_wf3_im <- lmm_wf0_im |> update_model(lmm_model, formula = formula_3)
-lmm_wf4_im <- lmm_wf0_im |> update_model(lmm_model, formula = formula_4)
-
-# ─── Fitting all models at once ────────────────────────────────
-# explicit
-lmm_fit_ex <-
-  list(
-    lmm_ex_0 = lmm_wf0_ex,
-    lmm_ex_1 = lmm_wf1_ex,
-    lmm_ex_2 = lmm_wf2_ex,
-    lmm_ex_3 = lmm_wf3_ex,
-    lmm_ex_4 = lmm_wf4_ex
-  ) |> 
-  imap(~ .x |> fit(data = df_explicit_rt) |> extract_fit_engine())
-
-# implicit
-lmm_fit_im <-
-  list(
-    lmm_im_0 = lmm_wf0_im,
-    lmm_im_1 = lmm_wf1_im,
-    lmm_im_2 = lmm_wf2_im,
-    lmm_im_3 = lmm_wf3_im,
-    lmm_im_4 = lmm_wf4_im
-  ) |> 
-  imap(~ .x |> fit(data = df_implicit_rt) |> extract_fit_engine())
-
-# ═══ Nested list of all the models ════════════════════════════════════════════
-all_models_fitted <-
-  list(
-    glmm_ex = glmm_fit_ex,
-    glmm_im = glmm_fit_im,
-    lmm_ex = lmm_fit_ex,
-    lmm_im = lmm_fit_im
+# Listing these formulas
+model_formulas <- list(
+  formula_0 = formula_0,
+  formula_1 = formula_1,
+  formula_2 = formula_2,
+  formula_3 = formula_3,
+  formula_4 = formula_4
   )
 
-# ═══ Model analyses ═══════════════════════════════════════════════════════════
+# ─── Table to combine everything in workflows and fit the models ──────────────
+model_all_workflows_fitted <- 
+  tribble( ~recipe,     ~ task,          ~models,      ~formulas,
+    glmm_recipe_ex, "explicit", model_specs_glmm, model_formulas,
+    glmm_recipe_im, "implicit", model_specs_glmm, model_formulas,
+     lmm_recipe_ex, "explicit",   model_spec_lmm, model_formulas,
+     lmm_recipe_im, "implicit",   model_spec_lmm, model_formulas,
+  ) |> 
+  # combining recipes with models
+  unnest_longer(models) |> 
+  # combining recipes and models with formulas
+  unnest_longer(formulas) |>
+  rowwise() |>
+  mutate(
+    # creating workflows
+    workflow = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(models, formula = formulas)  
+      ),
+    # fitting all the workflows
+    fitted_model = ifelse(
+      task == "explicit",
+      list(workflow |> fit(data = df_explicit_rt) |> extract_fit_engine()),
+      list(workflow |> fit(data = df_implicit_rt) |> extract_fit_engine())
+    ),
+    # extracting the parameters of the models
+    parameters = model_parameters(fitted_model),
+    # checking convergence of the models
+    convergence = check_convergence(engine),
+    # model quality indices
+    model_perf = model_performance(engine),
+    AIC  = model_perf[[1]],
+    AICc = model_perf[[2]],
+    BIC  = model_perf[[3]]
+  ) |>
+  ungroup() |> 
+  select(-c(recipe, models, formulas, workflow, model_perf))
 
-# ─── Model quality comparison ────────────────────────────────
-all_models_performances <-
-  all_models_fitted |>  
-  imap(
-    ~ .x |>  
-      compare_performance(metrics = c("AIC", "AICc")) |>  
-      select(-Model) #|>
-      # display()
-    )
-
-# ─── Model parameter estimations ─────────────────────────────
-all_models_parameters <-
-  all_models_fitted |>  
-  imap(
-    ~ .x |> 
-      imap(
-        ~ .x |>  
-          model_parameters(effects = "fixed") #|> 
-          # display()
-        )
-    )
-
-# ─── Best models assumption checks ───────────────────────────
-# glmm_fit_ex[["glmm_im_4"]] |> check_model(check = "all")
+model_selection <-
+  model_all_workflows_fitted |> 
+  filter(formulas_id != "formula_0") |> 
+  group_by(task, models_id) |> 
+  mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
+  filter(best_model == TRUE)
 ```
+
+```{r check_the_best_models}
+#| fig-label: fig-model_checks
+#| fig-cap: "Checking the assumptions of all the models for both tasks."
+#| fig-subcap: true
+#| layout-ncol: 1
+
+# ─── Model checks ───────────────────────────
+glmm_ex_optimal |> 
+  check_model(
+    check = c(
+      "pp_check",
+      "homogeneity",
+      "outliers",
+      "vif",
+      "qq",
+      "reqq"
+      )
+  )
+
+lmm_ex_optimal |>  
+  check_model(
+    check = c(
+      "pp_check",
+      "linearity",
+      "homogeneity",
+      "outliers",
+      "vif",
+      "qq",
+      "reqq"
+      )
+  )
+
+glmm_im_optimal |> 
+  check_model(
+    check = c(
+      "pp_check",
+      "homogeneity",
+      "outliers",
+      "vif",
+      "qq",
+      "reqq"
+      )
+  )
+
+lmm_im_optimal |>  
+  check_model(
+    check = c(
+      "pp_check",
+      "linearity",
+      "homogeneity",
+      "outliers",
+      "vif",
+      "qq",
+      "reqq"
+      )
+  )
+```
+
+:::{.panel-tabset .column-page-inset-right}
+
+#### Explicit task
+
+```{r model_plots_ex}
+#| label: fig-model_plots_ex
+#| fig-cap: "Plots for the effects of interest in the explicit task."
+#| fig-subcap:
+#|   - "Group x Congruence interaction in the GLMM for the explicit task."
+#|   - "Group x Congruence interaction in the LMM for the explicit task."
+
+# ─── Model effects plots ───────────────────────────
+
+# setting dodge width for all the geoms
+dw <- .75
+# stat text size
+st <- 7
+# legend and axis text size
+txt <- 32
+
+# marginal means predictions
+# glmm
+glmm_preds <- 
+  glmm_ex_optimal |> 
+  estimate_means(at = c("aphantasia", "congruence"))
+# glmm intercept
+glmm_intercept <- (glmm_ex_optimal |> model_parameters())$Coefficient[1]
+
+# lmm
+lmm_preds <-  
+  lmm_ex_optimal |> 
+  estimate_means(
+    at = c("aphantasia", "congruence"), 
+    lmerTest.limit = 9000, 
+    pbkrtest.limit = 9000
+    )
+# lmm intercept
+lmm_intercept <- (lmm_ex_optimal |> model_parameters())$Coefficient[1]
+
+# ─── GLMM ───
+df_explicit_rt |> 
+  ggplot(aes(
+    x = congruence,
+    y = rt_explicit,
+    fill = aphantasia,
+    color = aphantasia
+  )) +
+  # linear modelling of the differences
+  geom_line(
+    data = glmm_preds,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+  # predicted means of the model
+  geom_pointrange2(
+    data = glmm_preds,
+    aes(
+      x = congruence,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  # intercept
+  geom_hline(yintercept = glmm_intercept, linetype = 2) +
+  labs( 
+    x = NULL, 
+    y = "Response time (ms)"
+    ) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL)
+
+# ─── LMM ───
+lmm_recipe_ex|> 
+  prep()|> 
+  bake(df_explicit_rt) |> 
+  ggplot(aes(
+    x = congruence,
+    y = rt_explicit,
+    fill = aphantasia,
+    color = aphantasia
+  )) +
+  # linear modelling of the differences
+  geom_line(
+    data = lmm_preds,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+  # predicted means of the model
+  geom_pointrange2(
+    data = lmm_preds,
+    aes(
+      x = congruence,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  # intercept
+  geom_hline(yintercept = lmm_intercept, linetype = 2) +
+  labs( 
+    x = NULL, 
+    y = "Response time (standardized)"
+    ) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL)
+```
+
+#### Implicit task
+
+```{r model_plots_im}
+#| label: fig-model_plots_im
+#| fig-cap: "Plots for the effects of interest in the implicit task."
+#| fig-subcap:
+#|   - "Group x Congruence interaction in the GLMM for the implicit task."
+#|   - "Group x Congruence interaction in the LMM for the implicit task."
+
+# ─── Model effects plots ───────────────────────────
+
+# setting dodge width for all the geoms
+dw <- .75
+# stat text size
+st <- 7
+# legend and axis text size
+txt <- 32
+
+# marginal means predictions
+# glmm
+glmm_preds_im <- 
+  glmm_im_optimal |> 
+  estimate_means(at = c("aphantasia", "congruence"))
+# glmm intercept
+glmm_intercept_im <- (glmm_im_optimal |> model_parameters())$Coefficient[1]
+
+# lmm
+lmm_preds_im <-  
+  lmm_im_optimal |> 
+  estimate_means(
+    at = c("aphantasia", "congruence"), 
+    lmerTest.limit = 9000, 
+    pbkrtest.limit = 9000
+    )
+# lmm intercept
+lmm_intercept_im <- (lmm_im_optimal |> model_parameters())$Coefficient[1]
+
+# ─── GLMM ───
+df_implicit_rt |> 
+  ggplot(aes(
+    x = congruence,
+    y = rt_implicit,
+    fill = aphantasia,
+    color = aphantasia
+  )) +
+  # linear modelling of the differences
+  geom_line(
+    data = glmm_preds_im,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+  # predicted means of the model
+  geom_pointrange2(
+    data = glmm_preds_im,
+    aes(
+      x = congruence,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  # intercept
+  geom_hline(yintercept = glmm_intercept_im, linetype = 2) +
+  labs( 
+    x = NULL, 
+    y = "Response time (ms)"
+    ) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL)
+
+# ─── LMM ───
+lmm_recipe_im|> 
+  prep()|> 
+  bake(df_implicit_rt) |> 
+  ggplot(aes(
+    x = congruence,
+    y = rt_implicit,
+    fill = aphantasia,
+    color = aphantasia
+  )) +
+  # linear modelling of the differences
+  geom_line(
+    data = lmm_preds_im,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1,
+    show.legend = FALSE
+  ) +
+  # predicted means of the model
+  geom_pointrange2(
+    data = lmm_preds_im,
+    aes(
+      x = congruence,
+      y = Mean,
+      ymin = CI_low,
+      ymax = CI_high,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  # intercept
+  geom_hline(yintercept = lmm_intercept_im, linetype = 2) +
+  labs( 
+    x = NULL, 
+    y = "Response time (standardized)"
+    ) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
+  scale_color_okabeito(guide = NULL)
+```
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
