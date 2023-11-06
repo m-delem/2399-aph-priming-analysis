@@ -19,43 +19,42 @@ fig-asp: .618
 ---
 
 <!-- CSS options for custom title numbers styling-->
+
+```{=html}
 <style>
 .header-section-number:after {
   content: ". ";
 }
 </style>
-
+```
 ### Preliminary Set-up {.unnumbered}
 
 ::: {.callout-note collapse="true"}
-
 #### Datasets and code availability
 
 The folder containing this HTML file also has a "`data/`" folder, wherein can be found the main Excel file from which the datasets analysed here are sourced, i.e. "`aphantasia_priming_tidy_data.xlsx`". It has several sheets:
 
-- `data_asso`/`_implicit`/`_explicit`/`_rotation`/`_questionnaires` are raw datasheets retrieved from old Excels and cleaned up
+-   `data_asso`/`_implicit`/`_explicit`/`_rotation`/`_questionnaires` are raw datasheets retrieved from old Excels and cleaned up
 
-- `data_per_subject` is a table containing one row per subject with all the associated information, raw or computed:
+-   `data_per_subject` is a table containing one row per subject with all the associated information, raw or computed:
 
-    - visual_/spatial_imagery are the two PCA components calculated in [the analysis of questionnaire data](#sec-pca).
-    - congruence_effect_explicit/_implicit are the "*Congruence effects per subject*", i.e. the slope by-subject on Congruence extracted from the multilevel (mixed) models of the [inferential analysis](#sec-inferential).
-    - PC1/2/3 are the three PCA components calculated before the clustering procedure in @sec-pca2.
-    - clusters_2/_4 are the two clustering solutions, respectively with 2 and 4 clusters.
-    - explicit/implicit_mean/mad/min/max are the summary statistics of the two main tasks after data tidying and transformation.
+    -   visual\_/spatial_imagery are the two PCA components calculated in [the analysis of questionnaire data](#sec-pca).
+    -   congruence_effect_explicit/\_implicit are the "*Congruence effects per subject*", i.e. the slope by-subject on Congruence extracted from the multilevel (mixed) models of the [inferential analysis](#sec-inferential).
+    -   PC1/2/3 are the three PCA components calculated before the clustering procedure in @sec-pca2.
+    -   clusters_2/\_4 are the two clustering solutions, respectively with 2 and 4 clusters.
+    -   explicit/implicit_mean/mad/min/max are the summary statistics of the two main tasks after data tidying and transformation.
 
 The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the `aphantasia_priming_analysis.qmd` file, for which the best reading software are coding Integrated Development Environments (IDE) like [RStudio](https://posit.co/download/rstudio-desktop/) or [Visual Studio Code](https://code.visualstudio.com/). The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.
-
 :::
 
-:::{.callout-note collapse="true"}
-
+::: {.callout-note collapse="true"}
 #### Software and setup
 
-This analysis was conducted in R language on [RStudio](https://posit.co/download/rstudio-desktop/). This analysis report was written with [Quarto](https://quarto.org/). Just down below is the set-up code, including two essential steps: 
+This analysis was conducted in R language on [RStudio](https://posit.co/download/rstudio-desktop/). This analysis report was written with [Quarto](https://quarto.org/). Just down below is the set-up code, including two essential steps:
 
-1. Installing the required packages for this data analysis
+1.  Installing the required packages for this data analysis
 
-2. importing data into the dataframes used throughout. 
+2.  importing data into the dataframes used throughout.
 
 I left this (usually hidden) step here for reference of the tools used in a view of transparency for the interested reader.
 
@@ -151,28 +150,24 @@ df_questionnaires <-
     aphantasia = fct_relevel(aphantasia, "yes", "no")
     )
 ```
-
 :::
 
-:::{.callout-tip appearance="simple"}
-
+::: {.callout-tip appearance="simple"}
 #### Interactive figures
 
 Many figures in this report are interactive: hover over the plots to see some of the tools available. You can select a zone to zoom on a plot, hover over bars to see details about data, select only specific groups in the legend, among many other features.
-
 :::
 
-:::{.callout-caution}
-
+::: callout-caution
 #### TL: DR
 
 This report is long. While hoping to have made it organized and user-friendly enough to make people want to read it, here are a few key findings to shorten the process if necessary:
 
-1. Mixed models fitted on RTs showed a **significant interaction between Group (Aphantasics/Phantasics) and Congruence**, in both Explicit and Implicit tasks, although **very small in effect size** in either case. Non-aphantasics answer slightly slower in the incongruent condition, which is not the case for aphantasics.
+1.  Mixed models fitted on RTs showed a **significant interaction between Group (Aphantasics/Phantasics) and Congruence**, in both Explicit and Implicit tasks, although **very small in effect size** in either case. Non-aphantasics answer slightly slower in the incongruent condition, which is not the case for aphantasics.
 
-2. This "**Congruence effect**", when considered as continuous and computed *per subject* as the random parameter for Congruence in the mixed model (i.e. the slope by subject on Congruence), **did not correlate with mental imagery variables**. This contradictory finding might be related to very small effect sizes.
+2.  This "**Congruence effect**", when considered as continuous and computed *per subject* as the random parameter for Congruence in the mixed model (i.e. the slope by subject on Congruence), **did not correlate with mental imagery variables**. This contradictory finding might be related to very small effect sizes.
 
-3. A **Gaussian Mixture Model clustering** with 4 clusters, computed with the two congruence effects, visual and spatial imagery variables, revealed an interesting structure in the data, linking **visual *and* spatial imagery** to the congruence effects. While the cluster differences were negligible in the implicit task, the four clusters did manage to explain some variability in the explicit task. A specific group of non-aphantasics with **high visual imagery and low spatial imagery** showed especially high congruence effect, and could be interpreted as driving the effects analysed in (1).
+3.  A **Gaussian Mixture Model clustering** with 4 clusters, computed with the two congruence effects, visual and spatial imagery variables, revealed an interesting structure in the data, linking **visual *and* spatial imagery** to the congruence effects. While the cluster differences were negligible in the implicit task, the four clusters did manage to explain some variability in the explicit task. A specific group of non-aphantasics with **high visual imagery and low spatial imagery** showed especially high congruence effect, and could be interpreted as driving the effects analysed in (1).
 
 The rest of the report is describing the methods and models, justifying the choices, transformations and assumptions, and visualizing the analyses.
 :::
@@ -202,8 +197,7 @@ cor_questionnaires <-
     )
 ```
 
-:::{.panel-tabset .column-page-inset-right}
-
+::: {.panel-tabset .column-page-inset-right}
 #### Correlation matrix
 
 ```{r correlation_matrix}
@@ -263,7 +257,6 @@ cor_questionnaires %>%
   ) %>% 
   knitr::kable()
 ```
-
 :::
 
 As we can see, while the three visual imagery variables are highly correlated, the association between these visual variables and spatial imagery (OSIQ-S) is inconsistent: VVIQ and OSIQ-S are positively correlated although with anecdotal evidence, SUIS and OSIQ-S have a moderately evidenced positive correlation, while OSIQ-Object and OSIQ-Spatial are negatively correlated. We'll run a Principal Component Analysis to evaluate the possibility of a dimensionality reduction by considering visual imagery as a single variable.
@@ -284,8 +277,7 @@ pca <-
     ) 
 ```
 
-:::{layout-ncol=1}
-
+::: {layout-ncol="1"}
 ```{r loadings}
 #| label: fig-loadings
 #| fig-cap: "Loadings of each variable on the three components extracted by a PCA."
@@ -311,7 +303,6 @@ pca %>%
   rename("Component" = name) %>%
   display
 ```
-
 :::
 
 As expected, the visual imagery variables are grouped in a single component ("PC1" in @fig-loadings or "Component 1" in @tbl-eigenvalues) with an Eigenvalue of 2.84, therefore accounting for 71% of the total variance of the data. The second component (PC2 / Component 2) has an Eigenvalue of .97, accounts for 24% of the total variance, and is mostly loaded negatively on the OSIQ-S: this brings the total explained proportion of variance to 95%. Traditionally, the threshold used for selecting a principal component is an Eigenvalue of 1. Nevertheless, given the Eigenvalue of .97 and the properties of this component, i.e. singling out the specificity of the spatial scale, this component will be kept for analysis.
@@ -342,8 +333,7 @@ rm(pca, pca_components)
 
 Now we can see that the main visual imagery variables, namely the (conventional) VVIQ and the *Visual Imagery* component created through PCA are completely decorrelated from the *Spatial Imagery* component, as shown in @fig-spatial_corr1 and [-@fig-spatial_corr2].
 
-:::{.panel-tabset .column-page-inset-right}
-
+::: {.panel-tabset .column-page-inset-right}
 #### Spatial and Visual Imagery
 
 ```{r spatial_correlations_plotly_1}
@@ -410,14 +400,13 @@ Now we can see that the main visual imagery variables, namely the (conventional)
        y = "Spatial Imagery")) %>% 
   ggplotly
 ```
-
 :::
 
 The consequence of this analysis is that from this point onwards two options are available to model the data:
 
-1. Using **Aphantasia (i.e. *****Group*****) as a categorical variable** by binning the participants in two categories based on the VVIQ (cut-off at 32, Aphantasics/Phantasics).
+1.  Using **Aphantasia (i.e. *Group*) as a categorical variable** by binning the participants in two categories based on the VVIQ (cut-off at 32, Aphantasics/Phantasics).
 
-2. Using **Visual Imagery as a continuous variable.**
+2.  Using **Visual Imagery as a continuous variable.**
 
 In the main inferential analyses conducted down below, the first option has been selected for its ease of interpretation (and closeness to the results that would be obtained with the continuous variable anyway). Nevertheless, the two continuous variables of visual and spatial imagery defined here will be explored later in [further data exploration](#sec-further).
 
@@ -467,9 +456,9 @@ rm(dfs)
 
 While response time is an obvious outcome to model when it comes to decision tasks, the use of accuracy is more debatable, as the tasks were not specifically designed to be challenging. Traditionally, accuracy is mostly used to remove incorrect trials from RT modelling. We'll describe accuracy data to evaluate its relevance in this analysis. The distribution of the percentages of errors across the three tasks is displayed in @fig-tasks_errors, [-@fig-tasks_errors2], and [-@fig-tasks_errors3].
 
-:::{.panel-tabset .column-page-inset-right}
-
+::: {.panel-tabset .column-page-inset-right}
 #### Association task
+
 <!-- Percentage of errors -->
 
 ```{r tasks_errors_plotly_asso}
@@ -518,6 +507,7 @@ While response time is an obvious outcome to model when it comes to decision tas
 ```
 
 #### Explicit task
+
 <!-- Percentage of errors -->
 
 ```{r tasks_errors_plotly_explicit}
@@ -565,6 +555,7 @@ While response time is an obvious outcome to model when it comes to decision tas
 ```
 
 #### Implicit task
+
 <!-- Percentage of errors -->
 
 ```{r tasks_errors_plotly_implicit}
@@ -609,12 +600,12 @@ While response time is an obvious outcome to model when it comes to decision tas
   # plotly-ing it
   ggplotly
 ```
-
 :::
 
-We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nonetheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each task separately, the results of participants with an error rate superior to 16% will be removed ***(i.e., five participants in the explicit task and four in the implicit task)***, prior to removing all the missed trials of the remaining participants for modelling RTs.**
+We can see that the distributions are skewed yet very similar across groups and tasks: as such, we are going to use accuracy only to remove missed trials in the analyses of the RTs. Nonetheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each task separately, the results of participants with an error rate superior to 16% will be removed** *(i.e., five participants in the explicit task and four in the implicit task)***, prior to removing all the missed trials of the remaining participants for modelling RTs.**
 
 <!-- Finding and removing accuracy outliers -->
+
 ```{r acc_outliers}
 #| code-summary: "Removing incorrect trials and task-wise accuracy outliers"
 #| output: false
@@ -679,9 +670,10 @@ df_implicit_rt <-
 
 ### Response times
 
-As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms. The removal of accuracy outliers, incorrect trials and extreme RTs amounted to 6.9% of trials in the explicit and 6.7 in the implicit task. There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in @fig-rt_means1 and [-@fig-rt_means2], along with the overall RT statistics in @tbl-rt_means. 
+As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms. The removal of accuracy outliers, incorrect trials and extreme RTs amounted to 6.9% of trials in the explicit and 6.7 in the implicit task. There could also be outliers with overall abnormally fast or slow RTs. This analysis will be conducted on mean RTs, the distribution of which is displayed in @fig-rt_means1 and [-@fig-rt_means2], along with the overall RT statistics in @tbl-rt_means.
 
 <!-- Removing extreme RT outlier trials -->
+
 ```{r removing_first_rt_outliers}
 #| code-summary: "Removing extreme RTs"
 #| echo: true
@@ -706,9 +698,9 @@ df_implicit_rt <-
 # 9017 left, 647 = 6.7% removed
 ```
 
-:::{.panel-tabset .column-page-inset-right}
-
+::: {.panel-tabset .column-page-inset-right}
 #### Explicit task
+
 <!-- RT means -->
 
 ```{r explicit_task_rt_means_plotly}
@@ -733,6 +725,7 @@ df_implicit_rt <-
 ```
 
 #### Implicit task
+
 <!-- RT means -->
 
 ```{r implicit_task_rt_means_plotly}
@@ -757,6 +750,7 @@ df_implicit_rt <-
 ```
 
 #### RT means table
+
 <!-- RT means table -->
 
 ```{r rt_means_table}
@@ -779,12 +773,12 @@ df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
 df_rt %>% display
 
 ```
-
 :::
 
 For a more precise analysis of mean RTs, we are going to use an outlier detection method based on the Median Absolute Deviation (MAD). Common thresholds used for outlier detection in Gaussian distributions with MADs are $median \ \pm \ 3 \cdot MAD$ (Hampel filter; see Enderlein, 1987). However, the low boundary of this interval would be aberrant in our case of a skewed distribution, as all the participants with fast RT means even stay above the $median \ - \ 2 \cdot MAD$. As for the high threshold, the choice of the $median \ + \ 3 \cdot MAD$ would set a highly conservative maximum (e.g. 1385ms for the explicit task) and bring the total number of removed trials over 14%. Therefore, after careful examination of the ranges, and in order to keep as many trials as possible, we chose to set the upper threshold at $median \ + \ 5 \cdot MAD$ (i.e. 1797ms for the explicit task, and 1386ms for the implicit task), resulting in an overall deletion of 7.9% of trials in the explicit task and 8.9% of trials in the implicit one in this whole data preprocessing. The resulting distributions of RTs for each participant are represented in @fig-rt_per_participant_1 and [-@fig-rt_per_participant_2]. As we are going to transform the data before modelling it, we also visualized the resulting distributions after having undergone a Box-Cox transformation and a normalization.
 
 <!-- Removing second step RT outlier trials -->
+
 ```{r removing_second_rt_outliers}
 #| code-summary: "Removing individual outlier trials"
 #| output: false
@@ -843,12 +837,11 @@ df_implicit_rt <-
 #   count() # 147 participants left
 ```
 
-
 <!-- Maybe add "For a similar procedure, see Lefevre et al. (2022), or what she cites, Leys et al. (2013)" -->
 
-:::{.panel-tabset .column-page-inset-right}
-
+::: {.panel-tabset .column-page-inset-right}
 #### Explicit task
+
 <!-- RT distribution for each participant -->
 
 ```{r explicit_rt_per_participant_plotly}
@@ -876,6 +869,7 @@ df_implicit_rt <-
 ```
 
 #### Implicit task
+
 <!-- RT distribution for each participant -->
 
 ```{r implicit_rt_per_participant_plotly}
@@ -993,7 +987,6 @@ recipe_implicit <-
   ggplotly %>% 
   style(showlegend = FALSE)
 ```
-
 :::
 
 # Inferential Analyses {#sec-inferential}
@@ -1004,19 +997,19 @@ recipe_implicit <-
 
 Our analyses aim to evaluate the predictive abilities of several variables on one outcome, the **Response times** of the participants in the tasks. Our potential predictors are:
 
-- **Group** membership, with two levels: aphantasia/phantasia
+-   **Group** membership, with two levels: aphantasia/phantasia
 
-- **Congruence** conditions, with two levels: congruent and incongruent
+-   **Congruence** conditions, with two levels: congruent and incongruent
 
-- **Color** conditions, with two levels: colored and uncolored.
+-   **Color** conditions, with two levels: colored and uncolored.
 
 Sub-levels of the responses ("random effects") can also be accounted for:
 
-- the dependency between response times for **each participant** (also referred to as *subjects*) caused by repeated measures
+-   the dependency between response times for **each participant** (also referred to as *subjects*) caused by repeated measures
 
-- the varying effects of **Congruence for each participant**
+-   the varying effects of **Congruence for each participant**
 
-- the varying effects of **Color for each participant**.
+-   the varying effects of **Color for each participant**.
 
 This structure will be modeled using Multilevel Models (also called hierarchical or mixed models), allowing us to add the sub-levels of the hierarchy within participant measures we described above in the model. **RT data will be transformed using a Box-Cox transformation** to bring the distributions closer to normality and improve the quality of the models.
 
@@ -1026,14 +1019,13 @@ $$
 \begin{aligned}
 RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\beta_{2} + \beta_{2_{subject[i]}}) \cdot Congruence_{j} \times (\beta_{3} + \beta_{3_{subject[i]}}) \cdot Color_{k}
 \end{aligned}
-$$
-Where $\alpha$ is the global intercept, $\alpha_{subject[i]}$ is a random intercept by subject accounting for the inherent randomness tied to participants, and $\beta_{1/2/3}$ are the parameters representing the effect of each predictor. The "$\times$" signs represent all the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope $\beta_{2/3_{subject[i]}}$ by subject can be added to the Congruence or Color parameters to account for this variance.
+$$ Where $\alpha$ is the global intercept, $\alpha_{subject[i]}$ is a random intercept by subject accounting for the inherent randomness tied to participants, and $\beta_{1/2/3}$ are the parameters representing the effect of each predictor. The "$\times$" signs represent all the potential interactions along with fixed effects. Additionally, as one might expect the effect of the Congruence or Color conditions to have important variations between subjects (tied to cognitive processes and strategies), a slope $\beta_{2/3_{subject[i]}}$ by subject can be added to the Congruence or Color parameters to account for this variance.
 
 ### Potential models
 
-**RT data will be standardized before modelling**, therefore the standardized coefficients reported will scale on *standard deviations of the RT variable*. This allows to interpret these parameters (regression coefficients) roughly with the same guidelines as usual indices, e.g., Cohen's *d*. Several models will be fitted in turn. We are not going to fit reduced models that exclude some main effects, as we would like to model all of them in any case to produce inferences (as opposed to raw predictions of future data). We'll specify the following: 
+**RT data will be standardized before modelling**, therefore the standardized coefficients reported will scale on *standard deviations of the RT variable*. This allows to interpret these parameters (regression coefficients) roughly with the same guidelines as usual indices, e.g., Cohen's *d*. Several models will be fitted in turn. We are not going to fit reduced models that exclude some main effects, as we would like to model all of them in any case to produce inferences (as opposed to raw predictions of future data). We'll specify the following:
 
-1. The minimal model, accounting only for the random effect of subjects, will serve as a comparison baseline: 
+1.  The minimal model, accounting only for the random effect of subjects, will serve as a comparison baseline:
 
 $$
 \begin{aligned}
@@ -1041,7 +1033,7 @@ RT_{i} = \alpha + \alpha_{subject[i]}
 \end{aligned}
 $$
 
-2. A model accounting for the fixed effects only:
+2.  A model accounting for the fixed effects only:
 
 $$
 \begin{aligned}
@@ -1049,7 +1041,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} + \beta_{2
 \end{aligned}
 $$
 
-3. A model with all interactions:
+3.  A model with all interactions:
 
 $$
 \begin{aligned}
@@ -1057,7 +1049,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times \be
 \end{aligned}
 $$
 
-4. A model with a slope by subject on Congruence:
+4.  A model with a slope by subject on Congruence:
 
 $$
 \begin{aligned}
@@ -1065,7 +1057,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times (\b
 \end{aligned}
 $$
 
-5. A model with a slope by subject on Color:
+5.  A model with a slope by subject on Color:
 
 $$
 \begin{aligned}
@@ -1073,7 +1065,7 @@ RT_{ijk} = \alpha + \alpha_{subject[i]} + \beta_{1} \cdot \ Group_{i} \times \be
 \end{aligned}
 $$
 
-6. The maximal model:
+6.  The maximal model:
 
 $$
 \begin{aligned}
@@ -1331,18 +1323,17 @@ c_ex_col <-
 
 The parameters of the best model for the explicit task are displayed in @tbl-model_explicit_params_table. The significant parameters in the explicit task are the Color and the interaction between the Group and the Congruence conditions. The **main effect of Color** indicate that participants responded quicker in the colored condition (Marginal contrast (colored - uncolored) = `r c_ex_col[1,3]`, CI = $[`r c_ex_col[1,4]` ; `r c_ex_col[1,5]`]$, SE = `r c_ex_col[1,6]`, $p < .001$), although this effect has no interaction with the other variables. The **interaction between Group and Congruence** reveals that non-aphantasics responded slower in the uncongruent condition, as this contrast is the only significant one in this interaction (Marginal contrast (non-aphantasic congruent - incongruent) = `r c_ex_gcn[1,3]`, CI = $[`r c_ex_gcn[1,4]` ; `r c_ex_gcn[1,5]`]$, SE = `r c_ex_gcn[1,6]`, $p < .001$). These effects are illustrated in @fig-model_explicit_ggarrange. Both estimates are $\lt 0.2$, which denotes a *very small* effect size according to most standardized differences interpretation guidelines (e.g. Cohen, 1988; Gignac & Szodorai, 2016; Lovakov & Agadullina, 2021).
 
-:::{.column-page-inset-right}
-
+::: column-page-inset-right
 ```{r model_explicit_params_table}
 #| label: tbl-model_explicit_params_table
 #| tbl-cap: "Parameters of the optimal model for the explicit task including a random intercept and slope by subject on Congruence."
 
 all_models_parameters[["explicit_mods"]][["mod_explicit_5"]]
 ```
-
 :::
 
 <!-- Plot settings -->
+
 ```{r model_plots_general_settings}
 
 # setting dodge width for all the geoms
@@ -1356,6 +1347,7 @@ txt <- 32
 <!-- GCN -->
 
 <!-- Explicit model means and stats for congruence and group -->
+
 ```{r model_explicit_gcn_plot_stats}
 
 # model explicit gcn marginal means predictions
@@ -1387,6 +1379,7 @@ stats_mod_4_g_cng_zoom <-
 ```
 
 <!-- Explicit model full group and congruence plot -->
+
 ```{r model_explicit_gcn_full_plot}
 p_mod_ex_gcn_full <-
   recipe_explicit %>% 
@@ -1476,6 +1469,7 @@ p_mod_ex_gcn_full <-
 ```
 
 <!-- Explicit model zoomed group and congruence plot -->
+
 ```{r model_explicit_gcn_zoomed_plot}
 p_mod_ex_gcn_zoom <-
   recipe_explicit %>% 
@@ -1575,6 +1569,7 @@ p_mod_ex_gcn_zoom <-
 <!-- GCOL -->
 
 <!-- Explicit model means and stats for color and group -->
+
 ```{r model_explicit_gcol_plot_stats}
 # model explicit gcol marginal means predictions
 preds_mod_4_g_col <- 
@@ -1605,6 +1600,7 @@ stats_mod_4_g_col_zoom <-
 ```
 
 <!-- Explicit model full group and color plot -->
+
 ```{r model_explicit_gcol_full_plot}
 p_mod_ex_gcol_full <-
   recipe_explicit %>% 
@@ -1694,6 +1690,7 @@ p_mod_ex_gcol_full <-
 ```
 
 <!-- Explicit model zoomed group and color plot -->
+
 ```{r model_explicit_gcol_zoomed_plot}
 p_mod_ex_gcol_zoom <-
   recipe_explicit %>% 
@@ -1790,8 +1787,7 @@ p_mod_ex_gcol_zoom <-
     )
 ```
 
-:::{.column-page-inset-right}
-
+::: column-page-inset-right
 <!-- GCN and GCOL -->
 
 ```{r model_explicit_ggarrange}
@@ -1823,9 +1819,8 @@ p_mod_explicit_ggarrange <-
 
 p_mod_explicit_ggarrange
 ```
-
 :::
-  
+
 ## Implicit task results
 
 ```{r model_implicit_contrasts}
@@ -1855,18 +1850,17 @@ c_im_gcn <-
 
 The parameters of the best model for the **implicit task** are displayed in @tbl-model_implicit_params_table. The only significant parameter is the **interaction between Group and Congruence**. This interaction shows that non-aphantasics only responded slower in the incongruent condition, which is the only significant contrast (Marginal contrast (non-aphantasic congruent - incongruent) = `r c_im_gcn[1,3]`, CI = $[`r c_im_gcn[1,4]`;`r c_im_gcn[1,5]`]$, SE = `r c_im_gcn[1,6]`, $p = `r c_im_gcn[1,9]`$). This effect is represented in @fig-model_implicit_ggarrange. This estimate $\lt 0.2$, which denotes a *very small* effect size.
 
-:::{.column-page-inset-right}
-
+::: column-page-inset-right
 ```{r model_implicit_params_table}
 #| label: tbl-model_implicit_params_table
 #| tbl-cap: "Implicit task  - Parameters of the optimal model including a random intercept by subject."
 
 all_models_parameters[["implicit_mods"]][["mod_implicit_4"]]
 ```
-
 :::
 
 <!-- Implicit model stats -->
+
 ```{r model_implicit_gcn_plot_stats}
 
 # model 3 marginal means predictions
@@ -1937,6 +1931,7 @@ stats_mod_3_group_zoom <-
 ```
 
 <!-- Implicit model full group and congruence plot -->
+
 ```{r model_implicit_gcn_full_plot}
 p_mod_im_gcn_full <-
   recipe_implicit %>% 
@@ -2036,6 +2031,7 @@ p_mod_im_gcn_full <-
 ```
 
 <!-- Implicit model zoomed group and congruence plot -->
+
 ```{r model_implicit_gcn_zoomed_plot}
 p_mod_im_gcn_interaction_zoom <-
   recipe_implicit %>% 
@@ -2128,6 +2124,7 @@ p_mod_im_gcn_interaction_zoom <-
 ```
 
 <!-- Implicit model full group plot -->
+
 ```{r model_implicit_group_full_plot}
 p_mod_im_group_full <-
   recipe_implicit %>% 
@@ -2219,6 +2216,7 @@ p_mod_im_group_full <-
 ```
 
 <!-- Implicit model zoomed groupplot -->
+
 ```{r model_implicit_group_zoomed_plot}
 p_mod_im_group_zoom <-
   recipe_implicit %>% 
@@ -2313,9 +2311,9 @@ scale_x_discrete(labels = c("Aphantasics", "Controls")) +
     )
 ```
 
-:::{.column-page-inset-right}
-
+::: column-page-inset-right
 <!-- Implicit model group and congruence ggarrange -->
+
 ```{r model_implicit_ggarrange}
 #| label: fig-model_implicit_ggarrange
 #| fig-cap: "Visualization of the Congruence and Group variables in the optimal model for the implicit task. The bottom plot is a 'zoomed' version of the first one on a shorter (standard) RT range for a clearer view of the model. The horizontal colored lines in the 'violins' represent quantiles at 25, 50 and 75%. The black dots indicate marginal means predicted by the model, whereas the black bars represent the credible intervals of these estimations." 
@@ -2347,13 +2345,11 @@ p_mod_implicit_ggarrange
 
 # ggexport(p_mod_implicit_ggarrange, filename = "plots/model_explicit.png", width = 1300, height = 800)
 ```
-
 :::
 
 # Further EDA {#sec-further}
 
-:::{.callout-important}
-
+::: callout-important
 #### Note for the team
 
 I struggled to understand the variables used for clustering in the actual state of the manuscript. The clustering algorithms need continuous variables, and I only found three of them: *Visual imagery* (VVIQ, besides other redundant questionnaires), and two *Congruence effects* (transformed RT difference variables) respectively in the *Explicit* and *Implicit* tasks. On my end, I will also add a fourth variable, the *Spatial* component of the PCA, in the exploratory process. However, there is a mention in the manuscript of adding *Color* as a clustering variable: how was this possible? The question comes from the fact that Color is a sub-structure of the task, therefore adding Color would mean adding *four* Congruence variables instead of two (the Congruence effect in the Colored or Uncolored condition in the Explicit or Implicit task), along with an additional layer of complexity for the understanding of the meaning and relevance of the variables chosen (an essential aspect of unsupervised analysis).
@@ -2365,9 +2361,9 @@ I would very much like to read the full analysis through JASP inputs and outputs
 
 As we have seen, besides the lonesome main effect of Color in the explicit task, the only significant effects identified by our best models are those of the interactions $Group \times Congruence$, revealing that non-aphantasics tend to respond slower in the incongruent trials in both tasks whereas aphantasics have a constant performance. We will call this effect the **Congruence effect**, and it appears to vary between the groups. Now it would be very interesting to investigate the Congruence effect as a *continuous variable that varies across individuals*, a phenomenon that is hidden in our *group-wise* (or sample-wise, population-wise) analysis by averaging and searching for the main effect. To analyse the Congruence effect, we would need to calculate it per subject first. Here we have two possible approaches:
 
-- An **empirical approach**, by averaging the RTs per condition across all trials and subtracting Congruent mean RT minus Incongruent.
+-   An **empirical approach**, by averaging the RTs per condition across all trials and subtracting Congruent mean RT minus Incongruent.
 
-- A **model-based approach**.
+-   A **model-based approach**.
 
 ### Empirical approach
 
@@ -2390,6 +2386,7 @@ The whole $(\beta_{2} + \beta_{2_{subject[i]}})$ is the parameter describing the
 The implementation of this calculation in R is shown below, and relies on the (aptly named) package `modelbased`.
 
 <!-- Predicting the congruence effect for each subject -->
+
 ```{r search_for_congruence_effect}
 #| echo: true
 #| code-summary: "Computing the model-based Congruence effect per subject"
@@ -2458,8 +2455,7 @@ Why investigate the Congruence effect and mental imagery? The hypothesis is that
 
 In sum, we kept four variables: the Congruence effect in the Explicit and Implicit task, and the Visual and Spatial imageries. The distributions of these four variables are displayed in @fig-congruence_effect_explicit, [-@fig-congruence_effect_implicit], [-@fig-visual_imagery], and [-@fig-spatial_imagery]. Note that the Congruence effect is **not** $(Congruent \ RT - Incongruent \ RT)$, but the $standardized \ parameter \ \beta_{2_{subject[i]}}$ from the model for the Congruence effect per subject: therefore, a ***positive Congruence effect denotes a higher response time in the incongruent condition*** (which is arguably more intuitive).
 
-:::{.panel-tabset .column-page-inset-right}
-
+::: {.panel-tabset .column-page-inset-right}
 #### Explicit - Congruence
 
 ```{r congruence_effect_explicit_distribution}
@@ -2575,7 +2571,6 @@ In sum, we kept four variables: the Congruence effect in the Explicit and Implic
   ) %>% 
   ggplotly
 ```
-
 :::
 
 ### Correlational analysis
@@ -2609,8 +2604,7 @@ congruence_correlations_implicit <-
     )
 ```
 
-:::{.column-page-inset-right}
-
+::: column-page-inset-right
 ```{r cor_matrix_congruence}
 #| label: fig-cor_matrix_congruence_explicit
 #| fig-cap: "Correlation matrix with the Congruence effect in both tasks. The stars indicate the amount of evidence in favour of a correlation, as assessed by the $BF_{10}$: No star = Anecdotal evidence, * = Weak evidence, ** = Moderate evidence, *** = Extreme evidence."
@@ -2673,7 +2667,6 @@ congruence_correlations_implicit %>%
     axis.text = element_text(size = 14)
     )
 ```
-
 :::
 
 The Congruence effect does not seem to be correlated with visual or spatial imagery when these variables are taken as continua. We'll examine the relations from another point of view, by trying to model the Congruence effect with the two imagery variables.
@@ -2721,7 +2714,7 @@ mod_cng_effect_implicit %>%
 
 ```
 
-We can visualize these models interactively by plotting the  151 participants in a space defined by the three variables: such projections are presented in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]. The predictions of our model are represented as a plane that associates, for each Visual imagery value $x$ and Spatial imagery value $y$, a predicted value $z$ (the "*Predicted congruence effect*"): the model's plane is the collection of those points (it is colored by a gradient to ease the reading of a high/low predicted Congruence effect).
+We can visualize these models interactively by plotting the 151 participants in a space defined by the three variables: such projections are presented in @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit]. The predictions of our model are represented as a plane that associates, for each Visual imagery value $x$ and Spatial imagery value $y$, a predicted value $z$ (the "*Predicted congruence effect*"): the model's plane is the collection of those points (it is colored by a gradient to ease the reading of a high/low predicted Congruence effect).
 
 ```{r model_predictions_congruence_effect}
 
@@ -2748,8 +2741,7 @@ df_preds_congruence_effect <-
   select(4,5,1,6,7,8,3,2)
 ```
 
-:::{.panel-tabset}
-
+::: panel-tabset
 #### Explicit task model
 
 ```{r 3d_congruence_effect_explicit}
@@ -2825,22 +2817,23 @@ df_preds_congruence_effect %>%
       )
     )
 ```
-
 :::
 
-Although the effects of the mental imagery variables are statistically anecdotal, this method of visualization shows that the model's planes are not flat, reflecting the interaction dynamics between visual and spatial imagery, and allows us to intuitively understand this interaction. Some interesting observations (you can rotate @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit] to visualize the effects described here):
+Although the effects of the mental imagery variables are statistically anecdotal, this method of visualization shows that the model's planes are not flat, reflecting the interaction dynamics between visual and spatial imagery, and allows us to
 
-- In the Explicit task:
+intuitively understand this interaction. Some interesting observations (you can rotate @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit] to visualize the effects described here):
 
-    - The Congruence effect diminishes with spatial imagery *for high visual imagers*, but stays even across spatial imagery for *low visual imagers* (mostly aphantasics)
-    
-    - The Congruence effect augments with visual imagery for *low spatial imagers*, but diminishes with visual imagery for *high spatial imagers* (i.e. completely contrary dynamics depending on the spatial imagery abilities).
-    
-- In the Implicit task:
+-   In the Explicit task:
 
-    - The Congruence effect diminishes with spatial imagery *for high visual imagers*, but stays even across spatial imagery for *low visual imagers / aphantasics* (i.e. the same dynamic as the Explicit task)
-    
-    - The Congruence effect augments with visual imagery for *low spatial imagers*, but stays even across visual imagery for *high spatial imagers* (i.e. comparable dynamics with the Explicit task, although not as extreme).
+    -   The Congruence effect diminishes with spatial imagery *for high visual imagers*, but stays even across spatial imagery for *low visual imagers* (mostly aphantasics)
+
+    -   The Congruence effect augments with visual imagery for *low spatial imagers*, but diminishes with visual imagery for *high spatial imagers* (i.e. completely contrary dynamics depending on the spatial imagery abilities).
+
+-   In the Implicit task:
+
+    -   The Congruence effect diminishes with spatial imagery *for high visual imagers*, but stays even across spatial imagery for *low visual imagers / aphantasics* (i.e. the same dynamic as the Explicit task)
+
+    -   The Congruence effect augments with visual imagery for *low spatial imagers*, but stays even across visual imagery for *high spatial imagers* (i.e. comparable dynamics with the Explicit task, although not as extreme).
 
 These model planes seem to suggest that the higher Congruence effects in high visual imagers are not an even phenomenon, but that **the significant effect we observed in the [inferential analyses](#sec-inferential) might be driven by a sub-group of non-aphantasics with low spatial imagery**.
 
@@ -2856,7 +2849,7 @@ As we can see that the initial model of a division in two VVIQ groups somehow ma
 
 ### Variables?
 
-We mentioned that our initial groups were created based on the VVIQ, that is, **one variable**. We then showed that variance in our sample could come from several variables, limiting the explanatory power of this grouping. The clustering approach would consist in accounting for **all of these variables in the grouping**. This is still limited if we ponder about the innumerable reasons in the participants' cognition that could explain variance, but it is an analytical equivalent of "*doing our best with what we have*". But what variables do we have? Among the continuous within-subject variables, we isolated four, two mental imagery variables and two Congruence effects (one for each task). We could choose to use all four straight away, but that would mean ignoring an important methodological aspect of clustering procedures: as one could theoretically use an infinite number of variables for clustering, it is paramount that this choice be informed by the fact that all variables must be homogeneous in their physical meaning and equally important for classification. In operational terms, that means reducing covariance between variables as much as possible, often through *dimensionality reduction*, e.g., PCA. 
+We mentioned that our initial groups were created based on the VVIQ, that is, **one variable**. We then showed that variance in our sample could come from several variables, limiting the explanatory power of this grouping. The clustering approach would consist in accounting for **all of these variables in the grouping**. This is still limited if we ponder about the innumerable reasons in the participants' cognition that could explain variance, but it is an analytical equivalent of "*doing our best with what we have*". But what variables do we have? Among the continuous within-subject variables, we isolated four, two mental imagery variables and two Congruence effects (one for each task). We could choose to use all four straight away, but that would mean ignoring an important methodological aspect of clustering procedures: as one could theoretically use an infinite number of variables for clustering, it is paramount that this choice be informed by the fact that all variables must be homogeneous in their physical meaning and equally important for classification. In operational terms, that means reducing covariance between variables as much as possible, often through *dimensionality reduction*, e.g., PCA.
 
 ### Dimensionality reduction, part 2 {#sec-pca2}
 
@@ -2875,8 +2868,7 @@ pca_2 <-
   )
 ```
 
-:::{.panel-tabset}
-
+::: panel-tabset
 #### Loadings
 
 ```{r pca_2_loadings}
@@ -2954,16 +2946,15 @@ df_clustering %>%
       )
     )
 ```
-
 :::
 
-This PCA is a bit harder to interpret than the first one. To begin with, we can see the quality of the three components: they all have good Eigenvalues, account for homogeneous amounts of variance, and explain in total 80% of the whole variance. Now for their interpretation, we can use @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit] to ease the understanding: 
+This PCA is a bit harder to interpret than the first one. To begin with, we can see the quality of the three components: they all have good Eigenvalues, account for homogeneous amounts of variance, and explain in total 80% of the whole variance. Now for their interpretation, we can use @fig-3d_congruence_effect_explicit and [-@fig-3d_congruence_effect_implicit] to ease the understanding:
 
-- **The first component of the PCA** correlates positively with the implicit Congruence effect and Visual imagery, but negatively with Spatial imagery: this captures the variance reflected by the model plane in @fig-3d_congruence_effect_implicit (the implicit 3D projection), i.e. the diagonal gradient from low Congruence effect / low Visual imagery / high Spatial imagery (darkest purple angle of the plane) to high CE / VI and low SI (brightest yellow angle of the plane). The PCA component 1 denotes the importance of this gradient.
+-   **The first component of the PCA** correlates positively with the implicit Congruence effect and Visual imagery, but negatively with Spatial imagery: this captures the variance reflected by the model plane in @fig-3d_congruence_effect_implicit (the implicit 3D projection), i.e. the diagonal gradient from low Congruence effect / low Visual imagery / high Spatial imagery (darkest purple angle of the plane) to high CE / VI and low SI (brightest yellow angle of the plane). The PCA component 1 denotes the importance of this gradient.
 
-- **The second component of the PCA** correlates negatively with the explicit Congruence effect, but positively with the implicit Congruence effect. This highlights a very interesting dynamic that is hard to notice empirically: if we compare @fig-3d_congruence_effect_explicit (explicit) and @fig-3d_congruence_effect_implicit (implicit), we can notice that the model planes do not have the same surface shape! This affects particularly low Visual imagery (theoretically aphantasics), where a higher Spatial imagery is associated with a higher Congruence effect in the explicit task, but a lower one in the implicit; said differently, the Congruence effect / Spatial imagery relation is inverted at low Visual imagery. This effect is very slight in the model, but still warrants a coherent component according to the (unsupervised) PCA.
+-   **The second component of the PCA** correlates negatively with the explicit Congruence effect, but positively with the implicit Congruence effect. This highlights a very interesting dynamic that is hard to notice empirically: if we compare @fig-3d_congruence_effect_explicit (explicit) and @fig-3d_congruence_effect_implicit (implicit), we can notice that the model planes do not have the same surface shape! This affects particularly low Visual imagery (theoretically aphantasics), where a higher Spatial imagery is associated with a higher Congruence effect in the explicit task, but a lower one in the implicit; said differently, the Congruence effect / Spatial imagery relation is inverted at low Visual imagery. This effect is very slight in the model, but still warrants a coherent component according to the (unsupervised) PCA.
 
-- **The third component of the PCA** is basically visual imagery, integrating part of the interaction with spatial imagery in the four-dimensional space.
+-   **The third component of the PCA** is basically visual imagery, integrating part of the interaction with spatial imagery in the four-dimensional space.
 
 Now that we have three decorrelated variables explaining meaningful aspects of the data, we can run a cluster analysis on them.
 
@@ -2971,19 +2962,19 @@ Now that we have three decorrelated variables explaining meaningful aspects of t
 
 ### Method
 
-We will choose a method of clustering based on Gaussian mixture models [^kmeans] (GMM). A Gaussian mixture model is a linear combination of several Gaussian components: it is used when the data cannot be modelled by a simple Gaussian (i.e. a normal distribution). In other words, if the data structure is naturally composed of several clusters, they should be represented by an GMM rather than a simple Gaussian distribution: each distribution then represents a cluster.
+We will choose a method of clustering based on Gaussian mixture models [^1] (GMM). A Gaussian mixture model is a linear combination of several Gaussian components: it is used when the data cannot be modelled by a simple Gaussian (i.e. a normal distribution). In other words, if the data structure is naturally composed of several clusters, they should be represented by an GMM rather than a simple Gaussian distribution: each distribution then represents a cluster.
 
-[^kmeans]: GMMs are less common in psychology than the widely used K-Means algorithm, but have several advantages over it, mainly: ($i$) K-Means assumes sphericity and an equivalent cluster size, which is rarely the case in reality; ($ii$) GMMs are probabilistic models (*soft clustering*) that are more parsimonious than the geometric approach (*hard clustering*) of K-Means (see for instance Dalmaijer, 2022).
+[^1]: GMMs are less common in psychology than the widely used K-Means algorithm, but have several advantages over it, mainly: ($i$) K-Means assumes sphericity and an equivalent cluster size, which is rarely the case in reality; ($ii$) GMMs are probabilistic models (*soft clustering*) that are more parsimonious than the geometric approach (*hard clustering*) of K-Means (see for instance Dalmaijer, 2022).
 
-A GMM will therefore identify normal distributions in the data with different means and covariances corresponding to clusters, as well as probabilities for each observation (in this case, the participants) of belonging to a given cluster. As very little information is known about the possible clusters, their means and covariances for each of the variables, the GMM has to follow several steps: (i) Estimating the number of clusters; (ii) The random choice of initial parameters (mean, covariance and weight) for the clusters on each variable; (iii) The use of an "*expectation-maximisation*" algorithm (EM - see Dempster, 1977), an iterative algorithm for determining the parameters of a probabilistic model when it depends on unobservable latent variables. The EM algorithm proceeds in two stages. Step E: calculates the probability of each observation belonging to a cluster; then step M: updates the parameters to maximize these probabilities and approximate the actual distributions of the clusters; finally, returns to step E with the new parameters, and repeats the two steps until the model converges on stable clusters.[^complex]
-    
-[^complex]: The definitions of GMMs and the EM algorithm are extremely simplified, as they are based on complex probabilistic mathematical models, the explanation of which is not really relevant to this report. More details can be found in the article dedicated to the R package used to implement this method (i.e. `Mclust`, see Scrucca, 2016) or on the internet.
+A GMM will therefore identify normal distributions in the data with different means and covariances corresponding to clusters, as well as probabilities for each observation (in this case, the participants) of belonging to a given cluster. As very little information is known about the possible clusters, their means and covariances for each of the variables, the GMM has to follow several steps: (i) Estimating the number of clusters; (ii) The random choice of initial parameters (mean, covariance and weight) for the clusters on each variable; (iii) The use of an "*expectation-maximisation*" algorithm (EM - see Dempster, 1977), an iterative algorithm for determining the parameters of a probabilistic model when it depends on unobservable latent variables. The EM algorithm proceeds in two stages. Step E: calculates the probability of each observation belonging to a cluster; then step M: updates the parameters to maximize these probabilities and approximate the actual distributions of the clusters; finally, returns to step E with the new parameters, and repeats the two steps until the model converges on stable clusters.[^2]
+
+[^2]: The definitions of GMMs and the EM algorithm are extremely simplified, as they are based on complex probabilistic mathematical models, the explanation of which is not really relevant to this report. More details can be found in the article dedicated to the R package used to implement this method (i.e. `Mclust`, see Scrucca, 2016) or on the internet.
 
 ### Determining the number of clusters
 
-There are many methods for determining the ideal number of clusters in a data set. The `n_clusters` function from the package `parameters` on R allows you to use 30 unsupervised methods, and to observe their 'consensus' on this number. The results of this analysis are shown in @fig-number_of_clusters. The choice of 2 clusters is supported by 10 methods out of 30 (Elbow, kl, CCC, Duda, Pseudot2, Beale, Mcclain, Mixture (VEE), Mixture (EEE), Mixture (VII)), but the choices of 3 and 4 clusters are also supported by 6 and 7 methods respectively. We are going to compute the 2 and 4-cluster solutions[^simplicity] and examine the results.
+There are many methods for determining the ideal number of clusters in a data set. The `n_clusters` function from the package `parameters` on R allows you to use 30 unsupervised methods, and to observe their 'consensus' on this number. The results of this analysis are shown in @fig-number_of_clusters. The choice of 2 clusters is supported by 10 methods out of 30 (Elbow, kl, CCC, Duda, Pseudot2, Beale, Mcclain, Mixture (VEE), Mixture (EEE), Mixture (VII)), but the choices of 3 and 4 clusters are also supported by 6 and 7 methods respectively. We are going to compute the 2 and 4-cluster solutions[^3] and examine the results.
 
-[^simplicity]: We did not show the analysis of the 3-solution solely for the sake of simplicity, as it wasn't very "interpretable" and only highlighted the ambiguity of the procedure, which we do not ignore.
+[^3]: We did not show the analysis of the 3-solution solely for the sake of simplicity, as it wasn't very "interpretable" and only highlighted the ambiguity of the procedure, which we do not ignore.
 
 ```{r number_of_clusters}
 #| label: fig-number_of_clusters
@@ -3001,7 +2992,6 @@ There are many methods for determining the ideal number of clusters in a data se
   ) %>% 
   ggplotly
 ```
-
 
 ```{r computing_clusters}
 #| echo: true
@@ -3035,8 +3025,7 @@ We can visualize the results in the three dimensional spaces we examined earlier
 
 #### 2-Clusters solution
 
-:::{.panel-tabset}
-
+::: panel-tabset
 #### PCA components
 
 ```{r 3d_2_clusters_pca_plotly}
@@ -3141,17 +3130,15 @@ df_clustering %>%
   scale_color_okabeito(guide = NULL)) %>% 
   ggplotly
 ```
-
 :::
 
-As we can see from the repartition and 3D projections, the 2-clusters solution essentially captures the obvious split in visual imagery among participants, although in an unsupervised way[^mix]. This model neglects the rest of the variance but remains the one with the best fit, as the visual imagery split far outclasses the rest of the sources of variability in terms of effect size (by construction of the experiment, through selected recruitment). However, we could argue - as do the 7 indices recommending the 4-cluster solution - that a lot of this "spatial dispersion" of the observations is not accounted for by the model. Thus, we will investigate the results of the 4-clusters solution.
+As we can see from the repartition and 3D projections, the 2-clusters solution essentially captures the obvious split in visual imagery among participants, although in an unsupervised way[^4]. This model neglects the rest of the variance but remains the one with the best fit, as the visual imagery split far outclasses the rest of the sources of variability in terms of effect size (by construction of the experiment, through selected recruitment). However, we could argue - as do the 7 indices recommending the 4-cluster solution - that a lot of this "spatial dispersion" of the observations is not accounted for by the model. Thus, we will investigate the results of the 4-clusters solution.
 
-[^mix]: The mix of some "non-aphantasics" in the low imagery cluster (and vice-versa) comes from the fact that VVIQ was not the sole component of the Visual imagery variable. Admittedly, if we were to use additional questionnaires to "screen" aphantasia, some people in the "ambiguous" zone could move from one group to the other.
+[^4]: The mix of some "non-aphantasics" in the low imagery cluster (and vice-versa) comes from the fact that VVIQ was not the sole component of the Visual imagery variable. Admittedly, if we were to use additional questionnaires to "screen" aphantasia, some people in the "ambiguous" zone could move from one group to the other.
 
 #### 4-Clusters solution
 
-:::{.panel-tabset}
-
+::: panel-tabset
 #### PCA components
 
 ```{r 3d_4_clusters_pca_plotly}
@@ -3256,7 +3243,6 @@ df_clustering %>%
   scale_color_okabeito(guide = NULL)) %>% 
   ggplotly
 ```
-
 :::
 
 Interestingly, the 4-clusters solution roughly split the two visual imagery groups along the line of high/low spatial imagery. This split does not seem to be associated with a consistent dynamic across both Congruence effects. The clusters have different combinations of visual imagery, spatial imagery, and congruence effects. To have an intuitive visualization of these mean differences, we will plot them in a radar chart in @fig-4_clusters_radar_chart.
@@ -3294,17 +3280,17 @@ Interestingly, the 4-clusters solution roughly split the two visual imagery grou
 
 This (admittedly slightly crowded) plot shows several tendencies:
 
-- The Congruence effect in the implicit task seems badly explained by the cluster model.
+-   The Congruence effect in the implicit task seems badly explained by the cluster model.
 
-- The Congruence effect in the explicit task varies a bit more between the clusters:
+-   The Congruence effect in the explicit task varies a bit more between the clusters:
 
-    - Cluster 2 has a high Congruence effect: it characterized by a **high visual imagery** and **low spatial imagery**.
-    
-    - Cluster 1 has an average Congruence effect: it is characterized by **low visual** and **low spatial imagery**.
-    
-    - Cluster 3 and 4 have below average (i.e., inverted) Congruence effect: the two clusters are on opposite sides of the visual imagery continuum, but have in common a **high spatial imagery**.
-    
-The means displayed in the radar chart are rescaled on the minimums and maximums of each variable in our data, therefore the effect sizes might be disproportionately exaggerated. Therefore, let's conclude this analysis with a final model to analyse the actual numerical dynamics. 
+    -   Cluster 2 has a high Congruence effect: it characterized by a **high visual imagery** and **low spatial imagery**.
+
+    -   Cluster 1 has an average Congruence effect: it is characterized by **low visual** and **low spatial imagery**.
+
+    -   Cluster 3 and 4 have below average (i.e., inverted) Congruence effect: the two clusters are on opposite sides of the visual imagery continuum, but have in common a **high spatial imagery**.
+
+The means displayed in the radar chart are rescaled on the minimums and maximums of each variable in our data, therefore the effect sizes might be disproportionately exaggerated. Therefore, let's conclude this analysis with a final model to analyse the actual numerical dynamics.
 
 ### Coming full circle: 4-cluster models and end notes
 
@@ -3312,10 +3298,9 @@ First, we will explain the rationale behind this conclusion. In the beginning, w
 
 $$
 Congruence \ effect = \beta_{1} \cdot Cluster
-$$
-... Which is equivalent to analysing the width and significance of the differences identified by the GMM[^lie]. The parameters of this model are shown in @tbl-model_4_clusters_explicit. The Intercept of the model is centered on 0, denoting a null Congruence effect. Therefore, we can see that the first cluster indeed shows no Congruence effect, whereas the other three have significant Congruence effects in the direction observed in @fig-4_clusters_radar_chart and described above. We'll finally fit the same models for the other variables.
+$$ ... Which is equivalent to analysing the width and significance of the differences identified by the GMM[^5]. The parameters of this model are shown in @tbl-model_4_clusters_explicit. The Intercept of the model is centered on 0, denoting a null Congruence effect. Therefore, we can see that the first cluster indeed shows no Congruence effect, whereas the other three have significant Congruence effects in the direction observed in @fig-4_clusters_radar_chart and described above. We'll finally fit the same models for the other variables.
 
-[^lie]: Or, said differently, *is our radar chart a blatant lie?*
+[^5]: Or, said differently, *is our radar chart a blatant lie?*
 
 ```{r final_4_clusters_model}
 #| echo: true
@@ -3329,8 +3314,7 @@ linear_reg() %>%
   fit(congruence_effect_explicit ~ 0 + clusters_4, data = df_clustering)
 ```
 
-:::{.panel-tabset}
-
+::: panel-tabset
 #### Congruence explicit
 
 ```{r final_4_clusters_explicit}
@@ -3394,14 +3378,11 @@ linear_reg() %>%
   rename("*p*" = p) %>% 
   display
 ```
-
 :::
 
 In the end, I interpret the 4-cluster model as saying that low spatial imagery participants tend to have a higher congruence effect than high spatial imagery ones, although this difference is in *relative* terms, not absolute (as the first - aphantasic - cluster has a null congruence effect with low spatial imagery). It appears, with a certain grouping on the basis of visual imagery, that non-aphantasic participants have a slightly higher congruence effect, but I interpret the last model as showing that cluster 2 - 24 non-aphantasics only, with low spatial imagery - is the sub-group driving this effect, whereas the other non-aphantasics (cluster 3 and 4, 32 non-aphantasics total) show the opposite pattern.
 
 I suspect the Gabor orientation factor to be a potential predictor of this importance of spatial imagery. However that inquiry would mandate further analysis, and I also suspect that this influence is very small, so I'll wrap up this report with this conclusion for the time being.
-
-
 
 # Inferential exploration
 
@@ -3495,33 +3476,13 @@ glmm_explicit_fit |>
   # check_model()
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-:::{.callout-note collapse="true"}
-
+::: {.callout-note collapse="true"}
 #### R Session information
 
 ```{r session_information}
 report_system()
 ```
+
 The following packages were used:
 
 ```{r packages}
@@ -3530,7 +3491,6 @@ report_packages(
   include_R = FALSE
   )
 ```
-
 :::
 
 ```{r exporting_processed_data}
@@ -3586,43 +3546,3 @@ report_packages(
 #   tableStyle = "TableStyleMedium16"
 # )
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

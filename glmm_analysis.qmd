@@ -1,0 +1,950 @@
+---
+title: "Sensory priming in aphantasia - Data analysis report"
+author: "Maël Delem"
+date: 2023-11-03
+date-modified: last-modified
+date-format: "D/MM/YYYY"
+format: html
+editor_options: 
+  chunk_output_type: inline
+toc: true
+toc-depth: 3
+toc-expand: 2
+number-sections: true
+number-depth: 2
+---
+
+<!-- CSS options for custom title numbers styling-->
+
+```{=html}
+<style>
+.header-section-number:after {
+  content: ". ";
+}
+</style>
+```
+### Preliminary Set-up {.unnumbered}
+
+::: {.callout-note collapse="true" appearance="simple"}
+#### Datasets, code availability, software and setup
+
+The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the `analysis_report.qmd` file, for which the best reading software are coding Integrated Development Environments (IDE) like [RStudio](https://posit.co/download/rstudio-desktop/) or [Visual Studio Code](https://code.visualstudio.com/). The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.
+
+This analysis was conducted in R language on [RStudio](https://posit.co/download/rstudio-desktop/). This analysis report was written with [Quarto](https://quarto.org/). Down below is the set-up code, including two essential steps:
+
+1.  Installing the required packages for this data analysis
+
+2.  importing data into the dataframes used throughout.
+
+```{r setup}
+#| echo: true
+#| output: false
+#| code-summary: "Packages"
+
+# ═══ Packages ═════════════════════════════════════════════════════════════════
+
+# The package `librairian` will ease the package management with the "shelf" 
+# function, which automatically: 
+# 1) checks if a package is installed 
+# 2) installs it if need be
+# 3) loads the package like the "library()" function would.
+if (!require(librarian)) install.packages(librarian)
+library(librarian)
+
+# now putting packages on our library's shelves:
+shelf(
+  # ─── essential package collections ───
+  tidyverse,      # modern R ecosystem
+  easystats,      # data analysis framework
+  tidymodels,     # modelling framework
+  
+  # ─── tidymodels friends ──────────────
+  corrr,          # correlational analyses
+  tidybayes,      # bayesian inference
+  multilevelmod,  # multilevel modelling with lmer and tidymodels
+  
+  # ─── modelling ───────────────────────
+  lme4,           # mixed models
+  mclust,         # mixture clustering
+  rstanarm,       # bayesian models
+  BayesFactor,    # BFs
+  
+  # ─── data management ─────────────────
+  readxl,         # importing xlsx
+  openxlsx,       # exporting xlsx
+  
+  #  data visualization ──────────────
+  # plot types and geoms
+  ricardo-bion/ggradar,  # radar plots
+  ggbeeswarm,            # scatter violin plots
+  GGally,         # complex plots
+  # layout and options
+  ggpubr,         # publication plots
+  patchwork,      # layout control
+  rstatix,        # ggplot stat tools
+  # palettes
+  ggsci,          # scientific palettes
+  viridis,        # colour-blind friendly palettes
+  # interactive
+  plotly         # interactive plots
+)
+
+# ─── Global cosmetic theme ───q
+theme_set(theme_bw(base_size = 14))
+
+# ─── Fixing a seed for reproducibility ───
+set.seed(14051998)
+```
+
+```{r importing_data}
+#| echo: true
+#| output: false
+#| code-summary: "Importing data"
+
+# Implicit task
+df_implicit <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_implicit"
+    ) |> 
+  rename("rt" = rt_implicit)
+
+# Explicit task
+df_explicit <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_explicit"
+    ) |> 
+  rename("rt" = rt_explicit)
+
+# Questionnaires
+df_questionnaires <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_questionnaires"
+    ) %>% 
+  # creating the a/phantasia groups
+  mutate(
+    aphantasia = ifelse(vviq80 < 32, "yes", "no"),
+    aphantasia = fct_relevel(aphantasia, "yes", "no")
+    )
+
+# updating all the dataframes with the questionnaires data
+dfs <- 
+  list(
+    implicit_task = df_implicit, 
+    explicit_task = df_explicit
+    ) |> 
+  # adding the vviq and group column to every dataframe
+  imap(~left_join(
+    .x, 
+    df_questionnaires |>  
+      select(
+        # column to match with the correct participants
+        subjectid, 
+        # new variables to add
+        age,
+        sexe,
+        vviq80,
+        aphantasia), by = "subjectid") |>  
+      rename("sex" = sexe) |>  
+      # reordering the final dfs
+      select(
+        subjectid, 
+        age, sex, aphantasia,
+        vviq80,
+        everything())
+    )
+
+df_implicit <- dfs$implicit_task
+df_explicit <- dfs$explicit_task
+rm(dfs)
+```
+:::
+
+::: {.callout-tip collapse="true" appearance="simple"}
+#### Interactive figures
+
+Many figures in this report are interactive: hover over the plots to see some of the tools available. You can select a zone to zoom on a plot, hover over bars to see details about data, select only specific groups in the legend, among many other features.
+:::
+
+# Exploratory Data Analysis (EDA) {#sec-eda}
+
+## Accuracy
+
+The distribution of the percentages of errors across the two tasks is displayed in @fig-tasks_errors, and [-@fig-tasks_errors2].
+
+::: panel-tabset
+#### Explicit task accuracy
+
+```{r tasks_errors_plotly_explicit}
+#| label: fig-tasks_errors
+#| fig-cap: "Distribution of errors between groups in the explicit task."
+#| out-width: 100%
+#| fig-height: 4
+
+# ═══ Percentage of errors plot - Explicit task ════════════════════════════════
+
+(df_explicit |> 
+  select(subjectid, correct_explicit, aphantasia) |> 
+  group_by(subjectid, aphantasia) |>  
+  count(correct_explicit) |>  
+  filter(correct_explicit == 1) |> 
+  mutate(n = (64 - n)/64 * 100) |>  
+  ggplot(aes(
+    x = n, 
+    color = aphantasia,
+    fill = aphantasia
+    )) +
+  geom_bar(
+    aes(y = after_stat(prop)),
+    position = position_dodge(),
+    width = .6,
+    alpha = .6
+    ) +
+  scale_x_continuous(
+    name = "Percentage of errors",
+    breaks = breaks_pretty(n = 20)
+    ) +
+  scale_y_continuous(
+    name = "Proportion of the group",
+    breaks = breaks_pretty(n = 10)
+    ) +
+  coord_cartesian(
+    xlim = c(1, 46),
+    ylim = c(.01,.36)
+    ) +
+  # labs(title = "Explicit task") +
+  scale_color_okabeito(guide = NULL) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) |>  
+  # plotly-ing it
+  ggplotly()
+```
+
+#### Implicit task accuracy
+
+```{r tasks_errors_plotly_implicit}
+#| label: fig-tasks_errors2
+#| fig-cap: "Distribution of errors between groups in the implicit task."
+#| out-width: 100%
+#| fig-height: 4
+
+# ═══ Percentage of errors plot - Implicit task ════════════════════════════════
+
+(df_implicit |> 
+  select(subjectid, correct_implicit, aphantasia) |>  
+  group_by(subjectid, aphantasia) |>  
+  count(correct_implicit) |>  
+  filter(correct_implicit == 1) |>  
+  mutate(n = (64 - n)/64 * 100) |>  
+  ggplot(aes(
+    x = n, 
+    color = aphantasia,
+    fill = aphantasia
+    )) +
+  geom_bar(
+    aes(y = after_stat(prop)),
+    position = position_dodge(),
+    width = .6,
+    alpha = .6
+    ) +
+  scale_x_continuous(
+    name = "Percentage of errors",
+    breaks = breaks_pretty(n = 20)
+    ) +
+  scale_y_continuous(
+    name = "Proportion of the group",
+    breaks = breaks_pretty(n = 10)
+    ) +
+  coord_cartesian(
+    xlim = c(1, 40),
+    ylim = c(.01,.28)
+    ) +
+  # labs(title = "Implicit task") +
+  scale_color_okabeito(guide = NULL) +
+  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) |>  
+  # plotly-ing it
+  ggplotly()
+```
+:::
+
+We are going to remove missed trials in the analyses of the RTs. Nonetheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each task separately, the results of participants with an error rate superior to 16% will be removed** *(i.e., five participants in the explicit task and four in the implicit task)***, prior to removing all the missed trials of the remaining participants for modelling RTs.**
+
+```{r finding_and_removing_accuracy_outliers}
+#| code-summary: "Removing incorrect trials and task-wise accuracy outliers"
+#| echo: true
+#| output: false
+
+# ═══ Accuracy outliers analysis ═══════════════════════════════════════════════
+
+# ─── Listing error rates per subject ───
+list(df_explicit, df_implicit) |> 
+  imap(
+    ~.x |> 
+      select(subjectid, starts_with("correct"), aphantasia) |> 
+      group_by(subjectid) |> 
+      count(pick(2)) |> 
+      filter(pick(1) == 1) |> 
+      ungroup() |> 
+      mutate(
+        n_tot = max(n),
+        prop = (n_tot - n) / n_tot * 100  # analyzing the error rate per subject
+      ) %>%
+      arrange(desc(prop)) |> 
+      select(1, 5)
+    )
+# 5 accuracy outliers in the explicit task, 4 in the implicit one
+
+# ─── Removing incorrect trials and task-wise accuracy outliers ───
+df_explicit_rt <-
+  df_explicit |> 
+  # filtering out...
+  filter(
+    # incorrect trials
+    correct_explicit == 1 &
+    # participants identified with with high error rates
+    !(subjectid %in% c( 
+      "aknezevic", 
+      "lbrunie",  
+      "agayou", 
+      "bluciani",
+      "ldossantos"))
+    ) |>  
+  # removing irrelevant variables
+  select(-c(sex, vviq80, orientation, response, correct_explicit))
+
+# percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
+# 9091 trials left, 573 = 5.9% removed
+
+df_implicit_rt <- 
+  df_implicit |>  
+  filter(
+    correct_implicit == 1 &
+    !(subjectid %in% c(
+      "bdispaux", 
+      "eleveque", 
+      "aleclaire", 
+      "dchimenton"))
+      ) |>  
+  select(-c(sex, vviq80, orientation, response, correct_implicit))
+
+# percentage of trials removed in the implicit task
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit) 
+# 9078 trials left, 586 = 6% removed
+```
+
+## Response times
+
+### Extreme RTs
+
+As a preprocessing, response times below 300ms and above 3000ms will be removed as they could represent false alarms.
+
+```{r removing_extreme_rt_outlier_trials}
+#| code-summary: "Removing extreme RTs"
+#| echo: true
+#| output: false
+
+# ═══ First broad RT outlier trials removal ════════════════════════════════════
+
+df_explicit_rt <- 
+  df_explicit_rt |>  
+  # filtering out extreme RTs
+  filter(rt > 300 & rt < 3000)
+
+# total percentage of trials removed in the explicit task
+# (count(df_explicit) - count(df_explicit_rt)) / count(df_explicit) 
+# 9000 trials left, 664 = 6.9% removed
+
+df_implicit_rt <- 
+  df_implicit_rt |>  
+  filter(rt > 300 & rt < 3000)
+
+# total percentage of trials removed in the implicit task
+# (count(df_implicit) - count(df_implicit_rt)) / count(df_implicit) 
+# 9017 left, 647 = 6.7% removed
+```
+
+The removal of accuracy outliers, incorrect trials and extreme RTs amounted to 6.9% of trials in the explicit and 6.7 in the implicit task.
+
+### Aberrant RT means
+
+A first level of the RT outliers analysis is based on the overall mean RT of the participants. Participants with abnormally high RT means could represent various specific situations out of the range of our study: pathological conditions, attention deficits, or even more trivially low attention to the task. Such participants could bias both the overall results *and the analysis of the individual trials*: just like the accuracy outliers, the removal of their slow trials could result in a deletion of a large part of their responses, thus biasing the distributions. Let's visualize the distribution of the RT means in @fig-rt_means1 and [-@fig-rt_means2]
+
+::: panel-tabset
+#### Explicit task RT means
+
+```{r explicit_task_rt_means_plotly}
+#| label: fig-rt_means1
+#| fig-cap: "Distribution of the mean RTs of participants in the explicit task (very high RT means have been cut for better readability)."
+#| fig-height: 4
+
+# ═══ RT means plot - Explicit task ════════════════════════════════════════════
+
+(df_explicit_rt |>  
+  group_by(subjectid) |>  
+  summarise(mean = mean(rt)) |>  
+  ggplot(aes(x = mean)) +
+  geom_histogram(
+    fill = "aquamarine2", 
+    color = "aquamarine4", 
+    alpha = .3,
+    bins = 70
+    # adjust = .4
+    ) +
+  labs(x = "Mean RT", y = "Number of participants") +
+  scale_y_continuous(breaks = seq(0, 13, by = 1))) |>  
+  ggplotly()
+```
+
+#### Implicit task RT means
+
+```{r implicit_task_rt_means_plotly}
+#| label: fig-rt_means2
+#| fig-cap: "Distribution of the mean RTs of participants in the implicit task (very high RT means have been cut for better readability)."
+#| fig-height: 4
+
+# ═══ RT means plot - Implicit task ════════════════════════════════════════════
+
+(df_implicit_rt |> 
+  group_by(subjectid) |>  
+  summarise(mean = mean(rt)) |>  
+  ggplot(aes(x = mean)) +
+  geom_histogram(
+    fill = "coral2", 
+    color = "coral4", 
+    alpha = .3,
+    bins = 70
+    # adjust = .4
+    ) +
+  labs(x = "Mean RT", y = "Number of participants") +
+  scale_y_continuous(breaks = seq(0, 9, by = 1))) |>  
+  ggplotly()
+```
+
+#### RT means table
+
+```{r rt_means_table}
+#| label: tbl-rt_means
+#| tbl-cap: "Descriptive statistics of the average RTs across the sample in both tasks."
+
+# ═══ RT means table - Both tasks ══════════════════════════════════════════════
+
+df_rt <- 
+  list(
+  df_explicit_rt |>  rename("Explicit task mean RTs" = rt), 
+  df_implicit_rt |>  rename("Implicit task mean RTs" = rt)
+  ) |>  
+  imap(
+    ~select(.x, contains("RT")) |> 
+      report() |>  
+      as.data.frame() |>  
+      select(1:10)
+    )
+
+df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
+df_rt |>  display()
+```
+:::
+
+The median RT mean among participants is `r df_rt$Median[1]` in the explicit task, and `r df_rt$Median[2]` in the implicit one. Using an outlier detection procedure based on MADs, a common scaling factor to determine acceptable values is $\pm 3 \times MAD$: as 300ms is our chosen minimal value, this would result in our case in an acceptable range (in ms) of \[300,`r round(df_rt$Median[1] + 3*df_rt$MAD[1])`\] for the explicit task and \[300,`r round(df_rt$Median[2] + 3*df_rt$MAD[2])`\] for the implicit task.
+
+```{r removing_rt_means_outliers}
+#| code-summary: "Removing outliers with aberrant RT means"
+#| echo: true
+#| output: false
+
+# ═══ Aberrant RT means outliers removal ═══════════════════════════════════════
+
+# ─── Finding outliers ───
+
+df_explicit_rt |> 
+  group_by(subjectid) |> 
+  summarise(mean_rt_explicit = mean(rt)) |> 
+  ungroup() |> 
+  filter(mean_rt_explicit > 1384) |> 
+  arrange(desc(mean_rt_explicit))
+# 7 outliers in the explicit task
+
+df_implicit_rt |> 
+  group_by(subjectid) |> 
+  summarise(mean_rt_implicit = mean(rt)) |> 
+  ungroup() |> 
+  filter(mean_rt_implicit > 1063) |> 
+  arrange(desc(mean_rt_implicit))
+# 4 outliers in the implicit task
+
+# ─── Removing specific outliers ───
+
+df_explicit_rt <- 
+  df_explicit_rt |> 
+  filter(
+    !(subjectid %in% c(
+      "dchimenton",
+      "fc",
+      "mbilodeau",
+      "llhermitte",
+      "hmassot",
+      "mbillon",
+      "nnguyenphuoc"
+    ))
+  )
+
+# 139 participants and 8603 trials left
+# (9664-8603)/9664 # 11% out
+# alternative point of view: 12 participants excluded in the explicit task due to high error rates or overall abnormally slow RTs.
+
+df_implicit_rt <-
+  df_implicit_rt |> 
+  filter(
+    !(subjectid %in% c(
+      "mbilodeau",
+      "cbertrand",
+      "omeyer",
+      "rcarnez"
+    ))
+  )
+
+# 143 partcipants and 8777 trials left
+# (9664-8777)/9664 # 9.2% out
+# alternative point of view: 8 participants excluded in the implicit task due to high error rates or overall abnormally slow RTs.
+```
+
+At this step, 12 participants in the explicit task and 8 participants in the implicit task have been excluded due to high error rates or overall abnormally slow RTs. Let's visualize the RT means distributions again in @fig-rt_means3 and [-@fig-rt_means4].
+
+::: panel-tabset
+#### Tidied explicit task RT means
+
+```{r final_explicit_task_rt_means_plotly}
+#| label: fig-rt_means3
+#| fig-cap: "Distribution of the mean RTs of participants in the explicit task after outlier removal."
+#| fig-height: 4
+
+# ═══ RT means final plot - Explicit task ══════════════════════════════════════
+
+(df_explicit_rt |>  
+  group_by(subjectid) |>  
+  summarise(mean = mean(rt)) |>  
+  ggplot(aes(x = mean)) +
+  geom_histogram(
+    fill = "aquamarine2", 
+    color = "aquamarine4", 
+    alpha = .3,
+    bins = 70
+    # adjust = .4
+    ) +
+  labs(x = "Mean RT", y = "Number of participants") +
+  scale_y_continuous(breaks = seq(0, 13, by = 1))) |>  
+  ggplotly()
+```
+
+#### Tidied implicit task RT means
+
+```{r final_implicit_task_rt_means_plotly}
+#| label: fig-rt_means4
+#| fig-cap: "Distribution of the mean RTs of participants in the implicit task after outlier removal."
+#| fig-height: 4
+
+# ═══ RT means final plot - Implicit task ══════════════════════════════════════
+
+(df_implicit_rt |> 
+  group_by(subjectid) |>  
+  summarise(mean = mean(rt)) |>  
+  ggplot(aes(x = mean)) +
+  geom_histogram(
+    fill = "coral2", 
+    color = "coral4", 
+    alpha = .3,
+    bins = 70
+    # adjust = .4
+    ) +
+  labs(x = "Mean RT", y = "Number of participants") +
+  scale_y_continuous(breaks = seq(0, 9, by = 1))) |>  
+  ggplotly()
+```
+:::
+
+The distributions are still positively skewed, yet in more acceptable ranges for the phenomena we are investigating.
+
+### Outlier trials per participant
+
+We will conduct a more detailed inspection of the RTs on a by-participant level. The RT distributions per participant in each task are presented in @fig-rt_per_participant_1 and [-@fig-rt_per_participant_2].
+
+::: {.panel-tabset .column-page-inset-right}
+#### Explicit task RT per participant
+
+```{r explicit_rt_per_participant_plotly}
+#| label: fig-rt_per_participant_1
+#| fig-cap: "Distribution of RTs in the explicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
+#| fig-height: 5
+
+# ═══ RTs per participant plot - Explicit task ═════════════════════════════════
+
+(df_explicit_rt |>  
+  ggplot(aes(x = rt, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty(10)) +
+  scale_y_continuous(name = "Density") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) +
+  # coord_cartesian(
+  #   xlim = c(380, 1700),
+  #   ylim = c(0.0005, .01)
+  # ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL)) |>  
+  ggplotly() |>  
+  style(showlegend = FALSE)
+```
+
+#### Implicit task RT per participant
+
+```{r implicit_rt_per_participant_plotly}
+#| label: fig-rt_per_participant_2
+#| fig-cap: "Distribution of RTs in the implicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
+#| fig-height: 5
+
+# ═══ RTs per participant plot - Implicit task ═════════════════════════════════
+
+(df_implicit_rt |>  
+  ggplot(aes(x = rt, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
+  scale_y_continuous(name = "Density") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) +
+  # coord_cartesian(
+  #   xlim = c(350, 1320),
+  #   ylim = c(0.0005, .01)
+  # ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL)) |>  
+  ggplotly() |>  
+  style(showlegend = FALSE)
+```
+:::
+
+As expected, most of the participants have a small amount of very slow outlier trials, even by their own standards of RT. Once again, we are going to detect these outliers using MAD thresholds.
+
+```{r removing_rt_outlier_trials_per_participant}
+#| code-summary: "Removing outlier trials by-participant"
+#| echo: true
+#| output: false
+
+# ═══ By-participant MAD outlier detection ═════════════════════════════════════
+
+# ─── Explicit task: ───
+# From 8603 observations
+# 3 MADs threshold
+df_explicit_rt <-
+  df_explicit_rt |> 
+  group_by(subjectid) |> 
+  mutate(
+    rt_median = median(rt),
+    rt_mad = mad(rt)
+    ) |> 
+  filter(
+    rt < rt_median + 3 * rt_mad &
+    rt > rt_median - 3 * rt_mad
+  ) |>
+  ungroup()
+# 8072 trials left
+# (8603-8072)/8603 # 6.2% trials out
+
+# ─── Implicit task: ───
+# From 8777 observations
+# 3 MADs threshold
+df_implicit_rt <-
+  df_implicit_rt |> 
+  group_by(subjectid) |> 
+  mutate(
+    rt_median = median(rt),
+    rt_mad = mad(rt)
+    ) |> 
+  filter(
+    rt < rt_median + 3 * rt_mad &
+    rt > rt_median - 3 * rt_mad
+  ) |>
+  ungroup()
+# 8110 trials left
+# (8777-8110)/8777 # 7.6% trials out
+```
+
+The range defined by $\pm 3 \times MAD$ resulted in a deletion of 6.2% of trials in the explicit task and 7.6% of trials in the implicit task. Let's visualize the final distribution of RTs for each participant in @fig-rt_per_participant_3 and [-@fig-rt_per_participant_4]
+
+::: {.panel-tabset .column-page-inset-right}
+#### Tidied explicit task RT per participant
+
+```{r final_explicit_rt_per_participant_plotly}
+#| label: fig-rt_per_participant_3
+#| fig-cap: "Resulting distribution of RTs in the explicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
+#| fig-height: 5
+
+# ═══ RTs per participant final plot - Explicit task ═══════════════════════════
+
+(df_explicit_rt |>  
+  ggplot(aes(x = rt, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty(10)) +
+  scale_y_continuous(name = "Density") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) +
+  # coord_cartesian(
+  #   xlim = c(380, 1700),
+  #   ylim = c(0.0005, .01)
+  # ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL)) |>  
+  ggplotly() |>  
+  style(showlegend = FALSE)
+```
+
+#### Tidied implicit task RT per participant
+
+```{r final_implicit_rt_per_participant_plotly}
+#| label: fig-rt_per_participant_4
+#| fig-cap: "Resulting distribution of RTs in the implicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
+#| fig-height: 5
+
+# ═══ RTs per participant final plot - Implicit task ═══════════════════════════
+
+(df_implicit_rt |>  
+  ggplot(aes(x = rt, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
+  scale_y_continuous(name = "Density") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) +
+  # coord_cartesian(
+  #   xlim = c(350, 1320),
+  #   ylim = c(0.0005, .01)
+  # ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL)) |>  
+  ggplotly() |>  
+  style(showlegend = FALSE)
+```
+:::
+
+We now have distributions in way more sensible ranges, what's more defined by the characteristics of the participants, as opposed to the broad arbitrary RT thresholds we chose at the beginning.
+
+# Inferential analyses
+
+## Generalized Linear Mixed Models
+
+### Rationale
+
+We are going to fit Generalized Linear Mixed Models (GLMM) on the RT data. As opposed to Linear Mixed Models (LMM), GLMMs are able to accommodate the shape of the skewed RT distribution, thus removing the need to transform the dependent variable. This will allow us to work with raw RT data: GLMMs allow assumptions regarding the relationship between the predictors and the dependent variable (i.e. RT here) to be tested independently of assumptions regarding the distribution of dependent variable (i.e. skewed in our case). In LMMs, the two are confounded because the relationship between the predictors and the dependent variable is dictated by the transformation selected to normalize the distribution of the dependent variable (e.g. log transformation, Box-Cox transformation, etc.). By contrast, GLMMs allows the form of the link function to be determined by the theoretical issues under consideration (Lo & Andrews, 2015).
+
+### Model fitting
+
+To accomodate the RTs, the distribution chosen here will be a Gamma distribution with an identity link function. The predictors of the RT outcomes in the models are the **Group**, the **Congruence** condition and the **Color** condition. The random factors here are participants. The models could account for the varying RT means of each participant with a *random intercept per participant*, the varying effect of **Congruence** for each participant with a *slope on Congruence per participant*, and the varying effect of **Color** for each participant with a *slope on Color per participant*. These random effects will be added if they contribute significantly to the quality of the models.
+
+Alternatively, we could also transform our data using a Box-Cox transformation to bring the RTs closer to normality and fit LMMs. Using the `tidymodels` workflows, we can easily fit all of these models and compare their quality.
+
+Only two-way interactions between the three factors have been kept, as three-way interactions were not improving the quality of the models, and were sometimes even preventing the models from converging at all.
+
+```{r fitting_glmms}
+#| code-summary: "Fitting all the models (Warning: long code chunk)"
+#| echo: true
+#| output: false
+ 
+# ═══ Fitting Generalized Linear Mixed Models ══════════════════════════════════
+
+# ─── Preparing variable roles ──────────────────────────────────
+glmm_recipe_ex <- 
+  df_explicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, aphantasia, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+glmm_recipe_im <- 
+  df_implicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, aphantasia, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+# ─── Specifying the type and distribution for the models ───────
+glmm_model <-
+  linear_reg() |> 
+  set_engine(
+    "glmer",
+    family = Gamma(link = "identity")
+  )
+
+# ─── Writing down the formulas of our models ───────────────────
+# null model
+formula_0 <- rt ~ (1|subjectid)
+# intercept by-participant
+formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
+# intercept and slope on congruence by-participant
+formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
+# intercept and slope on color by-participant
+formula_3 <- rt ~ (aphantasia + congruence + color)^2 + (color|subjectid)
+# intercept and slope on congruence and color by-participant
+formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
+
+# ─── Combing formulas and model specs in workflows ─────────────
+# the null model workflows
+glmm_wf0_ex <- 
+  workflow() |> 
+  add_recipe(glmm_recipe_ex) |> 
+  add_model(glmm_model, formula = formula_0)
+
+glmm_wf0_im <- 
+  workflow() |> 
+  add_recipe(glmm_recipe_im) |> 
+  add_model(glmm_model, formula = formula_0)
+
+# using the first workflow to derive all the others
+# explicit task
+glmm_wf1_ex <- glmm_wf0_ex |> update_model(glmm_model, formula = formula_1)
+glmm_wf2_ex <- glmm_wf0_ex |> update_model(glmm_model, formula = formula_2)
+glmm_wf3_ex <- glmm_wf0_ex |> update_model(glmm_model, formula = formula_3)
+glmm_wf4_ex <- glmm_wf0_ex |> update_model(glmm_model, formula = formula_4)
+# implicit task
+glmm_wf1_im <- glmm_wf0_im |> update_model(glmm_model, formula = formula_1)
+glmm_wf2_im <- glmm_wf0_im |> update_model(glmm_model, formula = formula_2)
+glmm_wf3_im <- glmm_wf0_im |> update_model(glmm_model, formula = formula_3)
+glmm_wf4_im <- glmm_wf0_im |> update_model(glmm_model, formula = formula_4)
+
+# ─── Fitting all models at once ────────────────────────────────
+# explicit
+glmm_fit_ex <-
+  list(
+    glmm_ex_0 = glmm_wf0_ex,
+    glmm_ex_1 = glmm_wf1_ex,
+    glmm_ex_2 = glmm_wf2_ex,
+    glmm_ex_3 = glmm_wf3_ex,
+    glmm_ex_4 = glmm_wf4_ex
+  ) |> 
+  imap(~ .x |> fit(data = df_explicit_rt) |> extract_fit_engine())
+
+# implicit
+glmm_fit_im <-
+  list(
+    glmm_im_0 = glmm_wf0_im,
+    glmm_im_1 = glmm_wf1_im,
+    glmm_im_2 = glmm_wf2_im,
+    glmm_im_3 = glmm_wf3_im,
+    glmm_im_4 = glmm_wf4_im
+  ) |> 
+  imap(~ .x |> fit(data = df_implicit_rt) |> extract_fit_engine())
+
+# ═══ Fitting Linear Mixed Models ══════════════════════════════════════════════
+
+# ─── Adding pre-processing steps to Box-Cox and normalize RTs ──
+lmm_recipe_ex <- 
+  glmm_recipe_ex |> 
+  step_BoxCox(rt) |> 
+  step_normalize(rt)
+
+lmm_recipe_im <- 
+  glmm_recipe_im |> 
+  step_BoxCox(rt) |> 
+  step_normalize(rt)
+
+# ─── Specifying the type of the models ─────────────────────────
+lmm_model <-
+  linear_reg() |> 
+  set_engine("lmer")
+
+# ─── Combing formulas and model specs in workflows ─────────────
+# the null model workflows
+lmm_wf0_ex <- 
+  workflow() |> 
+  add_recipe(lmm_recipe_ex) |> 
+  add_model(lmm_model, formula = formula_0)
+
+lmm_wf0_im <- 
+  workflow() |> 
+  add_recipe(lmm_recipe_im) |> 
+  add_model(lmm_model, formula = formula_0)
+
+# using the first workflow to derive all the others
+# explicit task
+lmm_wf1_ex <- lmm_wf0_ex |> update_model(lmm_model, formula = formula_1)
+lmm_wf2_ex <- lmm_wf0_ex |> update_model(lmm_model, formula = formula_2)
+lmm_wf3_ex <- lmm_wf0_ex |> update_model(lmm_model, formula = formula_3)
+lmm_wf4_ex <- lmm_wf0_ex |> update_model(lmm_model, formula = formula_4)
+# implicit task
+lmm_wf1_im <- lmm_wf0_im |> update_model(lmm_model, formula = formula_1)
+lmm_wf2_im <- lmm_wf0_im |> update_model(lmm_model, formula = formula_2)
+lmm_wf3_im <- lmm_wf0_im |> update_model(lmm_model, formula = formula_3)
+lmm_wf4_im <- lmm_wf0_im |> update_model(lmm_model, formula = formula_4)
+
+# ─── Fitting all models at once ────────────────────────────────
+# explicit
+lmm_fit_ex <-
+  list(
+    lmm_ex_0 = lmm_wf0_ex,
+    lmm_ex_1 = lmm_wf1_ex,
+    lmm_ex_2 = lmm_wf2_ex,
+    lmm_ex_3 = lmm_wf3_ex,
+    lmm_ex_4 = lmm_wf4_ex
+  ) |> 
+  imap(~ .x |> fit(data = df_explicit_rt) |> extract_fit_engine())
+
+# implicit
+lmm_fit_im <-
+  list(
+    lmm_im_0 = lmm_wf0_im,
+    lmm_im_1 = lmm_wf1_im,
+    lmm_im_2 = lmm_wf2_im,
+    lmm_im_3 = lmm_wf3_im,
+    lmm_im_4 = lmm_wf4_im
+  ) |> 
+  imap(~ .x |> fit(data = df_implicit_rt) |> extract_fit_engine())
+
+# ═══ Nested list of all the models ════════════════════════════════════════════
+all_models_fitted <-
+  list(
+    glmm_ex = glmm_fit_ex,
+    glmm_im = glmm_fit_im,
+    lmm_ex = lmm_fit_ex,
+    lmm_im = lmm_fit_im
+  )
+
+# ═══ Model analyses ═══════════════════════════════════════════════════════════
+
+# ─── Model quality comparison ────────────────────────────────
+all_models_performances <-
+  all_models_fitted |>  
+  imap(
+    ~ .x |>  
+      compare_performance(metrics = c("AIC", "AICc")) |>  
+      select(-Model) #|>
+      # display()
+    )
+
+# ─── Model parameter estimations ─────────────────────────────
+all_models_parameters <-
+  all_models_fitted |>  
+  imap(
+    ~ .x |> 
+      imap(
+        ~ .x |>  
+          model_parameters(effects = "fixed") #|> 
+          # display()
+        )
+    )
+
+# ─── Best models assumption checks ───────────────────────────
+# glmm_fit_ex[["glmm_im_4"]] |> check_model(check = "all")
+```
