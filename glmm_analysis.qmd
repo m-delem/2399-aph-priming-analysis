@@ -70,6 +70,7 @@ shelf(
   mclust,         # mixture clustering
   rstanarm,       # bayesian models
   BayesFactor,    # BFs
+  emmeans,        # marginal estimates
   
   # ─── data management ─────────────────
   readxl,         # importing xlsx
@@ -775,10 +776,10 @@ Only two-way interactions between the three factors have been kept, as three-way
 #| echo: true
 #| output: false
  
-# ═══ Fitting (Generalized) Linear Mixed Models ════════════════════════════════
+# ═══ Fitting Generalized Linear Mixed Models ══════════════════════════════════
 
 # ─── Preparing variable roles ─────────────────────────────────────────────────
-glmm_recipe_ex <- 
+model_recipe_glmm_ex <- 
   df_explicit_rt |> 
   recipe() |> 
   update_role(rt, new_role = "outcome") %>%
@@ -788,7 +789,7 @@ glmm_recipe_ex <-
   ) |> 
   add_role(subjectid, new_role = "group")
 
-glmm_recipe_im <- 
+model_recipe_glmm_im <- 
   df_implicit_rt |> 
   recipe() |> 
   update_role(rt, new_role = "outcome") %>%
@@ -799,17 +800,17 @@ glmm_recipe_im <-
   add_role(subjectid, new_role = "group")
 
 # Adding pre-processing steps to Box-Cox and normalize RTs in LMMs
-lmm_recipe_ex <- 
-  glmm_recipe_ex |> 
+model_recipe_lmm_ex <- 
+  model_recipe_glmm_ex |> 
   step_BoxCox(rt) |> 
   step_normalize(rt)
 
-lmm_recipe_im <- 
-  glmm_recipe_im |> 
+model_recipe_lmm_im <- 
+  model_recipe_glmm_im |> 
   step_BoxCox(rt) |> 
   step_normalize(rt)
 
-# ─── Specifying the types and distributions for the models ────────────────────
+# ─── Specifying the distributions for the models ──────────────────────────────
 
 # GLMM, Inverse Gaussian distribution, identity link
 glmm_inverse_id <-
@@ -827,24 +828,25 @@ glmm_inverse_log <-
     family = inverse.gaussian(link = "log")
   )
 
-# LMM (i.e. GLMM with a Gaussian distribution)
-lmm_gauss <-
+# LMM = GLMM with a Gaussian distribution and identity link
+glmm_gaussian <-
   linear_reg() |> 
   set_engine("lmer")
 
 # Listing these models
 # GLMMs
 model_specs_glmm <- list(
-  glmm_inverse_id = glmm_inverse_id,
-  glmm_inverse_log = glmm_inverse_log
+  glmm_inverse_id  = glmm_inverse_id,
+  glmm_inverse_log = glmm_inverse_log,
+  glmm_gaussian    = glmm_gaussian
 )
-# LMM
-model_spec_lmm <- list(lmm_gauss = lmm_model)
+# LMM spec for transformed data
+model_spec_lmm <- list(lmm_boxcox = glmm_gaussian)
 
 # ─── Writing down the formulas of our models ──────────────────────────────────
 # null model
 formula_0 <- rt ~ (1|subjectid)
-# intercept by-participant
+# intercept by-participant only
 formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
 # intercept and slope on congruence by-participant
 formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
@@ -864,50 +866,52 @@ model_formulas <- list(
 
 # ─── Table to combine everything in workflows and fit the models ──────────────
 model_all_workflows_fitted <- 
-  tribble( ~recipe,     ~ task,          ~models,      ~formulas,
-    glmm_recipe_ex, "explicit", model_specs_glmm, model_formulas,
-    glmm_recipe_im, "implicit", model_specs_glmm, model_formulas,
-     lmm_recipe_ex, "explicit",   model_spec_lmm, model_formulas,
-     lmm_recipe_im, "implicit",   model_spec_lmm, model_formulas,
+  tribble(       ~recipe,     ~ task,           ~model,       ~formula,
+    model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas,
+    model_recipe_glmm_im, "implicit", model_specs_glmm, model_formulas,
+     model_recipe_lmm_ex, "explicit",   model_spec_lmm, model_formulas,
+     model_recipe_lmm_im, "implicit",   model_spec_lmm, model_formulas,
   ) |> 
   # combining recipes with models
-  unnest_longer(models) |> 
-  # combining recipes and models with formulas
-  unnest_longer(formulas) |>
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
   rowwise() |>
   mutate(
     # creating workflows
     workflow = list(
       workflow() |>
       add_recipe(recipe) |> 
-      add_model(models, formula = formulas)  
+      add_model(model, formula = formula)  
       ),
-    # fitting all the workflows
+    # fitting all the workflows (models) for each task
     fitted_model = ifelse(
       task == "explicit",
       list(workflow |> fit(data = df_explicit_rt) |> extract_fit_engine()),
       list(workflow |> fit(data = df_implicit_rt) |> extract_fit_engine())
     ),
     # extracting the parameters of the models
-    parameters = model_parameters(fitted_model),
-    # checking convergence of the models
-    convergence = check_convergence(engine),
+    parameters = list(model_parameters(fitted_model)),
+    # checking the convergence of the models
+    convergence = check_convergence(fitted_model),
     # model quality indices
-    model_perf = model_performance(engine),
+    model_perf = list(model_performance(fitted_model)),
     AIC  = model_perf[[1]],
     AICc = model_perf[[2]],
     BIC  = model_perf[[3]]
   ) |>
   ungroup() |> 
-  select(-c(recipe, models, formulas, workflow, model_perf))
+  select(-c(recipe, model_specs, formulas, workflow, model_perf))
 
 model_selection <-
   model_all_workflows_fitted |> 
-  filter(formulas_id != "formula_0") |> 
+  filter(formulas_id != "formula_0" & convergence == TRUE) |> 
   group_by(task, models_id) |> 
   mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
   filter(best_model == TRUE)
 ```
+
+<!-- not there yet
 
 ```{r check_the_best_models}
 #| fig-label: fig-model_checks
@@ -1234,8 +1238,7 @@ lmm_recipe_im|>
 ```
 :::
 
-
-
+-->
 
 
 
