@@ -661,7 +661,7 @@ As expected, most of the participants have a small amount of very slow outlier t
 # 3 MADs threshold
 df_explicit_rt <-
   df_explicit_rt |> 
-  group_by(subjectid) |> 
+  group_by(subjectid, congruence) |> 
   mutate(
     rt_median = median(rt),
     rt_mad = mad(rt)
@@ -671,15 +671,15 @@ df_explicit_rt <-
     rt > rt_median - 3 * rt_mad
   ) |>
   ungroup()
-# 7710 trials left
-# (8229-7710)/8229 # 6.3% trials out
+# 7687 trials left
+# (8229-7687)/8229 # 6.6% trials out
 
 # ─── Implicit task: ───
 # From 8166 observations
 # 3 MADs threshold
 df_implicit_rt <-
   df_implicit_rt |> 
-  group_by(subjectid) |> 
+  group_by(subjectid, congruence) |> 
   mutate(
     rt_median = median(rt),
     rt_mad = mad(rt)
@@ -689,8 +689,8 @@ df_implicit_rt <-
     rt > rt_median - 3 * rt_mad
   ) |>
   ungroup()
-# 7550 trials left
-# (8166-7550)/8166 # 7.5% trials out
+# 7489 trials left
+# (8166-7489)/8166 # 8.2% trials out
 ```
 
 The range defined by $\pm 3 \times MAD$ resulted in a deletion of 6.2% of trials in the explicit task and 7.6% of trials in the implicit task. Let's visualize the final distribution of RTs for each participant in @fig-rt_per_participant_3 and [-@fig-rt_per_participant_4]
@@ -901,17 +901,16 @@ model_all_workflows_fitted <-
     BIC  = model_perf[[3]]
   ) |>
   ungroup() |> 
-  select(-c(recipe, model_specs, formulas, workflow, model_perf))
+  select(-c(recipe, model, formula, workflow, model_perf))
 
 model_selection <-
   model_all_workflows_fitted |> 
-  filter(formulas_id != "formula_0" & convergence == TRUE) |> 
-  group_by(task, models_id) |> 
+  filter(formula_id != "formula_0" & convergence == TRUE) |> 
+  group_by(task, model_id) |> 
   mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
   filter(best_model == TRUE)
 ```
 
-<!-- not there yet
 
 ```{r check_the_best_models}
 #| fig-label: fig-model_checks
@@ -920,55 +919,55 @@ model_selection <-
 #| layout-ncol: 1
 
 # ─── Model checks ───────────────────────────
-glmm_ex_optimal |> 
-  check_model(
-    check = c(
-      "pp_check",
-      "homogeneity",
-      "outliers",
-      "vif",
-      "qq",
-      "reqq"
-      )
-  )
-
-lmm_ex_optimal |>  
-  check_model(
-    check = c(
-      "pp_check",
-      "linearity",
-      "homogeneity",
-      "outliers",
-      "vif",
-      "qq",
-      "reqq"
-      )
-  )
-
-glmm_im_optimal |> 
-  check_model(
-    check = c(
-      "pp_check",
-      "homogeneity",
-      "outliers",
-      "vif",
-      "qq",
-      "reqq"
-      )
-  )
-
-lmm_im_optimal |>  
-  check_model(
-    check = c(
-      "pp_check",
-      "linearity",
-      "homogeneity",
-      "outliers",
-      "vif",
-      "qq",
-      "reqq"
-      )
-  )
+# glmm_ex_optimal |> 
+#   check_model(
+#     check = c(
+#       "pp_check",
+#       "homogeneity",
+#       "outliers",
+#       "vif",
+#       "qq",
+#       "reqq"
+#       )
+#   )
+# 
+# lmm_ex_optimal |>  
+#   check_model(
+#     check = c(
+#       "pp_check",
+#       "linearity",
+#       "homogeneity",
+#       "outliers",
+#       "vif",
+#       "qq",
+#       "reqq"
+#       )
+#   )
+# 
+# glmm_im_optimal |> 
+#   check_model(
+#     check = c(
+#       "pp_check",
+#       "homogeneity",
+#       "outliers",
+#       "vif",
+#       "qq",
+#       "reqq"
+#       )
+#   )
+# 
+# lmm_im_optimal |>  
+#   check_model(
+#     check = c(
+#       "pp_check",
+#       "linearity",
+#       "homogeneity",
+#       "outliers",
+#       "vif",
+#       "qq",
+#       "reqq"
+#       )
+#   )
 ```
 
 :::{.panel-tabset .column-page-inset-right}
@@ -984,125 +983,125 @@ lmm_im_optimal |>
 
 # ─── Model effects plots ───────────────────────────
 
-# setting dodge width for all the geoms
-dw <- .75
-# stat text size
-st <- 7
-# legend and axis text size
-txt <- 32
-
-# marginal means predictions
-# glmm
-glmm_preds <- 
-  glmm_ex_optimal |> 
-  estimate_means(at = c("aphantasia", "congruence"))
-# glmm intercept
-glmm_intercept <- (glmm_ex_optimal |> model_parameters())$Coefficient[1]
-
-# lmm
-lmm_preds <-  
-  lmm_ex_optimal |> 
-  estimate_means(
-    at = c("aphantasia", "congruence"), 
-    lmerTest.limit = 9000, 
-    pbkrtest.limit = 9000
-    )
-# lmm intercept
-lmm_intercept <- (lmm_ex_optimal |> model_parameters())$Coefficient[1]
-
-# ─── GLMM ───
-df_explicit_rt |> 
-  ggplot(aes(
-    x = congruence,
-    y = rt_explicit,
-    fill = aphantasia,
-    color = aphantasia
-  )) +
-  # linear modelling of the differences
-  geom_line(
-    data = glmm_preds,
-    aes(
-      y = Mean,
-      group = aphantasia
-    ),
-    position = position_dodge(width = dw),
-    linewidth = 1.5,
-    linetype = 1,
-    show.legend = FALSE
-  ) +
-  # predicted means of the model
-  geom_pointrange2(
-    data = glmm_preds,
-    aes(
-      x = congruence,
-      y = Mean,
-      ymin = CI_low,
-      ymax = CI_high,
-      group = aphantasia
-      ),
-    color = "black",
-    position = position_dodge(width = dw),
-    size = 1,
-    linewidth = .75,
-    show.legend = FALSE
-  ) +
-  # intercept
-  geom_hline(yintercept = glmm_intercept, linetype = 2) +
-  labs( 
-    x = NULL, 
-    y = "Response time (ms)"
-    ) +
-  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
-  scale_color_okabeito(guide = NULL)
-
-# ─── LMM ───
-lmm_recipe_ex|> 
-  prep()|> 
-  bake(df_explicit_rt) |> 
-  ggplot(aes(
-    x = congruence,
-    y = rt_explicit,
-    fill = aphantasia,
-    color = aphantasia
-  )) +
-  # linear modelling of the differences
-  geom_line(
-    data = lmm_preds,
-    aes(
-      y = Mean,
-      group = aphantasia
-    ),
-    position = position_dodge(width = dw),
-    linewidth = 1.5,
-    linetype = 1,
-    show.legend = FALSE
-  ) +
-  # predicted means of the model
-  geom_pointrange2(
-    data = lmm_preds,
-    aes(
-      x = congruence,
-      y = Mean,
-      ymin = CI_low,
-      ymax = CI_high,
-      group = aphantasia
-      ),
-    color = "black",
-    position = position_dodge(width = dw),
-    size = 1,
-    linewidth = .75,
-    show.legend = FALSE
-  ) +
-  # intercept
-  geom_hline(yintercept = lmm_intercept, linetype = 2) +
-  labs( 
-    x = NULL, 
-    y = "Response time (standardized)"
-    ) +
-  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
-  scale_color_okabeito(guide = NULL)
+# # setting dodge width for all the geoms
+# dw <- .75
+# # stat text size
+# st <- 7
+# # legend and axis text size
+# txt <- 32
+# 
+# # marginal means predictions
+# # glmm
+# glmm_preds <- 
+#   glmm_ex_optimal |> 
+#   estimate_means(at = c("aphantasia", "congruence"))
+# # glmm intercept
+# glmm_intercept <- (glmm_ex_optimal |> model_parameters())$Coefficient[1]
+# 
+# # lmm
+# lmm_preds <-  
+#   lmm_ex_optimal |> 
+#   estimate_means(
+#     at = c("aphantasia", "congruence"), 
+#     lmerTest.limit = 9000, 
+#     pbkrtest.limit = 9000
+#     )
+# # lmm intercept
+# lmm_intercept <- (lmm_ex_optimal |> model_parameters())$Coefficient[1]
+# 
+# # ─── GLMM ───
+# df_explicit_rt |> 
+#   ggplot(aes(
+#     x = congruence,
+#     y = rt_explicit,
+#     fill = aphantasia,
+#     color = aphantasia
+#   )) +
+#   # linear modelling of the differences
+#   geom_line(
+#     data = glmm_preds,
+#     aes(
+#       y = Mean,
+#       group = aphantasia
+#     ),
+#     position = position_dodge(width = dw),
+#     linewidth = 1.5,
+#     linetype = 1,
+#     show.legend = FALSE
+#   ) +
+#   # predicted means of the model
+#   geom_pointrange2(
+#     data = glmm_preds,
+#     aes(
+#       x = congruence,
+#       y = Mean,
+#       ymin = CI_low,
+#       ymax = CI_high,
+#       group = aphantasia
+#       ),
+#     color = "black",
+#     position = position_dodge(width = dw),
+#     size = 1,
+#     linewidth = .75,
+#     show.legend = FALSE
+#   ) +
+#   # intercept
+#   geom_hline(yintercept = glmm_intercept, linetype = 2) +
+#   labs( 
+#     x = NULL, 
+#     y = "Response time (ms)"
+#     ) +
+#   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+#   scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
+#   scale_color_okabeito(guide = NULL)
+# 
+# # ─── LMM ───
+# lmm_recipe_ex|> 
+#   prep()|> 
+#   bake(df_explicit_rt) |> 
+#   ggplot(aes(
+#     x = congruence,
+#     y = rt_explicit,
+#     fill = aphantasia,
+#     color = aphantasia
+#   )) +
+#   # linear modelling of the differences
+#   geom_line(
+#     data = lmm_preds,
+#     aes(
+#       y = Mean,
+#       group = aphantasia
+#     ),
+#     position = position_dodge(width = dw),
+#     linewidth = 1.5,
+#     linetype = 1,
+#     show.legend = FALSE
+#   ) +
+#   # predicted means of the model
+#   geom_pointrange2(
+#     data = lmm_preds,
+#     aes(
+#       x = congruence,
+#       y = Mean,
+#       ymin = CI_low,
+#       ymax = CI_high,
+#       group = aphantasia
+#       ),
+#     color = "black",
+#     position = position_dodge(width = dw),
+#     size = 1,
+#     linewidth = .75,
+#     show.legend = FALSE
+#   ) +
+#   # intercept
+#   geom_hline(yintercept = lmm_intercept, linetype = 2) +
+#   labs( 
+#     x = NULL, 
+#     y = "Response time (standardized)"
+#     ) +
+#   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+#   scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
+#   scale_color_okabeito(guide = NULL)
 ```
 
 #### Implicit task
@@ -1116,151 +1115,125 @@ lmm_recipe_ex|>
 
 # ─── Model effects plots ───────────────────────────
 
-# setting dodge width for all the geoms
-dw <- .75
-# stat text size
-st <- 7
-# legend and axis text size
-txt <- 32
-
-# marginal means predictions
-# glmm
-glmm_preds_im <- 
-  glmm_im_optimal |> 
-  estimate_means(at = c("aphantasia", "congruence"))
-# glmm intercept
-glmm_intercept_im <- (glmm_im_optimal |> model_parameters())$Coefficient[1]
-
-# lmm
-lmm_preds_im <-  
-  lmm_im_optimal |> 
-  estimate_means(
-    at = c("aphantasia", "congruence"), 
-    lmerTest.limit = 9000, 
-    pbkrtest.limit = 9000
-    )
-# lmm intercept
-lmm_intercept_im <- (lmm_im_optimal |> model_parameters())$Coefficient[1]
-
-# ─── GLMM ───
-df_implicit_rt |> 
-  ggplot(aes(
-    x = congruence,
-    y = rt_implicit,
-    fill = aphantasia,
-    color = aphantasia
-  )) +
-  # linear modelling of the differences
-  geom_line(
-    data = glmm_preds_im,
-    aes(
-      y = Mean,
-      group = aphantasia
-    ),
-    position = position_dodge(width = dw),
-    linewidth = 1.5,
-    linetype = 1,
-    show.legend = FALSE
-  ) +
-  # predicted means of the model
-  geom_pointrange2(
-    data = glmm_preds_im,
-    aes(
-      x = congruence,
-      y = Mean,
-      ymin = CI_low,
-      ymax = CI_high,
-      group = aphantasia
-      ),
-    color = "black",
-    position = position_dodge(width = dw),
-    size = 1,
-    linewidth = .75,
-    show.legend = FALSE
-  ) +
-  # intercept
-  geom_hline(yintercept = glmm_intercept_im, linetype = 2) +
-  labs( 
-    x = NULL, 
-    y = "Response time (ms)"
-    ) +
-  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
-  scale_color_okabeito(guide = NULL)
-
-# ─── LMM ───
-lmm_recipe_im|> 
-  prep()|> 
-  bake(df_implicit_rt) |> 
-  ggplot(aes(
-    x = congruence,
-    y = rt_implicit,
-    fill = aphantasia,
-    color = aphantasia
-  )) +
-  # linear modelling of the differences
-  geom_line(
-    data = lmm_preds_im,
-    aes(
-      y = Mean,
-      group = aphantasia
-    ),
-    position = position_dodge(width = dw),
-    linewidth = 1.5,
-    linetype = 1,
-    show.legend = FALSE
-  ) +
-  # predicted means of the model
-  geom_pointrange2(
-    data = lmm_preds_im,
-    aes(
-      x = congruence,
-      y = Mean,
-      ymin = CI_low,
-      ymax = CI_high,
-      group = aphantasia
-      ),
-    color = "black",
-    position = position_dodge(width = dw),
-    size = 1,
-    linewidth = .75,
-    show.legend = FALSE
-  ) +
-  # intercept
-  geom_hline(yintercept = lmm_intercept_im, linetype = 2) +
-  labs( 
-    x = NULL, 
-    y = "Response time (standardized)"
-    ) +
-  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
-  scale_color_okabeito(guide = NULL)
+# # setting dodge width for all the geoms
+# dw <- .75
+# # stat text size
+# st <- 7
+# # legend and axis text size
+# txt <- 32
+# 
+# # marginal means predictions
+# # glmm
+# glmm_preds_im <- 
+#   glmm_im_optimal |> 
+#   estimate_means(at = c("aphantasia", "congruence"))
+# # glmm intercept
+# glmm_intercept_im <- (glmm_im_optimal |> model_parameters())$Coefficient[1]
+# 
+# # lmm
+# lmm_preds_im <-  
+#   lmm_im_optimal |> 
+#   estimate_means(
+#     at = c("aphantasia", "congruence"), 
+#     lmerTest.limit = 9000, 
+#     pbkrtest.limit = 9000
+#     )
+# # lmm intercept
+# lmm_intercept_im <- (lmm_im_optimal |> model_parameters())$Coefficient[1]
+# 
+# # ─── GLMM ───
+# df_implicit_rt |> 
+#   ggplot(aes(
+#     x = congruence,
+#     y = rt_implicit,
+#     fill = aphantasia,
+#     color = aphantasia
+#   )) +
+#   # linear modelling of the differences
+#   geom_line(
+#     data = glmm_preds_im,
+#     aes(
+#       y = Mean,
+#       group = aphantasia
+#     ),
+#     position = position_dodge(width = dw),
+#     linewidth = 1.5,
+#     linetype = 1,
+#     show.legend = FALSE
+#   ) +
+#   # predicted means of the model
+#   geom_pointrange2(
+#     data = glmm_preds_im,
+#     aes(
+#       x = congruence,
+#       y = Mean,
+#       ymin = CI_low,
+#       ymax = CI_high,
+#       group = aphantasia
+#       ),
+#     color = "black",
+#     position = position_dodge(width = dw),
+#     size = 1,
+#     linewidth = .75,
+#     show.legend = FALSE
+#   ) +
+#   # intercept
+#   geom_hline(yintercept = glmm_intercept_im, linetype = 2) +
+#   labs( 
+#     x = NULL, 
+#     y = "Response time (ms)"
+#     ) +
+#   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+#   scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
+#   scale_color_okabeito(guide = NULL)
+# 
+# # ─── LMM ───
+# lmm_recipe_im|> 
+#   prep()|> 
+#   bake(df_implicit_rt) |> 
+#   ggplot(aes(
+#     x = congruence,
+#     y = rt_implicit,
+#     fill = aphantasia,
+#     color = aphantasia
+#   )) +
+#   # linear modelling of the differences
+#   geom_line(
+#     data = lmm_preds_im,
+#     aes(
+#       y = Mean,
+#       group = aphantasia
+#     ),
+#     position = position_dodge(width = dw),
+#     linewidth = 1.5,
+#     linetype = 1,
+#     show.legend = FALSE
+#   ) +
+#   # predicted means of the model
+#   geom_pointrange2(
+#     data = lmm_preds_im,
+#     aes(
+#       x = congruence,
+#       y = Mean,
+#       ymin = CI_low,
+#       ymax = CI_high,
+#       group = aphantasia
+#       ),
+#     color = "black",
+#     position = position_dodge(width = dw),
+#     size = 1,
+#     linewidth = .75,
+#     show.legend = FALSE
+#   ) +
+#   # intercept
+#   geom_hline(yintercept = lmm_intercept_im, linetype = 2) +
+#   labs( 
+#     x = NULL, 
+#     y = "Response time (standardized)"
+#     ) +
+#   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+#   scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
+  # scale_color_okabeito(guide = NULL)
 ```
 :::
-
--->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
