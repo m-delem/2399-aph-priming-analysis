@@ -59,6 +59,7 @@ shelf(
   tidyverse,      # modern R ecosystem
   easystats,      # data analysis framework
   tidymodels,     # modelling framework
+  doParallel,     # parallel execution
   
   # ─── tidymodels friends ──────────────
   corrr,          # correlational analyses
@@ -71,6 +72,7 @@ shelf(
   rstanarm,       # bayesian models
   BayesFactor,    # BFs
   emmeans,        # marginal estimates
+  statmod,        # easystats dependency
   
   # ─── data management ─────────────────
   readxl,         # importing xlsx
@@ -872,6 +874,7 @@ model_formulas <- list(
   )
 
 # ─── Table to combine everything in workflows and fit the models ──────────────
+(
 model_all_workflows_fitted <- 
   tribble(       ~recipe,     ~ task,           ~model,       ~formula,
     model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas,
@@ -908,7 +911,9 @@ model_all_workflows_fitted <-
     BIC  = model_perf[[3]]
   ) |>
   ungroup() |> 
-  select(-c(recipe, model, formula, workflow, model_perf))
+  select(-c(recipe, model, formula, model_perf))
+) |> 
+  system.time() -> time_one_core # 16min
 
 # ─── Comparing the models' quality among those that converged ─────────────────
 model_selection <-
@@ -923,6 +928,14 @@ model_selection <-
 
 # inverse log models with random intercepts per-participant are the best GLMMs 
 # for both tasks
+```
+
+```{r faster}
+# registerDoParallel(cores = 20)
+# getDoParWorkers # -> Checks how many parallel cores foreach will use
+# registerDoSEQ() # -> switches back to sequential
+
+(test <- "This is a test") |> print()
 ```
 
 ```{r check_the_best_models}
@@ -946,18 +959,18 @@ best_glmm_explicit |>
     #   )
   )
 
-best_lmm_explicit |>
+best_glmm_implicit |>
   check_model(
     # check = c(
-    #   "pp_check",
-    #   "linearity",
     #   "homogeneity",
     #   "outliers",
     #   "vif",
-    #   "qq"
+    #   "qq",
+    #   "reqq"
     #   )
   )
 ```
+
 
 ::: {.panel-tabset .column-page-inset-right}
 #### Explicit task
