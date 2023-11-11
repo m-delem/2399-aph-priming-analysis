@@ -5,7 +5,7 @@ date: 2023-11-03
 date-modified: last-modified
 date-format: "D/MM/YYYY"
 format: html
-editor: visual
+editor: source
 editor_options: 
   
   chunk_output_type: inline
@@ -661,7 +661,7 @@ As expected, most of the participants have a small amount of very slow outlier t
 # 3 MADs threshold
 df_explicit_rt <-
   df_explicit_rt |> 
-  group_by(subjectid, congruence, color) |> 
+  group_by(subjectid, congruence) |> 
   mutate(
     rt_median = median(rt),
     rt_mad = mad(rt)
@@ -679,7 +679,7 @@ df_explicit_rt <-
 # 3 MADs threshold
 df_implicit_rt <-
   df_implicit_rt |> 
-  group_by(subjectid, congruence, color) |> 
+  group_by(subjectid, congruence) |> 
   mutate(
     rt_median = median(rt),
     rt_mad = mad(rt)
@@ -875,7 +875,7 @@ model_formulas <- list(
 
 # ─── Table to combine everything in workflows and fit the models ──────────────
 (
-model_all_workflows_fitted <- 
+model_all_workflows_fitted_sequential <- 
   tribble(       ~recipe,     ~ task,           ~model,       ~formula,
     model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas,
     model_recipe_glmm_im, "implicit", model_specs_glmm, model_formulas,
@@ -911,13 +911,15 @@ model_all_workflows_fitted <-
     BIC  = model_perf[[3]]
   ) |>
   ungroup() |> 
-  select(-c(recipe, model, formula, model_perf))
+  select(-c(recipe, model, formula, workflow, model_perf))
 ) |> 
-  system.time() -> time_one_core # 16min
+  system.time() -> time_sequential 
+
+# 841 seconds (14min)
 
 # ─── Comparing the models' quality among those that converged ─────────────────
 model_selection <-
-  model_all_workflows_fitted |> 
+  model_all_workflows_fitted_sequential |> 
   filter(
     formula_id != "formula_0" & 
     convergence == TRUE
@@ -930,13 +932,197 @@ model_selection <-
 # for both tasks
 ```
 
+# Testing foreach --------------------------------------------------------------
+
+```{r fitting_glmms_and_lmms_parallel}
+#| output: false
+ 
+# ═══ Fitting Generalized Linear Mixed Models in parallel ══════════════════════
+
+# ─── Preparing variable roles ─────────────────────────────────────────────────
+model_recipe_glmm_ex <- 
+  df_explicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, aphantasia, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+model_recipe_glmm_im <- 
+  df_implicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, aphantasia, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+# Adding pre-processing steps to Box-Cox and normalize RTs in LMMs
+model_recipe_lmm_ex <- 
+  model_recipe_glmm_ex |> 
+  step_BoxCox(rt) |> 
+  step_normalize(rt)
+
+model_recipe_lmm_im <- 
+  model_recipe_glmm_im |> 
+  step_BoxCox(rt) |> 
+  step_normalize(rt)
+
+# ─── Specifying the distributions for the models ──────────────────────────────
+
+# GLMM, Gamma distribution, identity link
+glmm_gamma_id <-
+  linear_reg() |> 
+  set_engine(
+    "glmer",
+    family = Gamma(link = "identity")
+  )
+
+# GLMM, Inverse Gaussian distribution, identity link
+glmm_inverse_id <-
+  linear_reg() |> 
+  set_engine(
+    "glmer",
+    family = inverse.gaussian(link = "identity")
+  )
+
+# GLMM, Inverse Gaussian distribution, log link
+glmm_inverse_log <-
+  linear_reg() |> 
+  set_engine(
+    "glmer",
+    family = inverse.gaussian(link = "log")
+  )
+
+# LMM = GLMM with a Gaussian distribution and identity link
+glmm_gaussian <-
+  linear_reg() |> 
+  set_engine("lmer")
+
+# Listing these models
+# GLMMs
+model_specs_glmm <- list(
+  glmm_gamma_id    = glmm_gamma_id,
+  glmm_inverse_id  = glmm_inverse_id,
+  glmm_inverse_log = glmm_inverse_log,
+  glmm_gaussian    = glmm_gaussian
+)
+# LMM spec for transformed data
+model_spec_lmm <- list(lmm_boxcox = glmm_gaussian)
+
+# ─── Writing down the formulas of our models ──────────────────────────────────
+# null model
+formula_0 <- rt ~ (1|subjectid)
+# intercept by-participant only
+formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
+# intercept and slope on congruence by-participant
+formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
+# intercept and slope on color by-participant
+formula_3 <- rt ~ (aphantasia + congruence + color)^2 + (color|subjectid)
+# intercept and slope on congruence and color by-participant
+formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
+
+# Listing these formulas
+model_formulas <- list(
+  formula_0 = formula_0,
+  formula_1 = formula_1,
+  formula_2 = formula_2,
+  formula_3 = formula_3,
+  formula_4 = formula_4
+  )
+
+# ─── Table to combine everything in workflows and fit the models ──────────────
+# (
+model_all_workflows_fitted_parallel <- 
+  tribble(       ~recipe,     ~ task,           ~model,       ~formula,
+    model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas,
+    model_recipe_glmm_im, "implicit", model_specs_glmm, model_formulas,
+     model_recipe_lmm_ex, "explicit",   model_spec_lmm, model_formulas,
+     model_recipe_lmm_im, "implicit",   model_spec_lmm, model_formulas,
+  ) |> 
+  # combining recipes with models
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
+  rowwise() |>
+  mutate(
+    # creating workflows
+    workflow = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(model, formula = formula)  
+      )
+  )
+
+# ─── Fitting the models with parallel processing ──────────────────────────────
+
+# finding the available cores for parallel processing
+n_cores <- parallel::detectCores() - 1
+
+# creating the cluster of cores
+parallel_cluster <- 
+  parallel::makeCluster(
+    n_cores,
+    type = "PSOCK"
+  )
+
+# registering the cluster for `foreach`
+doParallel::registerDoParallel(cl = parallel_cluster)
+# checking
+# foreach::getDoParRegistered()
+# foreach::getDoParWorkers()
+
+# creating a new list-column with all the models fitted in parallel
+# (+ measuring runtime)
+(model_all_workflows_fitted_parallel$fitted_models <-
+  foreach(
+    workflow = model_all_workflows_fitted_parallel$workflow,
+    task     = model_all_workflows_fitted_parallel$task,
+    .combine  = "c",
+    .packages = c("tidymodels", "multilevelmod")
+) %dopar% {
+  if(task == "explicit"){
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_explicit_rt) |> 
+        extract_fit_engine()
+      )
+  }
+  
+  else{
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_implicit_rt) |> 
+        extract_fit_engine()
+      )
+  }
+  
+  return(model_fit)
+}) |> system.time() -> time_parallel
+
+model_all_workflows_fitted_parallel <-  
+  model_all_workflows_fitted_parallel |> 
+  select(-c(recipe, model, formula, workflow))
+
+# stopping the cluster when we're done
+parallel::stopCluster(cl = parallel_cluster)
+
+# 214 seconds (3min30s)
+```
+
+
 ```{r faster}
 # registerDoParallel(cores = 20)
 # getDoParWorkers # -> Checks how many parallel cores foreach will use
 # registerDoSEQ() # -> switches back to sequential
-
-(test <- "This is a test") |> print()
 ```
+
+# ------------------------------------------------------------------------------
 
 ```{r check_the_best_models}
 #| fig-label: fig-model_checks
@@ -970,7 +1156,6 @@ best_glmm_implicit |>
     #   )
   )
 ```
-
 
 ::: {.panel-tabset .column-page-inset-right}
 #### Explicit task
