@@ -310,14 +310,10 @@ df_explicit_rt <-
     # participants identified with with high error rates
     !(subjectid %in% c( 
       "aknezevic",
-      "bdispaux", 
       "lbrunie", 
-      "eleveque", 
       "agayou", 
       "bluciani",
-      "ldossantos", 
-      "aleclaire", 
-      "dchimenton"))
+      "ldossantos"))
     ) |>  
   # removing irrelevant variables
   select(-c(sex, vviq80, orientation, response, correct_explicit))
@@ -331,13 +327,8 @@ df_implicit_rt <-
   filter(
     correct_implicit == 1 &
     !(subjectid %in% c( 
-      "aknezevic",
       "bdispaux", 
-      "lbrunie", 
       "eleveque", 
-      "agayou", 
-      "bluciani",
-      "ldossantos", 
       "aleclaire", 
       "dchimenton"))
       ) |>  
@@ -474,7 +465,7 @@ df_explicit_rt |>
   group_by(subjectid) |> 
   summarise(mean_rt_explicit = mean(rt)) |> 
   ungroup() |> 
-  filter(mean_rt_explicit > 1373) |> 
+  filter(mean_rt_explicit > 1384) |> 
   arrange(desc(mean_rt_explicit))
 # 7 outliers in the explicit task
 
@@ -492,15 +483,13 @@ df_explicit_rt <-
   df_explicit_rt |> 
   filter(
     !(subjectid %in% c(
+      "dchimenton",
       "fc",
       "mbilodeau",
       "llhermitte",
       "hmassot",
       "mbillon",
-      "nnguyenphuoc",
-      "rcarnez",
-      "cbertrand",
-      "omeyer"
+      "nnguyenphuoc"
     ))
   )
 
@@ -512,12 +501,7 @@ df_implicit_rt <-
   df_implicit_rt |> 
   filter(
     !(subjectid %in% c(
-      "fc",
       "mbilodeau",
-      "llhermitte",
-      "hmassot",
-      "mbillon",
-      "nnguyenphuoc",
       "rcarnez",
       "cbertrand",
       "omeyer"
@@ -667,8 +651,8 @@ df_explicit_rt <-
     rt_mad = mad(rt)
     ) |> 
   filter(
-    rt < rt_median + 3 * rt_mad &
-    rt > rt_median - 3 * rt_mad
+    rt < rt_median + 5 * rt_mad &
+    rt > rt_median - 2.5 * rt_mad
   ) |>
   ungroup()
 # 7687 trials left
@@ -685,8 +669,8 @@ df_implicit_rt <-
     rt_mad = mad(rt)
     ) |> 
   filter(
-    rt < rt_median + 3 * rt_mad &
-    rt > rt_median - 3 * rt_mad
+    rt < rt_median + 5 * rt_mad &
+    rt > rt_median - 2.5 * rt_mad
   ) |>
   ungroup()
 # 7489 trials left
@@ -997,7 +981,7 @@ model_selection <-
 #| fig-subcap: true
 #| layout-ncol: 1
 
-best_glmm_explicit <- model_selection$fitted_model[[2]]
+best_glmm_explicit <- model_selection$fitted_model[[1]]
 best_glmm_implicit <- model_selection$fitted_model[[5]]
 
 # characteristics to check
@@ -1162,6 +1146,102 @@ df_implicit_rt |>
 
 ```
 :::
+
+# Further EDA: continuous analyses
+
+## Continuous predictors: PCA
+
+Theoretically, the four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - could be used as predictors (independent variables) for the RT outcomes (dependent variable) of the experiment. Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: yet here we only modeled the VVIQ as representative of visual imagery, what's more as a categorical predictor by dividing two groups based on it. In order to explore the potential of all these scales, we are going to run a Principal Component Analysis (PCA) on the four questionnaires' standardized scores to evaluate how many different constructs they represent. The suitability of the data for a PCA was assessed with Bartlett's test of sphericity (Bartlett, 1951), suggesting there was sufficient correlation in the data ($\chi^{2}$(55) = 408.01, p < .001) and the KMO measure of sampling adequacy (KMO = 0.73; see Kaiser, H. F., & Rice, J. (1974)). The Eigenvalues and variance explained by the PCA components computed, along with the loadings of each score on them, are displayed in @tbl-pca_tables.
+
+```{r pca}
+#| code-summary: "Computing the PCA"
+#| echo: true
+
+# ─── Principal Component Analysis ───
+pca <- 
+  principal_components(
+    df_questionnaires[,4:7],
+    n = "max",
+    sort = TRUE,
+    standardize = TRUE
+    )
+```
+
+```{r pca_tables}
+#| label: tbl-pca_tables
+#| tbl-cap: "Results of the Principal Components Analysis."
+#| tbl-subcap: 
+#|   - "Loadings of each variable on the three components extracted by the PCA."
+#|   - "Eigenvalues and variance explained by the three components extracted by the PCA."
+#| layout-ncol: 2
+
+# ─── Loadings ───
+pca |> 
+  as.data.frame() |>  
+  mutate(Variable = case_when(
+    Variable == "suis60" ~ "SUIS",
+    Variable == "vviq80" ~ "VVIQ",
+    Variable == "osiq_o75" ~ "OSIQ-O",
+    Variable == "osiq_s75" ~ "OSIQ-S",
+    TRUE ~ Variable
+  )) |> 
+  display()
+
+# ─── Eigenvalues and variance ───
+pca |> 
+  summary() |> 
+  as.data.frame() |>
+  display()
+```
+
+The two first components (PC1 and PC2) explained 95% of the variance of the sample on the four scores (PC1 Eigenvalue = 2.84, 71% of the total variance explained, PC2 = 0.97, 24% of the total variance explained) and are the only meaningful ones in the PCA (PC3 explains 3% of variance). PC1 correlates highly with the VVIQ, OSIQ-Object and SUIS: this component can logically be interpreted as representing visual imagery (VI variable). PC2 also explains a significant part of variance, and correlates highly with the OSIQ-Spatial: we chose to interpret this component as representing spatial imagery (SI variable). These two variables, decorrelated by the PCA, are represented together in @fig-vi_si_corr.
+
+```{r pca_data}
+#| code-summary: "Adding the predicted PCA components to the data"
+#| echo: true
+
+# ─── Adding components to the data ───
+pca_components <- pca |> predict()
+
+df_questionnaires <-
+  bind_cols(df_questionnaires[,1:8], pca_components[,1:2]) %>% 
+  mutate(PC2 = -PC2) %>% 
+  rename(
+    "visual_imagery" = PC1,
+    "spatial_imagery" = PC2
+    )
+
+# updating all the dataframes with the imagery variables
+dfs <- 
+  list( 
+    implicit_task = df_implicit_rt, 
+    explicit_task = df_explicit_rt
+    ) %>%
+  # adding the new variables to each dataframe
+  imap(~left_join(
+    .x |> select(-c(rt_median, rt_mad)), 
+    df_questionnaires %>% 
+      select(
+        # column to match with the correct participants
+        subjectid, 
+        # new variables to add
+        visual_imagery, 
+        spatial_imagery), 
+    by = "subjectid") %>% 
+      # reordering the final dfs
+      select(
+        subjectid, 
+        age, aphantasia,
+        visual_imagery, spatial_imagery,
+        everything())
+    )
+
+df_implicit_rt <- dfs$implicit_task
+df_explicit_rt <- dfs$explicit_task
+rm(dfs)
+```
+
+
 
 ```{r fitting_glmms_continuous}
 #| output: false
