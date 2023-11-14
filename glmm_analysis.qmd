@@ -661,7 +661,7 @@ As expected, most of the participants have a small amount of very slow outlier t
 # 3 MADs threshold
 df_explicit_rt <-
   df_explicit_rt |> 
-  group_by(subjectid, congruence) |> 
+  group_by(subjectid, congruence, color) |> 
   mutate(
     rt_median = median(rt),
     rt_mad = mad(rt)
@@ -679,7 +679,7 @@ df_explicit_rt <-
 # 3 MADs threshold
 df_implicit_rt <-
   df_implicit_rt |> 
-  group_by(subjectid, congruence) |> 
+  group_by(subjectid, congruence, color) |> 
   mutate(
     rt_median = median(rt),
     rt_mad = mad(rt)
@@ -771,170 +771,7 @@ Alternatively, we could also transform our data using a Box-Cox transformation t
 
 Only two-way interactions between the three factors have been kept, as three-way interactions were not improving the quality of the models, and were sometimes even preventing the models from converging at all.
 
-```{r fitting_glmms_and_lmms}
-#| code-summary: "Fitting all the models with `tidymodels` (Warning: long code chunk)"
-#| echo: true
-#| output: false
- 
-# ═══ Fitting Generalized Linear Mixed Models ══════════════════════════════════
-
-# ─── Preparing variable roles ─────────────────────────────────────────────────
-model_recipe_glmm_ex <- 
-  df_explicit_rt |> 
-  recipe() |> 
-  update_role(rt, new_role = "outcome") %>%
-  update_role(
-    subjectid, age, aphantasia, color, congruence, 
-    new_role = "predictor"
-  ) |> 
-  add_role(subjectid, new_role = "group")
-
-model_recipe_glmm_im <- 
-  df_implicit_rt |> 
-  recipe() |> 
-  update_role(rt, new_role = "outcome") %>%
-  update_role(
-    subjectid, age, aphantasia, color, congruence, 
-    new_role = "predictor"
-  ) |> 
-  add_role(subjectid, new_role = "group")
-
-# Adding pre-processing steps to Box-Cox and normalize RTs in LMMs
-model_recipe_lmm_ex <- 
-  model_recipe_glmm_ex |> 
-  step_BoxCox(rt) |> 
-  step_normalize(rt)
-
-model_recipe_lmm_im <- 
-  model_recipe_glmm_im |> 
-  step_BoxCox(rt) |> 
-  step_normalize(rt)
-
-# ─── Specifying the distributions for the models ──────────────────────────────
-
-# GLMM, Gamma distribution, identity link
-glmm_gamma_id <-
-  linear_reg() |> 
-  set_engine(
-    "glmer",
-    family = Gamma(link = "identity")
-  )
-
-# GLMM, Inverse Gaussian distribution, identity link
-glmm_inverse_id <-
-  linear_reg() |> 
-  set_engine(
-    "glmer",
-    family = inverse.gaussian(link = "identity")
-  )
-
-# GLMM, Inverse Gaussian distribution, log link
-glmm_inverse_log <-
-  linear_reg() |> 
-  set_engine(
-    "glmer",
-    family = inverse.gaussian(link = "log")
-  )
-
-# LMM = GLMM with a Gaussian distribution and identity link
-glmm_gaussian <-
-  linear_reg() |> 
-  set_engine("lmer")
-
-# Listing these models
-# GLMMs
-model_specs_glmm <- list(
-  glmm_gamma_id    = glmm_gamma_id,
-  glmm_inverse_id  = glmm_inverse_id,
-  glmm_inverse_log = glmm_inverse_log,
-  glmm_gaussian    = glmm_gaussian
-)
-# LMM spec for transformed data
-model_spec_lmm <- list(lmm_boxcox = glmm_gaussian)
-
-# ─── Writing down the formulas of our models ──────────────────────────────────
-# null model
-formula_0 <- rt ~ (1|subjectid)
-# intercept by-participant only
-formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
-# intercept and slope on congruence by-participant
-formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
-# intercept and slope on color by-participant
-formula_3 <- rt ~ (aphantasia + congruence + color)^2 + (color|subjectid)
-# intercept and slope on congruence and color by-participant
-formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
-
-# Listing these formulas
-model_formulas <- list(
-  formula_0 = formula_0,
-  formula_1 = formula_1,
-  formula_2 = formula_2,
-  formula_3 = formula_3,
-  formula_4 = formula_4
-  )
-
-# ─── Table to combine everything in workflows and fit the models ──────────────
-(
-model_all_workflows_fitted_sequential <- 
-  tribble(       ~recipe,     ~ task,           ~model,       ~formula,
-    model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas,
-    model_recipe_glmm_im, "implicit", model_specs_glmm, model_formulas,
-     model_recipe_lmm_ex, "explicit",   model_spec_lmm, model_formulas,
-     model_recipe_lmm_im, "implicit",   model_spec_lmm, model_formulas,
-  ) |> 
-  # combining recipes with models
-  unnest_longer(model) |> 
-  # combining them with formulas
-  unnest_longer(formula) |>
-  rowwise() |>
-  mutate(
-    # creating workflows
-    workflow = list(
-      workflow() |>
-      add_recipe(recipe) |> 
-      add_model(model, formula = formula)  
-      ),
-    # fitting all the workflows (models) for each task
-    fitted_model = ifelse(
-      task == "explicit",
-      list(workflow |> fit(data = df_explicit_rt) |> extract_fit_engine()),
-      list(workflow |> fit(data = df_implicit_rt) |> extract_fit_engine())
-    ),
-    # extracting the parameters of the models
-    parameters = list(model_parameters(fitted_model)),
-    # checking the convergence of the models
-    convergence = check_convergence(fitted_model),
-    # model quality indices
-    model_perf = list(model_performance(fitted_model)),
-    AIC  = model_perf[[1]],
-    AICc = model_perf[[2]],
-    BIC  = model_perf[[3]]
-  ) |>
-  ungroup() |> 
-  select(-c(recipe, model, formula, workflow, model_perf))
-) |> 
-  system.time() -> time_sequential 
-
-# 841 seconds (14min)
-
-# ─── Comparing the models' quality among those that converged ─────────────────
-model_selection <-
-  model_all_workflows_fitted_sequential |> 
-  filter(
-    formula_id != "formula_0" & 
-    convergence == TRUE
-  ) |> 
-  group_by(task, model_id) |> 
-  mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
-  filter(best_model == TRUE)
-
-# inverse log models with random intercepts per-participant are the best GLMMs 
-# for both tasks
-```
-
-# Testing foreach --------------------------------------------------------------
-
-```{r fitting_glmms_and_lmms_parallel}
+```{r fitting_glmms}
 #| output: false
  
 # ═══ Fitting Generalized Linear Mixed Models in parallel ══════════════════════
@@ -960,17 +797,6 @@ model_recipe_glmm_im <-
   ) |> 
   add_role(subjectid, new_role = "group")
 
-# Adding pre-processing steps to Box-Cox and normalize RTs in LMMs
-model_recipe_lmm_ex <- 
-  model_recipe_glmm_ex |> 
-  step_BoxCox(rt) |> 
-  step_normalize(rt)
-
-model_recipe_lmm_im <- 
-  model_recipe_glmm_im |> 
-  step_BoxCox(rt) |> 
-  step_normalize(rt)
-
 # ─── Specifying the distributions for the models ──────────────────────────────
 
 # GLMM, Gamma distribution, identity link
@@ -1010,8 +836,6 @@ model_specs_glmm <- list(
   glmm_inverse_log = glmm_inverse_log,
   glmm_gaussian    = glmm_gaussian
 )
-# LMM spec for transformed data
-model_spec_lmm <- list(lmm_boxcox = glmm_gaussian)
 
 # ─── Writing down the formulas of our models ──────────────────────────────────
 # null model
@@ -1036,12 +860,10 @@ model_formulas <- list(
 
 # ─── Table to combine everything in workflows and fit the models ──────────────
 # (
-model_all_workflows_fitted_parallel <- 
+model_all_workflows_fitted <- 
   tribble(       ~recipe,     ~ task,           ~model,       ~formula,
     model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas,
-    model_recipe_glmm_im, "implicit", model_specs_glmm, model_formulas,
-     model_recipe_lmm_ex, "explicit",   model_spec_lmm, model_formulas,
-     model_recipe_lmm_im, "implicit",   model_spec_lmm, model_formulas,
+    model_recipe_glmm_im, "implicit", model_specs_glmm, model_formulas
   ) |> 
   # combining recipes with models
   unnest_longer(model) |> 
@@ -1076,11 +898,10 @@ doParallel::registerDoParallel(cl = parallel_cluster)
 # foreach::getDoParWorkers()
 
 # creating a new list-column with all the models fitted in parallel
-# (+ measuring runtime)
-(model_all_workflows_fitted_parallel$fitted_models <-
+(model_all_workflows_fitted$fitted_model <-
   foreach(
-    workflow = model_all_workflows_fitted_parallel$workflow,
-    task     = model_all_workflows_fitted_parallel$task,
+    workflow = model_all_workflows_fitted$workflow,
+    task     = model_all_workflows_fitted$task,
     .combine  = "c",
     .packages = c("tidymodels", "multilevelmod")
 ) %dopar% {
@@ -1103,26 +924,72 @@ doParallel::registerDoParallel(cl = parallel_cluster)
   }
   
   return(model_fit)
+# measuring runtime for benchmarking
 }) |> system.time() -> time_parallel
 
-model_all_workflows_fitted_parallel <-  
-  model_all_workflows_fitted_parallel |> 
+model_all_workflows_fitted <-  
+  model_all_workflows_fitted |> 
   select(-c(recipe, model, formula, workflow))
+
+# ─── Examining the quality of the models, estimating the parameters ───────────
+model_all_workflows_fitted$parameters <-
+  foreach(
+    fitted_model = model_all_workflows_fitted$fitted_model,
+    .combine  = "c",
+    .packages = c("parameters")
+) %dopar% {
+  parameters <- list(model_parameters(fitted_model))
+  return(parameters)
+}
+
+model_all_workflows_fitted$convergence <-
+  foreach(
+    fitted_model = model_all_workflows_fitted$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  convergence <- check_convergence(fitted_model)
+  return(convergence)
+}
+
+model_all_workflows_fitted$model_perf <-
+  foreach(
+    fitted_model = model_all_workflows_fitted$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  model_perf <- list(model_performance(fitted_model))
+  return(model_perf)
+}
+
+model_all_workflows_fitted <-
+  model_all_workflows_fitted |>
+  mutate(
+    # extracting model quality indices
+    AIC  = model_perf[[1]],
+    AICc = model_perf[[2]],
+    BIC  = model_perf[[3]]
+  ) |>
+  ungroup() |> 
+  select(-model_perf)
 
 # stopping the cluster when we're done
 parallel::stopCluster(cl = parallel_cluster)
 
 # 214 seconds (3min30s)
+
+# ─── Comparing the models' quality among those that converged ─────────────────
+model_selection <-
+  model_all_workflows_fitted |> 
+  filter(
+    formula_id != "formula_0" & 
+    convergence == TRUE
+  ) |> 
+  group_by(task, model_id) |> 
+  mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
+  filter(best_model == TRUE)
 ```
 
-
-```{r faster}
-# registerDoParallel(cores = 20)
-# getDoParWorkers # -> Checks how many parallel cores foreach will use
-# registerDoSEQ() # -> switches back to sequential
-```
-
-# ------------------------------------------------------------------------------
 
 ```{r check_the_best_models}
 #| fig-label: fig-model_checks
@@ -1130,37 +997,39 @@ parallel::stopCluster(cl = parallel_cluster)
 #| fig-subcap: true
 #| layout-ncol: 1
 
-best_glmm_explicit <- model_selection$fitted_model[[1]]
-best_glmm_implicit <- model_selection$fitted_model[[4]]
+best_glmm_explicit <- model_selection$fitted_model[[2]]
+best_glmm_implicit <- model_selection$fitted_model[[5]]
+
+# characteristics to check
+model_checks = c("homogeneity", "vif", "outliers", "qq", "reqq")
 
 # ─── Model checks ───────────────────────────
-best_glmm_explicit |>
-  check_model(
-    # check = c(
-    #   "homogeneity",
-    #   "outliers",
-    #   "vif",
-    #   "qq",
-    #   "reqq"
-    #   )
+p_glmm_checks_explicit <-
+  best_glmm_explicit |> check_model(check = model_checks, detrend = FALSE)
+p_glmm_checks_implicit <- 
+  best_glmm_implicit |> check_model(check = model_checks, detrend = FALSE)
+
+ggexport(
+  p_glmm_checks_explicit,
+  filename = "plots/glmm_checks_explicit.png",
+  width = 1000,
+  height = 800,
+  dpi = 600
   )
 
-best_glmm_implicit |>
-  check_model(
-    # check = c(
-    #   "homogeneity",
-    #   "outliers",
-    #   "vif",
-    #   "qq",
-    #   "reqq"
-    #   )
+ggexport(
+  p_glmm_checks_implicit,
+  filename = "plots/glmm_checks_implicit.png",
+  width = 1000,
+  height = 800,
+  dpi = 600
   )
 ```
 
 ::: {.panel-tabset .column-page-inset-right}
 #### Explicit task
 
-```{r model_plots_ex}
+```{r glmm_plots_ex}
 #| label: fig-model_plots_ex
 #| fig-cap: "Plots for the effects of interest in the explicit task."
 #| fig-subcap:
@@ -1238,7 +1107,7 @@ df_explicit_rt |>
 
 #### Implicit task
 
-```{r model_plots_im}
+```{r glmm_plots_im}
 #| label: fig-model_plots_im
 #| fig-cap: "Plots for the effects of interest in the implicit task."
 #| fig-subcap:
@@ -1293,3 +1162,375 @@ df_implicit_rt |>
 
 ```
 :::
+
+```{r fitting_glmms_continuous}
+#| output: false
+ 
+# ═══ Fitting Generalized Linear Mixed Models in parallel ══════════════════════
+
+# ─── Preparing variable roles ─────────────────────────────────────────────────
+model_recipe_glmm_ex_continuous <- 
+  df_explicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, visual_imagery, spatial_imagery, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+model_recipe_glmm_im_continuous <- 
+  df_implicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, visual_imagery, spatial_imagery, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+# ─── Writing down the formulas of our models ──────────────────────────────────
+# null model
+formula_0_continuous <- rt ~ (1|subjectid)
+# intercept by-participant only
+formula_1_continuous <- rt ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (1|subjectid)
+# intercept and slope on congruence by-participant
+formula_2_continuous <- rt ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (congruence|subjectid)
+# intercept and slope on color by-participant
+formula_3_continuous <- rt ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (color|subjectid)
+# intercept and slope on congruence and color by-participant
+# formula_4_continuous <- rt ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
+
+# Listing these formulas
+model_formulas_continuous <- list(
+  formula_0 = formula_0_continuous,
+  formula_1 = formula_1_continuous,
+  formula_2 = formula_2_continuous,
+  formula_3 = formula_3_continuous
+  # formula_4 = formula_4_continuous
+  )
+
+# ─── Table to combine everything in workflows and fit the models ──────────────
+# (
+model_all_fitted_continuous <- 
+  tribble(       ~recipe,     ~ task,           ~model,       ~formula,
+    model_recipe_glmm_ex_continuous, "explicit", model_specs_glmm, model_formulas_continuous,
+    model_recipe_glmm_im_continuous, "implicit", model_specs_glmm, model_formulas_continuous
+  ) |> 
+  # combining recipes with models
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
+  rowwise() |>
+  mutate(
+    # creating workflows
+    workflow = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(model, formula = formula)  
+      )
+  )
+
+# ─── Fitting the models with parallel processing ──────────────────────────────
+
+# finding the available cores for parallel processing
+n_cores <- parallel::detectCores() - 1
+
+# creating the cluster of cores
+parallel_cluster <- 
+  parallel::makeCluster(
+    n_cores,
+    type = "PSOCK"
+  )
+
+# registering the cluster for `foreach`
+doParallel::registerDoParallel(cl = parallel_cluster)
+# checking
+# foreach::getDoParRegistered()
+# foreach::getDoParWorkers()
+
+# creating a new list-column with all the models fitted in parallel
+(model_all_fitted_continuous$fitted_model <-
+  foreach(
+    workflow = model_all_fitted_continuous$workflow,
+    task     = model_all_fitted_continuous$task,
+    .combine  = "c",
+    .packages = c("tidymodels", "multilevelmod")
+) %dopar% {
+  if(task == "explicit"){
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_explicit_rt) |> 
+        extract_fit_engine()
+      )
+  }
+  
+  else{
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_implicit_rt) |> 
+        extract_fit_engine()
+      )
+  }
+  
+  return(model_fit)
+# measuring runtime for benchmarking
+}) |> system.time() -> time_parallel
+
+model_all_fitted_continuous <-  
+  model_all_fitted_continuous |> 
+  select(-c(recipe, model, formula, workflow))
+
+# ─── Examining the quality of the models, estimating the parameters ───────────
+model_all_fitted_continuous$parameters <-
+  foreach(
+    fitted_model = model_all_fitted_continuous$fitted_model,
+    .combine  = "c",
+    .packages = c("parameters")
+) %dopar% {
+  parameters <- list(model_parameters(fitted_model))
+  return(parameters)
+}
+
+model_all_fitted_continuous$convergence <-
+  foreach(
+    fitted_model = model_all_fitted_continuous$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  convergence <- check_convergence(fitted_model)
+  return(convergence)
+}
+
+model_all_fitted_continuous$model_perf <-
+  foreach(
+    fitted_model = model_all_fitted_continuous$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  model_perf <- list(model_performance(fitted_model))
+  return(model_perf)
+}
+
+model_all_fitted_continuous <-
+  model_all_fitted_continuous |>
+  mutate(
+    # extracting model quality indices
+    AIC  = model_perf[[1]],
+    AICc = model_perf[[2]],
+    BIC  = model_perf[[3]]
+  ) |>
+  ungroup() |> 
+  select(-model_perf)
+
+# stopping the cluster when we're done
+parallel::stopCluster(cl = parallel_cluster)
+
+# 214 seconds (3min30s)
+
+# ─── Comparing the models' quality among those that converged ─────────────────
+model_selection_continuous <-
+  model_all_fitted_continuous |> 
+  filter(
+    formula_id != "formula_0" & 
+    convergence == TRUE
+  ) |> 
+  group_by(task, model_id) |> 
+  mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
+  filter(best_model == TRUE)
+```
+
+```{r plot_vi_congruence_explicit}
+
+best_glmm_explicit_continuous <- model_selection_continuous[[4]][[1]]
+best_glmm_implicit_continuous <- model_selection_continuous[[4]][[2]]
+
+vizdata_glmm_explicit <- 
+  df_explicit_rt |> 
+  visualisation_matrix(
+    at = c("visual_imagery", "congruence"),
+    length = 100,
+    preserve_range = TRUE
+)
+
+vizdata_glmm_explicit <- 
+  vizdata_glmm_explicit |> 
+  mutate(predicted = insight::get_predicted(
+    best_glmm_explicit_continuous, 
+    vizdata_glmm_explicit
+    )) |> 
+  mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent"))
+
+df_explicit_rt |> 
+  mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent")) |>  
+  ggplot(aes(
+    x = visual_imagery,
+    y = rt,
+    color = congruence
+  )) +
+  geom_line(
+    data = vizdata_glmm_explicit,
+    aes(
+      y = predicted,
+      group = congruence
+    ),
+    size = 1.5
+  ) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  coord_cartesian(
+    ylim = c(400,600)
+  ) +
+  labs(
+    title = "Explicit task",
+    x = "",
+    y = ""
+    ) +
+  scale_color_lancet(name = "Congruence") +
+  theme(
+    title = element_text(size = txt),
+    axis.text = element_text(size = txt/2),
+    legend.text = element_text(size = txt),
+    legend.title = element_text(size = txt)
+    )
+```
+
+```{r plot_vi_congruence_implicit}
+
+vizdata_glmm_implicit <- 
+  df_implicit_rt |> 
+  visualisation_matrix(
+    at = c("visual_imagery", "congruence"),
+    length = 100,
+    preserve_range = TRUE
+)
+
+vizdata_glmm_implicit <- 
+  vizdata_glmm_implicit |> 
+  mutate(predicted = insight::get_predicted(
+    best_glmm_implicit_continuous, 
+    vizdata_glmm_implicit
+    )) |> 
+  mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent"))
+
+df_implicit_rt |> 
+  mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent")) |>  
+  ggplot(aes(
+    x = visual_imagery,
+    y = rt,
+    color = congruence
+  )) +
+  geom_line(
+    data = vizdata_glmm_implicit,
+    aes(
+      y = predicted,
+      group = congruence
+    ),
+    size = 1.5
+  ) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  coord_cartesian(
+    ylim = c(400,600)
+  ) +
+  labs(
+    title = "Explicit task",
+    x = "",
+    y = ""
+    ) +
+  scale_color_lancet(name = "Congruence") +
+  theme(
+    title = element_text(size = txt),
+    axis.text = element_text(size = txt/2),
+    legend.text = element_text(size = txt),
+    legend.title = element_text(size = txt)
+    )
+```
+
+```{r plot_vi_si_explicit}
+vizdata_glmm_visi_explicit <-
+  df_explicit_rt |> 
+  visualisation_matrix(c("visual_imagery", "spatial_imagery"), length = 100) |> 
+  visualisation_matrix("visual_imagery", length = 15, numerics = "all") 
+
+vizdata_glmm_visi_explicit$predicted <- 
+  insight::get_predicted(
+    best_glmm_explicit_continuous, 
+    vizdata_glmm_visi_explicit
+    )
+
+df_explicit_rt |> 
+  ggplot(aes(
+    x = visual_imagery,
+    y = rt,
+    color = spatial_imagery
+    )) +
+  geom_line(
+    data = vizdata_glmm_visi_explicit,
+    aes(
+      y = predicted,
+      group = spatial_imagery
+      ),
+    size = 1
+  ) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  coord_cartesian(
+    ylim = c(150, 950)
+  ) +
+  labs(
+    title = "Explicit task",
+    x = "",
+    y = ""
+    ) +
+  scale_color_viridis(name = "Spatial imagery") +
+  theme(
+    title = element_text(size = txt),
+    axis.text = element_text(size = txt/2),
+    legend.text = element_text(size = txt/2),
+    legend.title = element_text(size = txt)
+    )
+```
+
+```{r plot_vi_si_implicit}
+vizdata_glmm_visi_implicit <-
+  df_implicit_rt |> 
+  visualisation_matrix(c("visual_imagery", "spatial_imagery"), length = 100) |> 
+  visualisation_matrix("visual_imagery", length = 15, numerics = "all") 
+
+vizdata_glmm_visi_implicit$predicted <- 
+  insight::get_predicted(
+    best_glmm_implicit_continuous, 
+    vizdata_glmm_visi_implicit
+    )
+
+df_implicit_rt |> 
+  ggplot(aes(
+    x = visual_imagery,
+    y = rt,
+    color = spatial_imagery
+    )) +
+  geom_line(
+    data = vizdata_glmm_visi_implicit,
+    aes(
+      y = predicted,
+      group = spatial_imagery
+      ),
+    size = 1
+  ) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  coord_cartesian(
+    ylim = c(350, 750)
+  ) +
+  labs(
+    title = "Implicit task",
+    x = "",
+    y = ""
+    ) +
+  scale_color_viridis(name = "Spatial imagery") +
+  theme(
+    title = element_text(size = txt),
+    axis.text = element_text(size = txt/2),
+    legend.text = element_text(size = txt/2),
+    legend.title = element_text(size = txt)
+    )
+```
