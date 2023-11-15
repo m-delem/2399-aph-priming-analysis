@@ -179,100 +179,6 @@ Many figures in this report are interactive: hover over the plots to see some of
 
 The distribution of the percentages of errors across the two tasks is displayed in @fig-tasks_errors, and [-@fig-tasks_errors2].
 
-::: panel-tabset
-#### Explicit task accuracy
-
-```{r tasks_errors_plotly_explicit}
-#| label: fig-tasks_errors
-#| fig-cap: "Distribution of errors between groups in the explicit task."
-#| out-width: 100%
-#| fig-height: 4
-
-# ═══ Percentage of errors plot - Explicit task ════════════════════════════════
-
-(df_explicit |> 
-  select(subjectid, correct_explicit, aphantasia) |> 
-  group_by(subjectid, aphantasia) |>  
-  count(correct_explicit) |>  
-  filter(correct_explicit == 1) |> 
-  mutate(n = (64 - n)/64 * 100) |>  
-  ggplot(aes(
-    x = n, 
-    color = aphantasia,
-    fill = aphantasia
-    )) +
-  geom_bar(
-    aes(y = after_stat(prop)),
-    position = position_dodge(),
-    width = .6,
-    alpha = .6
-    ) +
-  scale_x_continuous(
-    name = "Percentage of errors",
-    breaks = breaks_pretty(n = 20)
-    ) +
-  scale_y_continuous(
-    name = "Proportion of the group",
-    breaks = breaks_pretty(n = 10)
-    ) +
-  coord_cartesian(
-    xlim = c(1, 46),
-    ylim = c(.01,.36)
-    ) +
-  # labs(title = "Explicit task") +
-  scale_color_okabeito(guide = NULL) +
-  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) |>  
-  # plotly-ing it
-  ggplotly()
-```
-
-#### Implicit task accuracy
-
-```{r tasks_errors_plotly_implicit}
-#| label: fig-tasks_errors2
-#| fig-cap: "Distribution of errors between groups in the implicit task."
-#| out-width: 100%
-#| fig-height: 4
-
-# ═══ Percentage of errors plot - Implicit task ════════════════════════════════
-
-(df_implicit |> 
-  select(subjectid, correct_implicit, aphantasia) |>  
-  group_by(subjectid, aphantasia) |>  
-  count(correct_implicit) |>  
-  filter(correct_implicit == 1) |>  
-  mutate(n = (64 - n)/64 * 100) |>  
-  ggplot(aes(
-    x = n, 
-    color = aphantasia,
-    fill = aphantasia
-    )) +
-  geom_bar(
-    aes(y = after_stat(prop)),
-    position = position_dodge(),
-    width = .6,
-    alpha = .6
-    ) +
-  scale_x_continuous(
-    name = "Percentage of errors",
-    breaks = breaks_pretty(n = 20)
-    ) +
-  scale_y_continuous(
-    name = "Proportion of the group",
-    breaks = breaks_pretty(n = 10)
-    ) +
-  coord_cartesian(
-    xlim = c(1, 40),
-    ylim = c(.01,.28)
-    ) +
-  # labs(title = "Implicit task") +
-  scale_color_okabeito(guide = NULL) +
-  scale_fill_okabeito(name = "Aphantasia", labels = c("Yes", "No"))) |>  
-  # plotly-ing it
-  ggplotly()
-```
-:::
-
 We are going to remove missed trials in the analyses of the RTs. Nonetheless, the main noticeable aspect of these plots are the obvious outliers in each of the tasks. This information is crucial as it could reflect a wrong understanding of the task, or random responses: in any case, participants that have high error rates would require a deletion of up to 47% of their trials, which could become a bias in the modelling of the overall data. As there appear to be a cut-off of the main distribution around 16% of errors in all tasks, this value will be chosen as threshold. **For each task separately, the results of participants with an error rate superior to 16% will be removed** *(i.e., five participants in the explicit task and four in the implicit task)***, prior to removing all the missed trials of the remaining participants for modelling RTs.**
 
 ```{r finding_and_removing_accuracy_outliers}
@@ -374,57 +280,6 @@ df_implicit_rt <-
 
 A first level of the RT outliers analysis is based on the overall mean RT of the participants. Participants with abnormally high RT means could represent various specific situations out of the range of our study: pathological conditions, attention deficits, or even more trivially low attention to the task. Such participants could bias both the overall results *and the analysis of the individual trials*: just like the accuracy outliers, the removal of their slow trials could result in a deletion of a large part of their responses, thus biasing the distributions. Let's visualize the distribution of the RT means in @fig-rt_means1 and [-@fig-rt_means2]
 
-::: panel-tabset
-#### Explicit task RT means
-
-```{r explicit_task_rt_means_plotly}
-#| label: fig-rt_means1
-#| fig-cap: "Distribution of the mean RTs of participants in the explicit task (very high RT means have been cut for better readability)."
-#| fig-height: 4
-
-# ═══ RT means plot - Explicit task ════════════════════════════════════════════
-
-(df_explicit_rt |>  
-  group_by(subjectid) |>  
-  summarise(mean = mean(rt)) |>  
-  ggplot(aes(x = mean)) +
-  geom_histogram(
-    fill = "aquamarine2", 
-    color = "aquamarine4", 
-    alpha = .3,
-    bins = 70
-    # adjust = .4
-    ) +
-  labs(x = "Mean RT", y = "Number of participants") +
-  scale_y_continuous(breaks = seq(0, 13, by = 1))) |>  
-  ggplotly()
-```
-
-#### Implicit task RT means
-
-```{r implicit_task_rt_means_plotly}
-#| label: fig-rt_means2
-#| fig-cap: "Distribution of the mean RTs of participants in the implicit task (very high RT means have been cut for better readability)."
-#| fig-height: 4
-
-# ═══ RT means plot - Implicit task ════════════════════════════════════════════
-
-(df_implicit_rt |> 
-  group_by(subjectid) |>  
-  summarise(mean = mean(rt)) |>  
-  ggplot(aes(x = mean)) +
-  geom_histogram(
-    fill = "coral2", 
-    color = "coral4", 
-    alpha = .3,
-    bins = 70
-    # adjust = .4
-    ) +
-  labs(x = "Mean RT", y = "Number of participants") +
-  scale_y_continuous(breaks = seq(0, 9, by = 1))) |>  
-  ggplotly()
-```
-
 #### RT means table
 
 ```{r rt_means_table}
@@ -448,7 +303,6 @@ df_rt <-
 df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
 df_rt |>  display()
 ```
-:::
 
 The median RT mean among participants is `r df_rt$Median[1]` in the explicit task, and `r df_rt$Median[2]` in the implicit one. Using an outlier detection procedure based on MADs, a common scaling factor to determine acceptable values is $\pm 3 \times MAD$: as 300ms is our chosen minimal value, this would result in our case in an acceptable range (in ms) of \[300,`r round(df_rt$Median[1] + 3*df_rt$MAD[1])`\] for the explicit task and \[300,`r round(df_rt$Median[2] + 3*df_rt$MAD[2])`\] for the implicit task.
 
@@ -515,121 +369,11 @@ df_implicit_rt <-
 
 In the end, 18 participants have been excluded due to high error rates or overall abnormally slow RTs. Let's visualize the RT means distributions again in @fig-rt_means3 and [-@fig-rt_means4].
 
-::: panel-tabset
-#### Tidied explicit task RT means
-
-```{r final_explicit_task_rt_means_plotly}
-#| label: fig-rt_means3
-#| fig-cap: "Distribution of the mean RTs of participants in the explicit task after outlier removal."
-#| fig-height: 4
-
-# ═══ RT means final plot - Explicit task ══════════════════════════════════════
-
-(df_explicit_rt |>  
-  group_by(subjectid) |>  
-  summarise(mean = mean(rt)) |>  
-  ggplot(aes(x = mean)) +
-  geom_histogram(
-    fill = "aquamarine2", 
-    color = "aquamarine4", 
-    alpha = .3,
-    bins = 70
-    # adjust = .4
-    ) +
-  labs(x = "Mean RT", y = "Number of participants") +
-  scale_y_continuous(breaks = seq(0, 13, by = 1))) |>  
-  ggplotly()
-```
-
-#### Tidied implicit task RT means
-
-```{r final_implicit_task_rt_means_plotly}
-#| label: fig-rt_means4
-#| fig-cap: "Distribution of the mean RTs of participants in the implicit task after outlier removal."
-#| fig-height: 4
-
-# ═══ RT means final plot - Implicit task ══════════════════════════════════════
-
-(df_implicit_rt |> 
-  group_by(subjectid) |>  
-  summarise(mean = mean(rt)) |>  
-  ggplot(aes(x = mean)) +
-  geom_histogram(
-    fill = "coral2", 
-    color = "coral4", 
-    alpha = .3,
-    bins = 70
-    # adjust = .4
-    ) +
-  labs(x = "Mean RT", y = "Number of participants") +
-  scale_y_continuous(breaks = seq(0, 9, by = 1))) |>  
-  ggplotly()
-```
-:::
-
 The distributions are still positively skewed, yet in more acceptable ranges for the phenomena we are investigating.
 
 ### Outlier trials per participant
 
 We will conduct a more detailed inspection of the RTs on a by-participant level. The RT distributions per participant in each task are presented in @fig-rt_per_participant_1 and [-@fig-rt_per_participant_2].
-
-::: {.panel-tabset .column-page-inset-right}
-#### Explicit task RT per participant
-
-```{r explicit_rt_per_participant_plotly}
-#| label: fig-rt_per_participant_1
-#| fig-cap: "Distribution of RTs in the explicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
-#| fig-height: 5
-
-# ═══ RTs per participant plot - Explicit task ═════════════════════════════════
-
-(df_explicit_rt |>  
-  ggplot(aes(x = rt, fill = subjectid)) +
-  geom_density(alpha = .25, color = "black") +
-  scale_x_continuous(name = "Response time", breaks = breaks_pretty(10)) +
-  scale_y_continuous(name = "Density") +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
-    ) +
-  # coord_cartesian(
-  #   xlim = c(380, 1700),
-  #   ylim = c(0.0005, .01)
-  # ) +
-  scale_fill_viridis_d(guide = NULL) +
-  scale_color_viridis_d(guide = NULL)) |>  
-  ggplotly() |>  
-  style(showlegend = FALSE)
-```
-
-#### Implicit task RT per participant
-
-```{r implicit_rt_per_participant_plotly}
-#| label: fig-rt_per_participant_2
-#| fig-cap: "Distribution of RTs in the implicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
-#| fig-height: 5
-
-# ═══ RTs per participant plot - Implicit task ═════════════════════════════════
-
-(df_implicit_rt |>  
-  ggplot(aes(x = rt, fill = subjectid)) +
-  geom_density(alpha = .25, color = "black") +
-  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
-  scale_y_continuous(name = "Density") +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
-    ) +
-  # coord_cartesian(
-  #   xlim = c(350, 1320),
-  #   ylim = c(0.0005, .01)
-  # ) +
-  scale_fill_viridis_d(guide = NULL) +
-  scale_color_viridis_d(guide = NULL)) |>  
-  ggplotly() |>  
-  style(showlegend = FALSE)
-```
-:::
 
 As expected, most of the participants have a small amount of very slow outlier trials, even by their own standards of RT. Once again, we are going to detect these outliers using MAD thresholds. The RTs have been group by subsets of conditions, as we know that our experimental conditions could have affected them: thus, using a global median would necessarily flatten within-participant outcomes and have a major impact on the analyses.
 
@@ -678,64 +422,6 @@ df_implicit_rt <-
 ```
 
 The range defined by $\pm 3 \times MAD$ resulted in a deletion of 6.6% of trials in the explicit task and 8.2% of trials in the implicit task. Let's visualize the final distribution of RTs for each participant in @fig-rt_per_participant_3 and [-@fig-rt_per_participant_4]
-
-::: {.panel-tabset .column-page-inset-right}
-#### Tidied explicit task RT per participant
-
-```{r final_explicit_rt_per_participant_plotly}
-#| label: fig-rt_per_participant_3
-#| fig-cap: "Resulting distribution of RTs in the explicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
-#| fig-height: 5
-
-# ═══ RTs per participant final plot - Explicit task ═══════════════════════════
-
-(df_explicit_rt |>  
-  ggplot(aes(x = rt, fill = subjectid)) +
-  geom_density(alpha = .25, color = "black") +
-  scale_x_continuous(name = "Response time", breaks = breaks_pretty(10)) +
-  scale_y_continuous(name = "Density") +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
-    ) +
-  # coord_cartesian(
-  #   xlim = c(380, 1700),
-  #   ylim = c(0.0005, .01)
-  # ) +
-  scale_fill_viridis_d(guide = NULL) +
-  scale_color_viridis_d(guide = NULL)) |>  
-  ggplotly() |>  
-  style(showlegend = FALSE)
-```
-
-#### Tidied implicit task RT per participant
-
-```{r final_implicit_rt_per_participant_plotly}
-#| label: fig-rt_per_participant_4
-#| fig-cap: "Resulting distribution of RTs in the implicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
-#| fig-height: 5
-
-# ═══ RTs per participant final plot - Implicit task ═══════════════════════════
-
-(df_implicit_rt |>  
-  ggplot(aes(x = rt, fill = subjectid)) +
-  geom_density(alpha = .25, color = "black") +
-  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
-  scale_y_continuous(name = "Density") +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
-    ) +
-  # coord_cartesian(
-  #   xlim = c(350, 1320),
-  #   ylim = c(0.0005, .01)
-  # ) +
-  scale_fill_viridis_d(guide = NULL) +
-  scale_color_viridis_d(guide = NULL)) |>  
-  ggplotly() |>  
-  style(showlegend = FALSE)
-```
-:::
 
 We now have distributions in way more sensible ranges, what's more defined by the characteristics of the participants, as opposed to the broad arbitrary RT thresholds we chose at the beginning.
 
