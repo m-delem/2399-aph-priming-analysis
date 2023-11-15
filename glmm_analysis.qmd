@@ -697,6 +697,29 @@ ggexport(
 ```
 
 ::: {.panel-tabset .column-page-inset-right}
+
+```{r glmm_plots_setup}
+# setting dodge width for all the geoms
+dw <- .75
+# stat text size
+st <- 7
+# legend and axis text size
+txt <- 14
+
+# marginal means predictions
+best_glmm_explicit_preds <-
+  best_glmm_explicit |>
+  estimate_means(at = c("aphantasia", "congruence"))
+
+best_glmm_implicit_preds <-
+  best_glmm_implicit |>
+  estimate_means(at = c("aphantasia", "congruence"))
+  
+# overall means
+rt_mean_explicit <- df_explicit_rt$rt |> mean()
+rt_mean_implicit <- df_implicit_rt$rt |> mean()
+```
+
 #### Explicit task
 
 ```{r glmm_plots_ex}
@@ -708,68 +731,39 @@ ggexport(
 
 # ─── Model effects plots ───────────────────────────
 
-# setting dodge width for all the geoms
-dw <- .75
-# stat text size
-st <- 7
-# legend and axis text size
-txt <- 32
-
-# marginal means predictions
-best_glmm_explcit_preds <-
-  best_glmm_explicit |>
-  estimate_means(at = c("aphantasia", "congruence"))
-
-best_glmm_implcit_preds <-
-  best_glmm_implicit |>
-  estimate_means(at = c("aphantasia", "congruence"))
-  
-# overall means
-rt_mean_explicit <- df_explicit_rt$rt |> mean()
-rt_mean_implicit <- df_implicit_rt$rt |> mean()
-
-# rt means per participant
-df_explicit_mean_rt_by_subject <-
-  df_explicit_rt |> 
-  group_by(subjectid, congruence) |> 
-  reframe(
-    mean_rt = mean(rt), 
-    aphantasia = aphantasia
-    ) |> 
-  distinct()
-
-df_implicit_mean_rt_by_subject <-
-  df_implicit_rt |> 
-  group_by(subjectid, congruence) |> 
-  reframe(
-    mean_rt = mean(rt), 
-    aphantasia = aphantasia
-    ) |> 
-  distinct()
+# annotations
+plot_explicit_annotations <-
+  df_explicit_rt |>
+  group_by(aphantasia) |> 
+  pairwise_wilcox_test(rt ~ congruence) |> 
+  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
+  mutate(
+    y.position = c(825, 840),
+    p.adj.signif = c("ns", "***")
+    )
 
 # plot
-df_explicit_rt |>
+p_glmm_explicit <-
+  df_explicit_rt |>
   ggplot(aes(
     x = congruence,
     y = rt,
-    fill = aphantasia,
     color = aphantasia
   )) +
   # linear modelling of the differences
   geom_line(
-    data = best_glmm_explcit_preds,
+    data = best_glmm_explicit_preds,
     aes(
       y = Mean,
       group = aphantasia
     ),
     position = position_dodge(width = dw),
     linewidth = 1.5,
-    linetype = 1,
-    show.legend = FALSE
+    linetype = 1
   ) +
   # predicted means of the model
   geom_pointrange2(
-    data = best_glmm_explcit_preds,
+    data = best_glmm_explicit_preds,
     aes(
       x = congruence,
       y = Mean,
@@ -785,13 +779,29 @@ df_explicit_rt |>
   ) +
   # intercept
   geom_hline(yintercept = rt_mean_explicit, linetype = 2) +
+  
+  # stats display
+  stat_pvalue_manual(
+    plot_explicit_annotations, 
+    label = "p.adj.signif", 
+    tip.length = 0,
+    size = st
+    ) +
   labs(
+    title = "Explicit task",
     x = NULL,
     y = "Response time (ms)"
     ) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
-  scale_color_okabeito(guide = NULL)
+  scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt)
+    )
 ```
 
 #### Implicit task
@@ -803,42 +813,39 @@ df_explicit_rt |>
 #|   - "Group x Congruence interaction in the GLMM for the implicit task."
 #|   - "Group x Congruence interaction in the LMM for the implicit task."
 
+# annotations
+plot_implicit_annotations <-
+  df_implicit_rt |>
+  group_by(aphantasia) |> 
+  pairwise_wilcox_test(rt ~ congruence) |> 
+  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
+  mutate(
+    y.position = c(665, 675),
+    p.adj.signif = c("ns", "***")
+    )
+
 # ─── Model effects plot ───────────────────────────
-df_implicit_rt |>
+p_glmm_implicit <-
+  df_implicit_rt |>
   ggplot(aes(
     x = congruence,
     y = rt,
-    fill = aphantasia,
     color = aphantasia
   )) +
-  geom_beeswarm(
-    data = df_implicit_mean_rt_by_subject |> filter(mean_rt < 800),
-    aes(
-      x = congruence,
-      y = mean_rt,
-    fill = aphantasia,
-    color = aphantasia
-    ),
-    cex = 2,
-    dodge.width = dw,
-    alpha = 0.4,
-    size = .5
-  ) +
   # linear modelling of the differences
   geom_line(
-    data = best_glmm_implcit_preds,
+    data = best_glmm_implicit_preds,
     aes(
       y = Mean,
       group = aphantasia
     ),
     position = position_dodge(width = dw),
     linewidth = 1.5,
-    linetype = 1,
-    show.legend = FALSE
+    linetype = 1
   ) +
   # predicted means of the model
   geom_pointrange2(
-    data = best_glmm_implcit_preds,
+    data = best_glmm_implicit_preds,
     aes(
       x = congruence,
       y = Mean,
@@ -854,16 +861,53 @@ df_implicit_rt |>
   ) +
   # intercept
   geom_hline(yintercept = rt_mean_implicit, linetype = 2) +
-  labs(
-    x = NULL,
-    y = "Response time (ms)"
+  
+  # stats display
+  stat_pvalue_manual(
+    plot_implicit_annotations, 
+    label = "p.adj.signif", 
+    tip.length = 0,
+    size = st
     ) +
+  labs(
+    title = "Implicit task",
+    x = NULL,
+    y = NULL
+    ) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_fill_okabeito(name = "Aphantasia: ", labels = c("Yes", "No")) +
-  scale_color_okabeito(guide = NULL)
-
+  scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt)
+    )
 ```
 :::
+
+``` {r glmm_ggarrange}
+#| label: fig-glmm_ggarrange
+
+p_glmms <-
+  ggarrange(
+    p_glmm_explicit,
+    p_glmm_implicit,
+    common.legend = TRUE,
+    legend = "top",
+    ncol = 2,
+    align = "v"
+  )
+
+ggexport(
+  p_glmms, 
+  filename = "plots/plots_glmm.png", 
+  width = 4000,
+  height = 1500,
+  res = 300
+  )
+```
 
 # Further EDA: continuous analyses
 
@@ -1140,12 +1184,14 @@ model_selection_continuous <-
   filter(best_model == TRUE)
 ```
 
-```{r plot_vi_congruence_explicit}
+#### Plotting VI x Congruence
+
+```{r plot_glmm_ex_continuous_congruence}
 
 best_glmm_explicit_continuous <- model_selection_continuous[[4]][[1]]
-best_glmm_implicit_continuous <- model_selection_continuous[[4]][[2]]
+best_glmm_implicit_continuous <- model_selection_continuous[[4]][[3]]
 
-vizdata_glmm_explicit <- 
+vizdata_glmm_explicit_congruence <- 
   df_explicit_rt |> 
   visualisation_matrix(
     at = c("visual_imagery", "congruence"),
@@ -1153,50 +1199,54 @@ vizdata_glmm_explicit <-
     preserve_range = TRUE
 )
 
-vizdata_glmm_explicit <- 
-  vizdata_glmm_explicit |> 
+vizdata_glmm_explicit_congruence <- 
+  vizdata_glmm_explicit_congruence |> 
   mutate(predicted = insight::get_predicted(
     best_glmm_explicit_continuous, 
-    vizdata_glmm_explicit
+    vizdata_glmm_explicit_congruence
     )) |> 
   mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent"))
 
-df_explicit_rt |> 
+p_glmm_explicit_continuous_congruence <-
+  df_explicit_rt |> 
   mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent")) |>  
   ggplot(aes(
     x = visual_imagery,
-    y = rt,
-    color = congruence
+    y = rt
   )) +
   geom_line(
-    data = vizdata_glmm_explicit,
+    data = vizdata_glmm_explicit_congruence,
     aes(
       y = predicted,
+      color = congruence,
+      linetype = congruence,
       group = congruence
     ),
     size = 1.5
   ) +
   geom_vline(xintercept = 0, linetype = 2) +
   coord_cartesian(
-    ylim = c(400,600)
+    ylim = c(450,570)
   ) +
   labs(
     title = "Explicit task",
     x = "",
-    y = ""
+    y = "Response time (ms)"
     ) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_color_lancet(name = "Congruence") +
+  scale_linetype(name = "Congruence") +
   theme(
     title = element_text(size = txt),
-    axis.text = element_text(size = txt/2),
+    axis.text = element_text(size = txt/1.5),
     legend.text = element_text(size = txt),
     legend.title = element_text(size = txt)
     )
 ```
 
-```{r plot_vi_congruence_implicit}
+```{r plot_glmm_im_continuous_congruence}
 
-vizdata_glmm_implicit <- 
+vizdata_glmm_implicit_congruence <- 
   df_implicit_rt |> 
   visualisation_matrix(
     at = c("visual_imagery", "congruence"),
@@ -1204,131 +1254,200 @@ vizdata_glmm_implicit <-
     preserve_range = TRUE
 )
 
-vizdata_glmm_implicit <- 
-  vizdata_glmm_implicit |> 
+vizdata_glmm_implicit_congruence <- 
+  vizdata_glmm_implicit_congruence |> 
   mutate(predicted = insight::get_predicted(
     best_glmm_implicit_continuous, 
-    vizdata_glmm_implicit
+    vizdata_glmm_implicit_congruence
     )) |> 
   mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent"))
 
-df_implicit_rt |> 
+p_glmm_implicit_continuous_congruence <-
+  df_implicit_rt |> 
   mutate(congruence = ifelse(congruence == "congruent", "Congruent", "Incongruent")) |>  
   ggplot(aes(
     x = visual_imagery,
-    y = rt,
-    color = congruence
+    y = rt
   )) +
   geom_line(
-    data = vizdata_glmm_implicit,
+    data = vizdata_glmm_implicit_congruence,
     aes(
       y = predicted,
+      color = congruence,
+      linetype = congruence,
       group = congruence
     ),
     size = 1.5
   ) +
   geom_vline(xintercept = 0, linetype = 2) +
   coord_cartesian(
-    ylim = c(400,600)
-  ) +
-  labs(
-    title = "Explicit task",
-    x = "",
-    y = ""
-    ) +
-  scale_color_lancet(name = "Congruence") +
-  theme(
-    title = element_text(size = txt),
-    axis.text = element_text(size = txt/2),
-    legend.text = element_text(size = txt),
-    legend.title = element_text(size = txt)
-    )
-```
-
-```{r plot_vi_si_explicit}
-vizdata_glmm_visi_explicit <-
-  df_explicit_rt |> 
-  visualisation_matrix(c("visual_imagery", "spatial_imagery"), length = 100) |> 
-  visualisation_matrix("visual_imagery", length = 15, numerics = "all") 
-
-vizdata_glmm_visi_explicit$predicted <- 
-  insight::get_predicted(
-    best_glmm_explicit_continuous, 
-    vizdata_glmm_visi_explicit
-    )
-
-df_explicit_rt |> 
-  ggplot(aes(
-    x = visual_imagery,
-    y = rt,
-    color = spatial_imagery
-    )) +
-  geom_line(
-    data = vizdata_glmm_visi_explicit,
-    aes(
-      y = predicted,
-      group = spatial_imagery
-      ),
-    size = 1
-  ) +
-  geom_vline(xintercept = 0, linetype = 2) +
-  coord_cartesian(
-    ylim = c(150, 950)
-  ) +
-  labs(
-    title = "Explicit task",
-    x = "",
-    y = ""
-    ) +
-  scale_color_viridis(name = "Spatial imagery") +
-  theme(
-    title = element_text(size = txt),
-    axis.text = element_text(size = txt/2),
-    legend.text = element_text(size = txt/2),
-    legend.title = element_text(size = txt)
-    )
-```
-
-```{r plot_vi_si_implicit}
-vizdata_glmm_visi_implicit <-
-  df_implicit_rt |> 
-  visualisation_matrix(c("visual_imagery", "spatial_imagery"), length = 100) |> 
-  visualisation_matrix("visual_imagery", length = 15, numerics = "all") 
-
-vizdata_glmm_visi_implicit$predicted <- 
-  insight::get_predicted(
-    best_glmm_implicit_continuous, 
-    vizdata_glmm_visi_implicit
-    )
-
-df_implicit_rt |> 
-  ggplot(aes(
-    x = visual_imagery,
-    y = rt,
-    color = spatial_imagery
-    )) +
-  geom_line(
-    data = vizdata_glmm_visi_implicit,
-    aes(
-      y = predicted,
-      group = spatial_imagery
-      ),
-    size = 1
-  ) +
-  geom_vline(xintercept = 0, linetype = 2) +
-  coord_cartesian(
-    ylim = c(350, 750)
+    ylim = c(450,570)
   ) +
   labs(
     title = "Implicit task",
     x = "",
     y = ""
     ) +
-  scale_color_viridis(name = "Spatial imagery") +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
+  scale_color_lancet(name = "Congruence") +
+  scale_linetype(name = "Congruence") +
+  theme(
+    title = element_text(size = txt),
+    axis.text = element_text(size = txt/1.5),
+    legend.text = element_text(size = txt),
+    legend.title = element_text(size = txt)
+    )
+```
+
+``` {r glmm_continuous_congruence_ggarrange}
+#| label: fig-glmm_continuous_ggarrange
+
+p_glmms_continuous_congruence <-
+  ggarrange(
+    p_glmm_explicit_continuous_congruence,
+    p_glmm_implicit_continuous_congruence,
+    common.legend = TRUE,
+    legend = "top",
+    ncol = 2,
+    align = "v"
+  ) |> 
+  annotate_figure(
+    bottom = text_grob(
+      "Visual imagery (standardized PCA variable)", 
+      size = txt,
+      vjust = -1
+      )
+    )
+
+ggexport(
+  p_glmms_continuous_congruence, 
+  filename = "plots/plots_glmm_continuous_congruence.png", 
+  width = 4000,
+  height = 1500,
+  res = 300
+  )
+```
+
+#### Plotting VI x SI
+
+```{r plot_glmm_ex_continuous_si}
+
+vizdata_glmm_explicit_si <-
+  df_explicit_rt |> 
+  visualisation_matrix(c("visual_imagery", "spatial_imagery"), length = 100) |> 
+  visualisation_matrix("visual_imagery", length = 15, numerics = "all") 
+
+vizdata_glmm_explicit_si$predicted <- 
+  insight::get_predicted(
+    best_glmm_explicit_continuous, 
+    vizdata_glmm_explicit_si
+    )
+
+p_glmm_explicit_continuous_si <-
+  df_explicit_rt |> 
+  ggplot(aes(
+    x = visual_imagery,
+    y = rt,
+    color = spatial_imagery
+    )) +
+  geom_line(
+    data = vizdata_glmm_explicit_si,
+    aes(
+      y = predicted,
+      group = spatial_imagery
+      ),
+    size = 1
+  ) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  coord_cartesian(
+    ylim = c(200, 850)
+  ) +
+  labs(
+    title = "Explicit task",
+    x = "",
+    y = "Response time (ms)"
+    ) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
+  scale_color_viridis(name = "Spatial imagery (PCA)") +
   theme(
     title = element_text(size = txt),
     axis.text = element_text(size = txt/2),
     legend.text = element_text(size = txt/2),
     legend.title = element_text(size = txt)
     )
+```
+
+```{r plot_glmm_im_continuous_si}
+vizdata_glmm_implicit_si <-
+  df_implicit_rt |> 
+  visualisation_matrix(c("visual_imagery", "spatial_imagery"), length = 100) |> 
+  visualisation_matrix("visual_imagery", length = 15, numerics = "all") 
+
+vizdata_glmm_implicit_si$predicted <- 
+  insight::get_predicted(
+    best_glmm_implicit_continuous, 
+    vizdata_glmm_implicit_si
+    )
+
+p_glmm_implicit_continuous_si <-
+  df_implicit_rt |> 
+  ggplot(aes(
+    x = visual_imagery,
+    y = rt,
+    color = spatial_imagery
+    )) +
+  geom_line(
+    data = vizdata_glmm_implicit_si,
+    aes(
+      y = predicted,
+      group = spatial_imagery
+      ),
+    size = 1
+  ) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  coord_cartesian(
+    ylim = c(225, 825)
+  ) +
+  labs(
+    title = "Implicit task",
+    x = "",
+    y = ""
+    ) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
+  scale_color_viridis(name = "Spatial imagery (PCA)") +
+  theme(
+    title = element_text(size = txt),
+    axis.text = element_text(size = txt/2),
+    legend.text = element_text(size = txt/2),
+    legend.title = element_text(size = txt)
+    )
+```
+
+``` {r glmm_continuous_si_ggarrange}
+#| label: fig-glmm_continuous_si_ggarrange
+
+p_glmms_continuous_si <-
+  ggarrange(
+    p_glmm_explicit_continuous_si,
+    p_glmm_implicit_continuous_si,
+    common.legend = TRUE,
+    legend = "top",
+    ncol = 2,
+    align = "v"
+  ) |> 
+  annotate_figure(
+    bottom = text_grob(
+      "Visual imagery (standardized PCA variable)", 
+      size = txt,
+      vjust = -1
+      )
+    )
+
+ggexport(
+  p_glmms_continuous_si, 
+  filename = "plots/plots_glmm_continuous_si.png", 
+  width = 4000,
+  height = 1500,
+  res = 300
+  )
 ```
