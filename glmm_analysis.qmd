@@ -347,9 +347,8 @@ df_explicit_rt <-
     ))
   )
 
-# 133 participants and 8229 trials left
-# (9664-8229)/9664 # 14.8% out
-# alternative point of view: 18 participants excluded in the explicit task due to high error rates or overall abnormally slow RTs.
+# 8603 trials left
+# (9664-8603)/9664 # 11% out
 
 df_implicit_rt <-
   df_implicit_rt |> 
@@ -362,9 +361,8 @@ df_implicit_rt <-
     ))
   )
 
-# 133 partcipants and 8166 trials left
-# (9664-8166)/9664 # 15.5% out
-# alternative point of view: 18 participants excluded in the implicit task due to high error rates or overall abnormally slow RTs.
+# 8777 trials left
+# (9664-8777)/9664 # 9% out
 ```
 
 In the end, 18 participants have been excluded due to high error rates or overall abnormally slow RTs. Let's visualize the RT means distributions again in @fig-rt_means3 and [-@fig-rt_means4].
@@ -399,8 +397,9 @@ df_explicit_rt <-
     rt > rt_median - 2.5 * rt_mad
   ) |>
   ungroup()
-# 7687 trials left
-# (8229-7687)/8229 # 6.6% trials out
+# 8366 trials left
+# (9664-8366)/9664 # 13.4% trials out total
+# (8603-8366)/8603 # 2.7% of remaining trials
 
 # ─── Implicit task: ───
 # From 8166 observations
@@ -417,8 +416,9 @@ df_implicit_rt <-
     rt > rt_median - 2.5 * rt_mad
   ) |>
   ungroup()
-# 7489 trials left
-# (8166-7489)/8166 # 8.2% trials out
+# 8409 trials left
+# (9664-8409)/9664 # 13% trials out total
+# (8777-8409)/8777 # 4.2% of remaining trials
 ```
 
 The range defined by $\pm 3 \times MAD$ resulted in a deletion of 6.6% of trials in the explicit task and 8.2% of trials in the implicit task. Let's visualize the final distribution of RTs for each participant in @fig-rt_per_participant_3 and [-@fig-rt_per_participant_4]
@@ -440,6 +440,10 @@ The predictors of the RT outcomes in the models are the **Group**, the **Congrue
 Alternatively, we could also transform our data using a Box-Cox transformation to bring the RTs closer to normality and fit LMMs. Using the `tidymodels` workflows, we can easily fit all of these models and compare their quality.
 
 Only two-way interactions between the three factors have been kept, as three-way interactions were not improving the quality of the models, and were sometimes even preventing the models from converging at all.
+
+```{r}
+best_glmm_explicit |> summary()
+```
 
 ```{r fitting_glmms}
 #| output: false
@@ -738,7 +742,7 @@ plot_explicit_annotations <-
   pairwise_wilcox_test(rt ~ congruence) |> 
   add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
   mutate(
-    y.position = c(825, 840),
+    y.position = c(785, 795),
     p.adj.signif = c("ns", "***")
     )
 
@@ -767,8 +771,8 @@ p_glmm_explicit <-
     aes(
       x = congruence,
       y = Mean,
-      ymin = CI_low,
-      ymax = CI_high,
+      ymin = Mean - SE,
+      ymax = Mean + SE,
       group = aphantasia
       ),
     color = "black",
@@ -790,8 +794,11 @@ p_glmm_explicit <-
   labs(
     title = "Explicit task",
     x = NULL,
-    y = "Response time (ms)"
+    y = ""
     ) +
+  coord_cartesian(
+    ylim = c(680, 800)
+  ) +
   scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
   scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
@@ -820,7 +827,7 @@ plot_implicit_annotations <-
   pairwise_wilcox_test(rt ~ congruence) |> 
   add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
   mutate(
-    y.position = c(665, 675),
+    y.position = c(646, 653),
     p.adj.signif = c("ns", "***")
     )
 
@@ -849,8 +856,8 @@ p_glmm_implicit <-
     aes(
       x = congruence,
       y = Mean,
-      ymin = CI_low,
-      ymax = CI_high,
+      ymin = Mean - SE,
+      ymax = Mean + SE,
       group = aphantasia
       ),
     color = "black",
@@ -872,8 +879,11 @@ p_glmm_implicit <-
   labs(
     title = "Implicit task",
     x = NULL,
-    y = NULL
+    y = "Response time (ms)"
     ) +
+  coord_cartesian(
+    ylim = c(580, 655)
+  ) +
   scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
   scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
@@ -892,8 +902,8 @@ p_glmm_implicit <-
 
 p_glmms <-
   ggarrange(
-    p_glmm_explicit,
     p_glmm_implicit,
+    p_glmm_explicit,
     common.legend = TRUE,
     legend = "top",
     ncol = 2,
@@ -1231,7 +1241,7 @@ p_glmm_explicit_continuous_congruence <-
   labs(
     title = "Explicit task",
     x = "",
-    y = "Response time (ms)"
+    y = ""
     ) +
   scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_color_lancet(name = "Congruence") +
@@ -1286,7 +1296,7 @@ p_glmm_implicit_continuous_congruence <-
   labs(
     title = "Implicit task",
     x = "",
-    y = ""
+    y = "Response time (ms)"
     ) +
   scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_color_lancet(name = "Congruence") +
@@ -1304,8 +1314,8 @@ p_glmm_implicit_continuous_congruence <-
 
 p_glmms_continuous_congruence <-
   ggarrange(
-    p_glmm_explicit_continuous_congruence,
     p_glmm_implicit_continuous_congruence,
+    p_glmm_explicit_continuous_congruence,
     common.legend = TRUE,
     legend = "top",
     ncol = 2,
@@ -1365,7 +1375,7 @@ p_glmm_explicit_continuous_si <-
   labs(
     title = "Explicit task",
     x = "",
-    y = "Response time (ms)"
+    y = ""
     ) +
   scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_color_viridis(name = "Spatial imagery (PCA)") +
@@ -1411,7 +1421,7 @@ p_glmm_implicit_continuous_si <-
   labs(
     title = "Implicit task",
     x = "",
-    y = ""
+    y = "Response time (ms)"
     ) +
   scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_color_viridis(name = "Spatial imagery (PCA)") +
@@ -1428,8 +1438,8 @@ p_glmm_implicit_continuous_si <-
 
 p_glmms_continuous_si <-
   ggarrange(
-    p_glmm_explicit_continuous_si,
     p_glmm_implicit_continuous_si,
+    p_glmm_explicit_continuous_si,
     common.legend = TRUE,
     legend = "top",
     ncol = 2,
