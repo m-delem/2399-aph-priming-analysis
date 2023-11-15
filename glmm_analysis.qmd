@@ -728,6 +728,25 @@ best_glmm_implcit_preds <-
 rt_mean_explicit <- df_explicit_rt$rt |> mean()
 rt_mean_implicit <- df_implicit_rt$rt |> mean()
 
+# rt means per participant
+df_explicit_mean_rt_by_subject <-
+  df_explicit_rt |> 
+  group_by(subjectid, congruence) |> 
+  reframe(
+    mean_rt = mean(rt), 
+    aphantasia = aphantasia
+    ) |> 
+  distinct()
+
+df_implicit_mean_rt_by_subject <-
+  df_implicit_rt |> 
+  group_by(subjectid, congruence) |> 
+  reframe(
+    mean_rt = mean(rt), 
+    aphantasia = aphantasia
+    ) |> 
+  distinct()
+
 # plot
 df_explicit_rt |>
   ggplot(aes(
@@ -792,6 +811,19 @@ df_implicit_rt |>
     fill = aphantasia,
     color = aphantasia
   )) +
+  geom_beeswarm(
+    data = df_implicit_mean_rt_by_subject |> filter(mean_rt < 800),
+    aes(
+      x = congruence,
+      y = mean_rt,
+    fill = aphantasia,
+    color = aphantasia
+    ),
+    cex = 2,
+    dodge.width = dw,
+    alpha = 0.4,
+    size = .5
+  ) +
   # linear modelling of the differences
   geom_line(
     data = best_glmm_implcit_preds,
