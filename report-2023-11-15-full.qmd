@@ -441,10 +441,6 @@ Alternatively, we could also transform our data using a Box-Cox transformation t
 
 Only two-way interactions between the three factors have been kept, as three-way interactions were not improving the quality of the models, and were sometimes even preventing the models from converging at all.
 
-```{r}
-best_glmm_explicit |> summary()
-```
-
 ```{r fitting_glmms}
 #| output: false
  
