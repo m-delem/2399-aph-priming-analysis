@@ -330,9 +330,9 @@ df_implicit_rt <-
     rt > rt_median - 2.5 * rt_mad
   ) |>
   ungroup()
-# 5486 trials left
-(6400-5486)/6400 # 14.3% trials out total
-(5777-5486)/5777 # 5% of remaining trials
+# 5542 trials left
+(6400-5542)/6400 # 13.4% trials out total
+(5777-5542)/5777 # 4% of remaining trials
 ```
 
 ```{r fitting_glmms}
@@ -561,7 +561,7 @@ model_selection <-
 #| layout-ncol: 1
 
 best_glmm_explicit <- model_selection$fitted_model[[2]]
-best_glmm_implicit <- model_selection$fitted_model[[4]]
+best_glmm_implicit <- model_selection$fitted_model[[5]]
 ```
 
 ```{r glmm_plots_setup}
@@ -586,6 +586,8 @@ rt_mean_explicit <- df_explicit_rt$rt |> mean()
 rt_mean_implicit <- df_implicit_rt$rt |> mean()
 ```
 
+#### Explicit task
+
 ```{r glmm_plots_ex}
 #| label: fig-model_plots_ex
 #| fig-cap: "Plots for the effects of interest in the explicit task."
@@ -607,7 +609,7 @@ plot_explicit_annotations <-
     )
 
 # plot
-# p_glmm_explicit <-
+p_glmm_explicit <-
   df_explicit_rt |>
   ggplot(aes(
     x = congruence,
@@ -642,23 +644,23 @@ plot_explicit_annotations <-
     show.legend = FALSE
   ) +
   # intercept
-  geom_hline(yintercept = rt_mean_explicit, linetype = 2) +
+  # geom_hline(yintercept = rt_mean_explicit, linetype = 2) +
   
   # stats display
-  stat_pvalue_manual(
-    plot_explicit_annotations, 
-    label = "p.adj.signif", 
-    tip.length = 0,
-    size = st
-    ) +
+  # stat_pvalue_manual(
+  #   plot_explicit_annotations, 
+  #   label = "p.adj.signif", 
+  #   tip.length = 0,
+  #   size = st
+  #   ) +
   labs(
     title = "Explicit task",
     x = NULL,
     y = ""
     ) +
-  coord_cartesian(
-    ylim = c(680, 800)
-  ) +
+  # coord_cartesian(
+  #   ylim = c(680, 800)
+  # ) +
   scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
   scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
@@ -670,6 +672,8 @@ plot_explicit_annotations <-
     legend.text = element_text(size = txt)
     )
 ```
+
+#### Implicit task
 
 ```{r glmm_plots_im}
 #| label: fig-model_plots_im
@@ -690,7 +694,7 @@ plot_implicit_annotations <-
     )
 
 # ─── Model effects plot ───────────────────────────
-# p_glmm_implicit <-
+p_glmm_implicit <-
   df_implicit_rt |>
   ggplot(aes(
     x = congruence,
@@ -725,23 +729,23 @@ plot_implicit_annotations <-
     show.legend = FALSE
   ) +
   # intercept
-  geom_hline(yintercept = rt_mean_implicit, linetype = 2) +
+  # geom_hline(yintercept = rt_mean_implicit, linetype = 2) +
   
   # stats display
-  stat_pvalue_manual(
-    plot_implicit_annotations, 
-    label = "p.adj.signif", 
-    tip.length = 0,
-    size = st
-    ) +
+  # stat_pvalue_manual(
+  #   plot_implicit_annotations, 
+  #   label = "p.adj.signif", 
+  #   tip.length = 0,
+  #   size = st
+  #   ) +
   labs(
     title = "Implicit task",
     x = NULL,
     y = "Response time (ms)"
     ) +
-  coord_cartesian(
-    ylim = c(580, 655)
-  ) +
+  # coord_cartesian(
+  #   ylim = c(580, 655)
+  # ) +
   scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
   scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
@@ -752,4 +756,200 @@ plot_implicit_annotations <-
     legend.title = element_text(size = txt),
     legend.text = element_text(size = txt)
     )
+```
+:::
+
+``` {r glmm_ggarrange}
+#| label: fig-glmm_ggarrange
+
+p_glmms <-
+  ggarrange(
+    p_glmm_implicit,
+    p_glmm_explicit,
+    common.legend = TRUE,
+    legend = "top",
+    ncol = 2,
+    align = "v"
+  )
+
+ggexport(
+  p_glmms, 
+  filename = "plots/plots_glmm_floor_vviq.png", 
+  width = 4000,
+  height = 1500,
+  res = 300
+  )
+```
+
+```{r congruence_effect}
+#| echo: true
+#| code-summary: "Computing the Congruence effect per subject"
+
+# ═══ Congruence effect by-participant ═════════════════════════════════════════
+
+# ─── Empirical approach ───────────────────────────────────────────────────────
+
+# explicit task
+congruence_effect_ex_empiric <-
+  df_explicit_rt |> 
+  group_by(subjectid, congruence) |> 
+  summarise(mean_rt = mean(rt)) |> 
+  pivot_wider(
+    names_from = congruence,
+    values_from = mean_rt
+  ) |> 
+  mutate(
+    congruence_eff_ex_emp = uncongruent - congruent,
+    .keep = "unused"
+  )
+
+# implicit task
+congruence_effect_im_empiric <-
+  df_implicit_rt |> 
+  group_by(subjectid, congruence) |> 
+  summarise(mean_rt = mean(rt)) |> 
+  pivot_wider(
+    names_from = congruence,
+    values_from = mean_rt
+  ) |> 
+  mutate(
+    congruence_eff_im_emp = uncongruent - congruent,
+    .keep = "unused"
+  )
+
+# ─── Merging both ─────────────────────────────────────────────────────────────
+
+df_congruence_effect <-
+  inner_join(
+    congruence_effect_ex_empiric,
+    # subjectid, aphantasia, visual and spatial imagery
+    df_questionnaires |> select(1, 4:8),
+    by = "subjectid"
+  ) |> 
+  inner_join(
+    congruence_effect_im_empiric,
+    by = "subjectid"
+  ) |> 
+  select(subjectid, aphantasia, vviq80:suis60, 2, 8) |>
+  mutate(across(c(vviq80:congruence_eff_im_emp), ~round(as.numeric(.x), digits = 2))) |> 
+  ungroup()
+```
+
+```{r correlation_congruence_effect}
+#| code-summary: "Computing correlations"
+#| echo: true
+
+# ═══ Bayesian partial correlations ════════════════════════════════════════════
+
+congruence_correlations_explicit <-
+  df_congruence_effect |> 
+  select(!c(
+    # visual_imagery, spatial_imagery, 
+    contains("congruence_eff_im"))) |>
+  correlation(
+    # bayesian = TRUE,
+    # partial = TRUE,
+    # partial_bayesian = TRUE,
+    # bayesian_test = "bf"
+    )
+  # summary() |> 
+  # plot()
+
+congruence_correlations_implicit <-
+  df_congruence_effect |> 
+  select(!c(
+    # visual_imagery, spatial_imagery, 
+    contains("congruence_eff_ex"))) |>  
+  correlation(
+    # bayesian = TRUE,
+    # partial = TRUE,
+    # partial_bayesian = TRUE,
+    # bayesian_test = "bf"
+    )
+  # summary() |> 
+  # plot()
+
+p_congruence_corr_ex <-
+  congruence_correlations_explicit |> 
+  mutate(across(c(Parameter1, Parameter2),
+    ~ case_when(
+      .x == "vviq80" ~ "VVIQ",
+      .x == "osiq_o75" ~ "OSIQ-O",
+      .x == "osiq_s75" ~ "OSIQ-S",
+      .x == "suis60" ~ "SUIS",
+      .x == "congruence_eff_ex_emp" ~ "Congruence\neffect (Empirical)",
+      TRUE ~ .x))
+    ) |>  
+  summary(digits = 2) |>  
+  plot(
+    text = list(size = 5),
+    labs = list(title = "Explicit task")
+    ) +
+  scale_fill_viridis(
+    option = "D",
+    guide = NULL,
+    # name = expression(rho),
+    alpha = .6,
+    direction = 1,
+    limits = c(-1,1)
+    ) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(size = 14),
+    title = element_text(size = 14)
+    )
+
+p_congruence_corr_im <-
+  congruence_correlations_implicit |> 
+  mutate(across(c(Parameter1, Parameter2),
+    ~ case_when(
+      .x == "vviq80" ~ "VVIQ",
+      .x == "osiq_o75" ~ "OSIQ-O",
+      .x == "osiq_s75" ~ "OSIQ-S",
+      .x == "suis60" ~ "SUIS",
+      .x == "congruence_eff_im_emp" ~ "Congruence\neffect (Empirical)",
+      TRUE ~ .x))
+    ) |>  
+  summary(digits = 2) |>  
+  plot(
+    text = list(size = 5),
+    labs = list(title = "Implicit task")
+    ) +
+  scale_fill_viridis(
+    option = "D",
+    guide = NULL,
+    # name = expression(rho),
+    alpha = .6,
+    direction = 1,
+    limits = c(-1,1)
+    ) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(size = 14),
+    title = element_text(size = 14)
+    )
+
+df_congruence_effect |> 
+  ggplot(aes(x = suis60, y = congruence_eff_im_emp)) + 
+  geom_point()
+
+p_congruence_correlations <-
+  ggarrange(
+    p_congruence_corr_ex,
+    p_congruence_corr_im,
+    common.legend = TRUE,
+    legend = "top",
+    ncol = 2,
+    align = "v"
+  )
+
+ggexport(
+  p_congruence_correlations,
+  filename = "plots/plots_congruence_effects_floor_vviq.png",
+  width = 7000,
+  height = 3000,
+  res = 300
+  )
 ```

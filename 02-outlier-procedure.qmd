@@ -1,0 +1,216 @@
+
+```{r finding_and_removing_accuracy_outliers}
+#| code-summary: "Removing incorrect trials and task-wise accuracy outliers"
+#| echo: true
+#| output: false
+
+# ═══ Accuracy outliers analysis ═══════════════════════════════════════════════
+
+# ─── Listing error rates per subject ───
+list(df_explicit, df_implicit) |> 
+  imap(
+    ~.x |> 
+      select(subjectid, starts_with("correct"), aphantasia) |> 
+      group_by(subjectid) |> 
+      count(pick(2)) |> 
+      filter(pick(1) == 1) |> 
+      ungroup() |> 
+      mutate(
+        n_tot = max(n),
+        prop = (n_tot - n) / n_tot * 100  # analyzing the error rate per subject
+      ) %>%
+      arrange(desc(prop)) |> 
+      select(1, 5)
+    )
+# 5 accuracy outliers in the explicit task, 4 in the implicit one
+
+# ─── Removing incorrect trials and task-wise accuracy outliers ───
+df_explicit_rt <-
+  df_explicit |> 
+  # filtering out...
+  filter(
+    # incorrect trials
+    correct_explicit == 1 &
+    # participants identified with with high error rates
+    !(subjectid %in% c( 
+      "aknezevic",
+      "lbrunie", 
+      "agayou", 
+      "bluciani",
+      "ldossantos"))
+    ) |>  
+  # removing irrelevant variables
+  select(-c(sex, vviq80, orientation, response, correct_explicit))
+
+# percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
+# 8842 trials left = 8.5% removed
+
+df_implicit_rt <- 
+  df_implicit |>  
+  filter(
+    correct_implicit == 1 &
+    !(subjectid %in% c( 
+      "bdispaux", 
+      "eleveque", 
+      "aleclaire", 
+      "dchimenton"))
+      ) |>  
+  select(-c(sex, vviq80, orientation, response, correct_implicit))
+
+# percentage of trials removed in the implicit task
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit) 
+# 8765 trials left = 9.3% removed
+```
+
+```{r removing_extreme_rt_outlier_trials}
+#| code-summary: "Removing extreme RTs"
+#| echo: true
+#| output: false
+
+# ═══ First broad RT outlier trials removal ════════════════════════════════════
+
+df_explicit_rt <- 
+  df_explicit_rt |>  
+  # filtering out extreme RTs
+  filter(rt > 300 & rt < 3000)
+
+# total percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
+# 8753 trials left = 9.4% removed
+
+df_implicit_rt <- 
+  df_implicit_rt |>  
+  filter(rt > 300 & rt < 3000)
+
+# total percentage of trials removed in the implicit task
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit)
+# 8706 left = 9.9% removed
+```
+
+```{r rt_means_table}
+#| label: tbl-rt_means
+#| tbl-cap: "Descriptive statistics of the average RTs across the sample in both tasks."
+
+# ═══ RT means table - Both tasks ══════════════════════════════════════════════
+
+df_rt <- 
+  list(
+  df_explicit_rt |>  rename("Explicit task mean RTs" = rt), 
+  df_implicit_rt |>  rename("Implicit task mean RTs" = rt)
+  ) |>  
+  imap(
+    ~select(.x, contains("RT")) |> 
+      report() |>  
+      as.data.frame() |>  
+      select(1:10)
+    )
+
+df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
+df_rt |>  display()
+```
+
+```{r removing_rt_means_outliers}
+#| code-summary: "Removing outliers with aberrant RT means"
+#| echo: true
+#| output: false
+
+# ═══ Aberrant RT means outliers removal ═══════════════════════════════════════
+
+# ─── Finding outliers ───
+
+df_explicit_rt |> 
+  group_by(subjectid) |> 
+  summarise(mean_rt_explicit = mean(rt)) |> 
+  ungroup() |> 
+  filter(mean_rt_explicit > 1384) |> 
+  arrange(desc(mean_rt_explicit))
+# 7 outliers in the explicit task
+
+df_implicit_rt |> 
+  group_by(subjectid) |> 
+  summarise(mean_rt_implicit = mean(rt)) |> 
+  ungroup() |> 
+  filter(mean_rt_implicit > 1063) |> 
+  arrange(desc(mean_rt_implicit))
+# 4 outliers in the implicit task
+
+# ─── Removing specific outliers ───
+
+df_explicit_rt <- 
+  df_explicit_rt |> 
+  filter(
+    !(subjectid %in% c(
+      "dchimenton",
+      "fc",
+      "mbilodeau",
+      "llhermitte",
+      "hmassot",
+      "mbillon",
+      "nnguyenphuoc"
+    ))
+  )
+
+# 8603 trials left
+# (9664-8603)/9664 # 11% out
+
+df_implicit_rt <-
+  df_implicit_rt |> 
+  filter(
+    !(subjectid %in% c(
+      "mbilodeau",
+      "rcarnez",
+      "cbertrand",
+      "omeyer"
+    ))
+  )
+
+# 8777 trials left
+# (9664-8777)/9664 # 9% out
+```
+
+```{r removing_rt_outlier_trials_per_participant}
+#| code-summary: "Removing outlier trials by-participant"
+#| echo: true
+#| output: false
+
+# ═══ By-participant MAD outlier detection ═════════════════════════════════════
+
+# ─── Explicit task: ───
+# From 8229 observations
+# 3 MADs threshold
+df_explicit_rt <-
+  df_explicit_rt |> 
+  group_by(subjectid, congruence, color) |> 
+  mutate(
+    rt_median = median(rt),
+    rt_mad = mad(rt)
+    ) |> 
+  filter(
+    rt < rt_median + 5 * rt_mad &
+    rt > rt_median - 2.5 * rt_mad
+  ) |>
+  ungroup()
+# 8366 trials left
+# (9664-8366)/9664 # 13.4% trials out total
+# (8603-8366)/8603 # 2.7% of remaining trials
+
+# ─── Implicit task: ───
+# From 8166 observations
+# 3 MADs threshold
+df_implicit_rt <-
+  df_implicit_rt |> 
+  group_by(subjectid, congruence, color) |> 
+  mutate(
+    rt_median = median(rt),
+    rt_mad = mad(rt)
+    ) |> 
+  filter(
+    rt < rt_median + 5 * rt_mad &
+    rt > rt_median - 2.5 * rt_mad
+  ) |>
+  ungroup()
+# 8409 trials left
+# (9664-8409)/9664 # 13% trials out total
+# (8777-8409)/8777 # 4.2% of remaining trials
+```

@@ -1,0 +1,268 @@
+
+```{r congruence_effect}
+#| echo: true
+#| code-summary: "Computing the Congruence effect per subject"
+
+# ═══ Congruence effect by-participant ═════════════════════════════════════════
+
+# ─── Empirical approach ───────────────────────────────────────────────────────
+
+# explicit task
+congruence_effect_ex_empiric <-
+  df_explicit_rt |> 
+  group_by(subjectid, congruence) |> 
+  summarise(mean_rt = mean(rt)) |> 
+  pivot_wider(
+    names_from = congruence,
+    values_from = mean_rt
+  ) |> 
+  mutate(
+    congruence_eff_ex_emp = uncongruent - congruent,
+    .keep = "unused"
+  )
+
+# implicit task
+congruence_effect_im_empiric <-
+  df_implicit_rt |> 
+  group_by(subjectid, congruence) |> 
+  summarise(mean_rt = mean(rt)) |> 
+  pivot_wider(
+    names_from = congruence,
+    values_from = mean_rt
+  ) |> 
+  mutate(
+    congruence_eff_im_emp = uncongruent - congruent,
+    .keep = "unused"
+  )
+
+# ─── Model-based approach ─────────────────────────────────────────────────────
+
+# explicit task
+congruence_effect_ex_mbased <-
+  # selecting the random slope on congruence by subject model
+  best_glmm_explicit_continuous |> 
+  # estimating the coefficent and intercept by subject
+  estimate_grouplevel() |> 
+  # keeping only the coefficient and reshaping like the original dataframe
+  reshape_grouplevel(indices = "Coefficient")  |>  
+  # "summary" reduces to one row per subject
+  summary() |> 
+  # keeping only the Coefficient column
+  select(-Intercept)  |>  
+  rename("congruence_eff_ex_mb" = congruenceuncongruent)
+
+# implicit task
+congruence_effect_im_mbased <-
+  best_glmm_implicit_continuous |> 
+  estimate_grouplevel() |> 
+  reshape_grouplevel(indices = "Coefficient")  |>  
+  summary() |> 
+  select(-Intercept)  |>  
+  rename("congruence_eff_im_mb" = congruenceuncongruent)
+
+# ─── Merging both ─────────────────────────────────────────────────────────────
+
+df_congruence_effect <-
+  inner_join(
+    congruence_effect_ex_empiric,
+    # subjectid, aphantasia, visual and spatial imagery
+    df_questionnaires %>% select(1, 4:10),
+    by = "subjectid"
+  ) |> 
+  inner_join(
+    congruence_effect_ex_mbased,
+    by = "subjectid"
+  ) |> 
+  inner_join(
+    congruence_effect_im_empiric,
+    by = "subjectid"
+  ) |> 
+  inner_join(
+    congruence_effect_im_mbased,
+    by = "subjectid"
+  ) |> 
+  select(subjectid, aphantasia, vviq80:suis60, visual_imagery, spatial_imagery, 2, 10:12) |>
+  mutate(across(c(vviq80:congruence_eff_im_mb), ~round(as.numeric(.x), digits = 2))) |> 
+  ungroup()
+```
+
+#### Explicit effect - correlation and distributions
+
+```{r explicit_empirical_vs_modelbased_corr}
+#| label: fig-explicit_empirical_vs_modelbased_corr
+#| fig-cap: "Comparison of the manually calculated congruence effect against the model-based one in the explicit task."
+#| fig-width: 8
+#| fig-height: 4
+
+df_congruence_effect |> 
+  ggplot(aes(
+    x = congruence_eff_ex_emp,
+    y = congruence_eff_ex_mb
+  )) +
+  geom_point(aes(color = aphantasia)) + 
+  labs(
+    x = "Empirical Congruence Effect",
+    y = "Model-based Congruence Effect"
+  ) +
+  scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
+
+df_congruence_effect |> 
+  ggplot() +
+  geom_density(aes(x = congruence_eff_ex_emp), color = "coral", fill = "coral", alpha = .2) +
+  geom_density(aes(x = congruence_eff_ex_mb), color = "aquamarine", fill = "aquamarine", alpha = .2) + 
+  labs(
+    x = "Congruence Effect",
+    y = "Density"
+  )
+```
+
+#### Implicit effect - correlation and distributions
+
+```{r implicit_empirical_vs_modelbased_corr}
+#| label: fig-implicit_empirical_vs_modelbased_corr
+#| fig-cap: "Comparison of the manually calculated congruence effect against the model-based one in the implicit task."
+#| fig-width: 8
+#| fig-height: 4
+
+df_congruence_effect |> 
+  ggplot(aes(
+    x = congruence_eff_im_emp,
+    y = congruence_eff_im_mb
+  )) +
+  geom_point(aes(color = aphantasia)) +  
+  labs(
+    x = "Empirical Congruence Effect",
+    y = "Model-based Congruence Effect"
+  ) +
+  scale_color_okabeito(name = "Aphantasia", labels = c("Yes", "No"))
+
+df_congruence_effect |> 
+  ggplot() +
+  geom_density(aes(x = congruence_eff_im_emp), color = "coral", fill = "coral", alpha = .2) +
+  geom_density(aes(x = congruence_eff_im_mb), color = "aquamarine", fill = "aquamarine", alpha = .2) + 
+  labs(
+    x = "Congruence Effect",
+    y = "Density"
+  )
+```
+
+```{r correlation_congruence_effect}
+#| code-summary: "Computing correlations"
+#| echo: true
+
+# ═══ Bayesian partial correlations ════════════════════════════════════════════
+
+congruence_correlations_explicit <-
+  df_congruence_effect |> 
+  select(!c(
+    # visual_imagery, spatial_imagery, 
+    contains("congruence_eff_im"))) |>
+  correlation(
+    # bayesian = TRUE,
+    # partial = TRUE,
+    # partial_bayesian = TRUE,
+    # bayesian_test = "bf"
+    )
+  # summary() |> 
+  # plot()
+
+congruence_correlations_implicit <-
+  df_congruence_effect |> 
+  select(!c(
+    # visual_imagery, spatial_imagery, 
+    contains("congruence_eff_ex"))) |>  
+  correlation(
+    # bayesian = TRUE,
+    # partial = TRUE,
+    # partial_bayesian = TRUE,
+    # bayesian_test = "bf"
+    )
+  # summary() |> 
+  # plot()
+
+p_congruence_corr_ex <-
+  congruence_correlations_explicit |> 
+  mutate(across(c(Parameter1, Parameter2),
+    ~ case_when(
+      .x == "vviq80" ~ "VVIQ",
+      .x == "osiq_o75" ~ "OSIQ-O",
+      .x == "osiq_s75" ~ "OSIQ-S",
+      .x == "suis60" ~ "SUIS",
+      .x == "visual_imagery" ~ "Visual imagery",
+      .x == "spatial_imagery" ~ "Spatial imagery",
+      .x == "congruence_eff_ex_mb" ~ "Congruence\neffect (Model)",
+      .x == "congruence_eff_ex_emp" ~ "Congruence\neffect (Empirical)",
+      TRUE ~ .x))
+    ) |>  
+  summary(digits = 2) |>  
+  plot(
+    text = list(size = 5),
+    labs = list(title = "Explicit task")
+    ) +
+  scale_fill_viridis(
+    option = "D",
+    guide = NULL,
+    # name = expression(rho),
+    alpha = .6,
+    direction = 1,
+    limits = c(-1,1)
+    ) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(size = 14),
+    title = element_text(size = 14)
+    )
+
+p_congruence_corr_im <-
+  congruence_correlations_implicit |> 
+  mutate(across(c(Parameter1, Parameter2),
+    ~ case_when(
+      .x == "vviq80" ~ "VVIQ",
+      .x == "osiq_o75" ~ "OSIQ-O",
+      .x == "osiq_s75" ~ "OSIQ-S",
+      .x == "suis60" ~ "SUIS",
+      .x == "visual_imagery" ~ "Visual imagery",
+      .x == "spatial_imagery" ~ "Spatial imagery",
+      .x == "congruence_eff_im_mb" ~ "Congruence\neffect (Model)",
+      .x == "congruence_eff_im_emp" ~ "Congruence\neffect (Empirical)",
+      TRUE ~ .x))
+    ) |>  
+  summary(digits = 2) |>  
+  plot(
+    text = list(size = 5),
+    labs = list(title = "Implicit task")
+    ) +
+  scale_fill_viridis(
+    option = "D",
+    guide = NULL,
+    # name = expression(rho),
+    alpha = .6,
+    direction = 1,
+    limits = c(-1,1)
+    ) +
+  theme_bw() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(size = 14),
+    title = element_text(size = 14)
+    )
+
+p_congruence_correlations <-
+  ggarrange(
+    p_congruence_corr_ex,
+    p_congruence_corr_im,
+    common.legend = TRUE,
+    legend = "top",
+    ncol = 2,
+    align = "v"
+  )
+
+ggexport(
+  p_congruence_correlations,
+  filename = "plots/plots_congruence_effects.png",
+  width = 7000,
+  height = 3000,
+  res = 300
+  )
+```

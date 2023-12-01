@@ -1195,7 +1195,7 @@ model_selection_continuous <-
 ```{r plot_glmm_ex_continuous_congruence}
 
 best_glmm_explicit_continuous <- model_selection_continuous[[4]][[1]]
-best_glmm_implicit_continuous <- model_selection_continuous[[4]][[3]]
+best_glmm_implicit_continuous <- model_selection_continuous[[4]][[2]]
 
 vizdata_glmm_explicit_congruence <- 
   df_explicit_rt |> 

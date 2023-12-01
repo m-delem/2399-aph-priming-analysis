@@ -1,0 +1,266 @@
+
+```{r pca}
+#| code-summary: "Computing the PCA"
+#| echo: true
+
+# ─── Principal Component Analysis ───
+pca <- 
+  principal_components(
+    df_questionnaires[,4:7],
+    n = "max",
+    sort = TRUE,
+    standardize = TRUE
+    )
+```
+
+```{r pca_tables}
+#| label: tbl-pca_tables
+#| tbl-cap: "Results of the Principal Components Analysis."
+#| tbl-subcap: 
+#|   - "Loadings of each variable on the three components extracted by the PCA."
+#|   - "Eigenvalues and variance explained by the three components extracted by the PCA."
+#| layout-ncol: 2
+
+# ─── Loadings ───
+pca |> 
+  as.data.frame() |>  
+  mutate(Variable = case_when(
+    Variable == "suis60" ~ "SUIS",
+    Variable == "vviq80" ~ "VVIQ",
+    Variable == "osiq_o75" ~ "OSIQ-O",
+    Variable == "osiq_s75" ~ "OSIQ-S",
+    TRUE ~ Variable
+  )) |> 
+  display()
+
+# ─── Eigenvalues and variance ───
+pca |> 
+  summary() |> 
+  as.data.frame() |>
+  display()
+```
+
+```{r pca_data}
+#| code-summary: "Adding the predicted PCA components to the data"
+#| echo: true
+
+# ─── Adding components to the data ───
+pca_components <- pca |> predict()
+
+df_questionnaires <-
+  bind_cols(df_questionnaires[,1:8], pca_components[,1:2]) %>% 
+  mutate(PC2 = -PC2) %>% 
+  rename(
+    "visual_imagery" = PC1,
+    "spatial_imagery" = PC2
+    )
+
+# updating all the dataframes with the imagery variables
+dfs <- 
+  list( 
+    implicit_task = df_implicit_rt, 
+    explicit_task = df_explicit_rt
+    ) %>%
+  # adding the new variables to each dataframe
+  imap(~left_join(
+    .x |> select(-c(rt_median, rt_mad)), 
+    df_questionnaires %>% 
+      select(
+        # column to match with the correct participants
+        subjectid, 
+        # new variables to add
+        visual_imagery, 
+        spatial_imagery), 
+    by = "subjectid") %>% 
+      # reordering the final dfs
+      select(
+        subjectid, 
+        age, aphantasia,
+        visual_imagery, spatial_imagery,
+        everything())
+    )
+
+df_implicit_rt <- dfs$implicit_task
+df_explicit_rt <- dfs$explicit_task
+rm(dfs)
+```
+
+```{r fitting_glmms_continuous}
+#| output: false
+ 
+# ═══ Fitting Generalized Linear Mixed Models in parallel ══════════════════════
+
+# ─── Preparing variable roles ─────────────────────────────────────────────────
+model_recipe_glmm_ex_continuous <- 
+  df_explicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, visual_imagery, spatial_imagery, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+model_recipe_glmm_im_continuous <- 
+  df_implicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, visual_imagery, spatial_imagery, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+# ─── Writing down the formulas of our models ──────────────────────────────────
+# null model
+formula_0_continuous <- rt ~ (1|subjectid)
+# intercept by-participant only
+formula_1_continuous <- rt ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (1|subjectid)
+# intercept and slope on congruence by-participant
+formula_2_continuous <- rt ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (congruence|subjectid)
+# intercept and slope on color by-participant
+formula_3_continuous <- rt ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (color|subjectid)
+# intercept and slope on congruence and color by-participant
+# formula_4_continuous <- rt ~ (visual_imagery + spatial_imagery + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
+
+# Listing these formulas
+model_formulas_continuous <- list(
+  formula_0 = formula_0_continuous,
+  formula_1 = formula_1_continuous,
+  formula_2 = formula_2_continuous,
+  formula_3 = formula_3_continuous
+  # formula_4 = formula_4_continuous
+  )
+
+# ─── Table to combine everything in workflows and fit the models ──────────────
+# (
+model_all_fitted_continuous <- 
+  tribble(       ~recipe,     ~ task,           ~model,       ~formula,
+    model_recipe_glmm_ex_continuous, "explicit", model_specs_glmm, model_formulas_continuous,
+    model_recipe_glmm_im_continuous, "implicit", model_specs_glmm, model_formulas_continuous
+  ) |> 
+  # combining recipes with models
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
+  rowwise() |>
+  mutate(
+    # creating workflows
+    workflow = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(model, formula = formula)  
+      )
+  )
+
+# ─── Fitting the models with parallel processing ──────────────────────────────
+
+# finding the available cores for parallel processing
+n_cores <- parallel::detectCores() - 1
+
+# creating the cluster of cores
+parallel_cluster <- 
+  parallel::makeCluster(
+    n_cores,
+    type = "PSOCK"
+  )
+
+# registering the cluster for `foreach`
+doParallel::registerDoParallel(cl = parallel_cluster)
+# checking
+# foreach::getDoParRegistered()
+# foreach::getDoParWorkers()
+
+# creating a new list-column with all the models fitted in parallel
+(model_all_fitted_continuous$fitted_model <-
+  foreach(
+    workflow = model_all_fitted_continuous$workflow,
+    task     = model_all_fitted_continuous$task,
+    .combine  = "c",
+    .packages = c("tidymodels", "multilevelmod")
+) %dopar% {
+  if(task == "explicit"){
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_explicit_rt) |> 
+        extract_fit_engine()
+      )
+  }
+  
+  else{
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_implicit_rt) |> 
+        extract_fit_engine()
+      )
+  }
+  
+  return(model_fit)
+# measuring runtime for benchmarking
+}) |> system.time() -> time_parallel
+
+model_all_fitted_continuous <-  
+  model_all_fitted_continuous |> 
+  select(-c(recipe, model, formula, workflow))
+
+# ─── Examining the quality of the models, estimating the parameters ───────────
+model_all_fitted_continuous$parameters <-
+  foreach(
+    fitted_model = model_all_fitted_continuous$fitted_model,
+    .combine  = "c",
+    .packages = c("parameters")
+) %dopar% {
+  parameters <- list(model_parameters(fitted_model))
+  return(parameters)
+}
+
+model_all_fitted_continuous$convergence <-
+  foreach(
+    fitted_model = model_all_fitted_continuous$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  convergence <- check_convergence(fitted_model)
+  return(convergence)
+}
+
+model_all_fitted_continuous$model_perf <-
+  foreach(
+    fitted_model = model_all_fitted_continuous$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  model_perf <- list(model_performance(fitted_model))
+  return(model_perf)
+}
+
+model_all_fitted_continuous <-
+  model_all_fitted_continuous |>
+  mutate(
+    # extracting model quality indices
+    AIC  = model_perf[[1]],
+    AICc = model_perf[[2]],
+    BIC  = model_perf[[3]]
+  ) |>
+  ungroup() |> 
+  select(-model_perf)
+
+# stopping the cluster when we're done
+parallel::stopCluster(cl = parallel_cluster)
+
+# 214 seconds (3min30s)
+
+# ─── Comparing the models' quality among those that converged ─────────────────
+model_selection_continuous <-
+  model_all_fitted_continuous |> 
+  filter(
+    formula_id != "formula_0" & 
+    convergence == TRUE
+  ) |> 
+  group_by(task, model_id) |> 
+  mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
+  filter(best_model == TRUE)
+```
+

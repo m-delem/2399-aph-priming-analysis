@@ -1,0 +1,128 @@
+
+```{r setup}
+#| echo: true
+#| output: false
+#| code-summary: "Packages"
+
+# ═══ Packages ═════════════════════════════════════════════════════════════════
+
+# The package `librairian` will ease the package management with the "shelf" 
+# function, which automatically: 
+# 1) checks if a package is installed 
+# 2) installs it if need be
+# 3) loads the package like the "library()" function would.
+if (!require(librarian)) install.packages(librarian)
+library(librarian)
+
+# now putting packages on our library's shelves:
+shelf(
+  # ─── essential package collections ───
+  tidyverse,      # modern R ecosystem
+  easystats,      # data analysis framework
+  tidymodels,     # modelling framework
+  doParallel,     # parallel execution
+  
+  # ─── tidymodels friends ──────────────
+  corrr,          # correlational analyses
+  tidybayes,      # bayesian inference
+  multilevelmod,  # multilevel modelling with lmer and tidymodels
+  
+  # ─── modelling ───────────────────────
+  lme4,           # mixed models
+  mclust,         # mixture clustering
+  rstanarm,       # bayesian models
+  BayesFactor,    # BFs
+  emmeans,        # marginal estimates
+  statmod,        # easystats dependency
+  
+  # ─── data management ─────────────────
+  readxl,         # importing xlsx
+  openxlsx,       # exporting xlsx
+  
+  #  data visualization ──────────────
+  # plot types and geoms
+  ricardo-bion/ggradar,  # radar plots
+  ggbeeswarm,            # scatter violin plots
+  GGally,         # complex plots
+  # layout and options
+  ggpubr,         # publication plots
+  patchwork,      # layout control
+  rstatix,        # ggplot stat tools
+  # palettes
+  ggsci,          # scientific palettes
+  viridis,        # colour-blind friendly palettes
+  # interactive
+  plotly         # interactive plots
+)
+
+# ─── Global cosmetic theme ───q
+theme_set(theme_bw(base_size = 14))
+
+# ─── Fixing a seed for reproducibility ───
+set.seed(14051998)
+```
+
+```{r importing_data}
+#| echo: true
+#| output: false
+#| code-summary: "Importing data"
+
+# Implicit task
+df_implicit <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_implicit"
+    ) |> 
+  rename("rt" = rt_implicit)
+
+# Explicit task
+df_explicit <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_explicit"
+    ) |> 
+  rename("rt" = rt_explicit)
+
+# Questionnaires
+df_questionnaires <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_questionnaires"
+    ) %>% 
+  # creating the a/phantasia groups
+  mutate(
+    aphantasia = ifelse(vviq80 < 32, "yes", "no"),
+    aphantasia = fct_relevel(aphantasia, "yes", "no")
+    )
+
+# updating all the dataframes with the questionnaires data
+dfs <- 
+  list(
+    implicit_task = df_implicit, 
+    explicit_task = df_explicit
+    ) |> 
+  # adding the vviq and group column to every dataframe
+  imap(~left_join(
+    .x, 
+    df_questionnaires |>  
+      select(
+        # column to match with the correct participants
+        subjectid, 
+        # new variables to add
+        age,
+        sexe,
+        vviq80,
+        aphantasia), by = "subjectid") |>  
+      rename("sex" = sexe) |>  
+      # reordering the final dfs
+      select(
+        subjectid, 
+        age, sex, aphantasia,
+        vviq80,
+        everything())
+    )
+
+df_implicit <- dfs$implicit_task
+df_explicit <- dfs$explicit_task
+rm(dfs)
+```
