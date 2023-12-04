@@ -1,0 +1,56 @@
+---
+title: "Untitled"
+---
+
+{{< include 01-setup.qmd >}}
+
+{{< include 02-outlier-procedure.qmd >}}
+
+### Summary RT tables
+
+#### Implicit task 
+
+```{r summary_table_im}
+df_explicit_rt |> 
+  group_by(aphantasia, congruence) |> 
+  mutate(
+    aphantasia = case_when(
+      aphantasia == "yes" ~ "Aphantasic",
+      TRUE ~ "Control"
+    ),
+    congruence = if_else(congruence == "congruent", "Congruent", "Incongruent")
+  ) |> 
+  rename(
+    Group = aphantasia,
+    Congruence = congruence
+  ) |> 
+  summarise(
+    "Mean (ms)" = mean(rt),
+    "SD (ms)" = sd(rt)
+  ) |> 
+  display()
+```
+
+#### Explicit task 
+
+```{r summary_table_ex}
+df_explicit_rt |> 
+  group_by(aphantasia, congruence) |> 
+  mutate(
+    aphantasia = case_when(
+      aphantasia == "yes" ~ "Aphantasic",
+      TRUE ~ "Control"
+    ),
+    congruence = if_else(congruence == "congruent", "Congruent", "Incongruent")
+  ) |> 
+  rename(
+    Group = aphantasia,
+    Congruence = congruence
+  ) |> 
+  summarise(
+    'Mean (ms)' = mean(rt),
+    'SD (ms)' = sd(rt)
+  ) |> 
+  display()
+```
+
