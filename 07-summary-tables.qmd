@@ -8,6 +8,28 @@ title: "Untitled"
 
 ### Summary RT tables
 
+<!--
+#### Whole sample
+
+```{r summary_table}
+df_rt <- 
+  list( 
+  df_implicit_rt |>  rename("Implicit task" = rt),
+  df_explicit_rt |>  rename("Explicit task" = rt)
+  ) |>  
+  imap(
+    ~ungroup(.x) |> 
+      select(contains("task")) |> 
+      report() |>  
+      as.data.frame() |>  
+      select(1:10)
+    )
+
+df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
+df_rt |>  display()
+```
+--> 
+
 #### Implicit task 
 
 ```{r summary_table_im}
