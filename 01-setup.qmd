@@ -73,7 +73,9 @@ df_implicit <-
     "data/aphantasia_priming_tidy_data.xlsx",
     sheet = "data_implicit"
     ) |> 
-  rename("rt" = rt_implicit)
+  rename("rt" = rt_implicit) |> 
+  # convert to seconds
+  mutate(rt = rt/1000)
 
 # Explicit task
 df_explicit <- 
@@ -81,7 +83,9 @@ df_explicit <-
     "data/aphantasia_priming_tidy_data.xlsx",
     sheet = "data_explicit"
     ) |> 
-  rename("rt" = rt_explicit)
+  rename("rt" = rt_explicit) |> 
+  # convert to seconds
+  mutate(rt = rt/1000)
 
 # Questionnaires
 df_questionnaires <- 

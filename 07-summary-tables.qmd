@@ -33,7 +33,7 @@ df_rt |>  display()
 #### Implicit task 
 
 ```{r summary_table_im}
-df_explicit_rt |> 
+df_implicit_rt |> 
   group_by(aphantasia, congruence) |> 
   mutate(
     aphantasia = case_when(

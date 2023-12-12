@@ -69,13 +69,13 @@ model_specs_glmm <- list(
 # null model
 formula_0 <- rt ~ (1|subjectid)
 # intercept by-participant only
-formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
+formula_1 <- rt ~ (aphantasia + congruence + color)^3 + (1|subjectid)
 # intercept and slope on congruence by-participant
-formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
+formula_2 <- rt ~ (aphantasia + congruence + color)^3 + (congruence|subjectid)
 # intercept and slope on color by-participant
-formula_3 <- rt ~ (aphantasia + congruence + color)^2 + (color|subjectid)
+formula_3 <- rt ~ (aphantasia + congruence + color)^3 + (color|subjectid)
 # intercept and slope on congruence and color by-participant
-formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
+formula_4 <- rt ~ (aphantasia + congruence + color)^3 + (congruence|subjectid) + (color|subjectid)
 
 # Listing these formulas
 model_formulas <- list(
@@ -219,8 +219,170 @@ model_selection <-
 ```
 
 ```{r best_models}
-best_glmm_explicit <- model_selection$fitted_model[[1]]
-best_glmm_implicit <- model_selection$fitted_model[[5]]
+# best_glmm_explicit <- model_selection$fitted_model[[1]]
+# best_glmm_implicit <- model_selection$fitted_model[[5]]
+
+model_selection[[4]][[6]] |> check_model(check = "all")
 ```
 
+```{r full_crossover}
+df_full <-
+  bind_rows(
+    df_explicit_rt |> mutate(task = as.factor("explicit")),
+    df_implicit_rt |> mutate(task = as.factor("implicit"))
+  )
+
+
+# ═══ Fitting Generalized Linear Mixed Models in parallel ══════════════════════
+
+# ─── Preparing variable roles ─────────────────────────────────────────────────
+model_recipe_glmm_full <- 
+  df_full |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, aphantasia, color, congruence, task,
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+# ─── Writing down the formulas of our models ──────────────────────────────────
+# null model
+formula_0_full <- rt ~ (1|subjectid)
+# intercept by-participant only
+formula_1_full <- rt ~ (aphantasia + congruence + color + task)^3 + (1|subjectid)
+# intercept and slope on congruence by-participant
+formula_2_full <- rt ~ (aphantasia + congruence + color + task)^3 + (congruence|subjectid)
+# intercept and slope on color by-participant
+formula_3_full <- rt ~ (aphantasia + congruence + color + task)^3 + (color|subjectid)
+# intercept and slope on congruence and color by-participant
+formula_4_full <- rt ~ (aphantasia + congruence + color + task)^3 + (congruence + color + task|subjectid)
+
+# Listing these formulas
+model_formulas_full <- list(
+  formula_0 = formula_0_full,
+  formula_1 = formula_1_full,
+  formula_2 = formula_2_full,
+  formula_3 = formula_3_full,
+  formula_4 = formula_4_full
+  )
+
+# ─── Table to combine everything in workflows and fit the models ──────────────
+# (
+model_all_workflows_fitted_full <- 
+  tribble(       ~recipe,             ~model,            ~formula,
+    model_recipe_glmm_full, model_specs_glmm, model_formulas_full
+  ) |> 
+  # combining recipes with models
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
+  rowwise() |>
+  mutate(
+    # creating workflows
+    workflow = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(model, formula = formula)  
+      )
+  )
+
+# ─── Fitting the models with parallel processing ──────────────────────────────
+
+# finding the available cores for parallel processing
+n_cores <- parallel::detectCores() - 1
+
+# creating the cluster of cores
+parallel_cluster <- 
+  parallel::makeCluster(
+    n_cores,
+    type = "PSOCK"
+  )
+
+# registering the cluster for `foreach`
+doParallel::registerDoParallel(cl = parallel_cluster)
+# checking
+# foreach::getDoParRegistered()
+# foreach::getDoParWorkers()
+
+# creating a new list-column with all the models fitted in parallel
+(model_all_workflows_fitted_full$fitted_model <-
+  foreach(
+    workflow = model_all_workflows_fitted_full$workflow,
+    .combine  = "c",
+    .packages = c("tidymodels", "multilevelmod")
+) %dopar% {
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_full) |> 
+        extract_fit_engine()
+      )
+  
+  return(model_fit)
+# measuring runtime for benchmarking
+}) |> system.time() -> time_parallel
+
+model_all_workflows_fitted_full <-  
+  model_all_workflows_fitted_full |> 
+  select(-c(recipe, model, formula, workflow))
+
+# ─── Examining the quality of the models, estimating the parameters ───────────
+model_all_workflows_fitted_full$parameters <-
+  foreach(
+    fitted_model = model_all_workflows_fitted_full$fitted_model,
+    .combine  = "c",
+    .packages = c("parameters")
+) %dopar% {
+  parameters <- list(model_parameters(fitted_model))
+  return(parameters)
+}
+
+model_all_workflows_fitted_full$convergence <-
+  foreach(
+    fitted_model = model_all_workflows_fitted_full$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  convergence <- check_convergence(fitted_model)
+  return(convergence)
+}
+
+model_all_workflows_fitted_full$model_perf <-
+  foreach(
+    fitted_model = model_all_workflows_fitted_full$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  model_perf <- list(model_performance(fitted_model))
+  return(model_perf)
+}
+
+model_all_workflows_fitted_full <-
+  model_all_workflows_fitted_full |>
+  mutate(
+    # extracting model quality indices
+    AIC  = model_perf[[1]],
+    AICc = model_perf[[2]],
+    BIC  = model_perf[[3]]
+  ) |>
+  ungroup() |> 
+  select(-model_perf)
+
+# stopping the cluster when we're done
+parallel::stopCluster(cl = parallel_cluster)
+
+# 214 seconds (3min30s)
+
+# ─── Comparing the models' quality among those that converged ─────────────────
+model_selection_full <-
+  model_all_workflows_fitted_full |> 
+  filter(
+    formula_id != "formula_0" & 
+    convergence == TRUE
+  ) |> 
+  group_by(task, model_id) |> 
+  mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
+  filter(best_model == TRUE)
+```
 
