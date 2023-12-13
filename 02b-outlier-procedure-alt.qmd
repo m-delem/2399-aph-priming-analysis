@@ -1,0 +1,277 @@
+
+```{r}
+#| code-summary: "Removing extreme RTs"
+#| echo: true
+#| output: false
+
+# ═══ First broad RT outlier trials removal ════════════════════════════════════
+
+df_explicit_rt <- 
+  df_explicit_rt |>  
+  # filtering out extreme RTs
+  filter(rt > .25 & rt < 2)
+
+# total percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
+# 8812 trials left = 8.8% removed
+
+df_implicit_rt <- 
+  df_implicit_rt |>  
+  filter(rt > .25 & rt < 2)
+
+# total percentage of trials removed in the implicit task
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit)
+# 8963 left = 7.3% removed
+```
+
+```{r}
+#| label: tbl-rt_means
+#| tbl-cap: "Descriptive statistics of the average RTs across the sample in both tasks."
+
+# ═══ RT means table - Both tasks ══════════════════════════════════════════════
+
+df_rt <- 
+  list(
+  df_explicit_rt |>  rename("Explicit task mean RTs" = rt), 
+  df_implicit_rt |>  rename("Implicit task mean RTs" = rt)
+  ) |>  
+  imap(
+    ~select(.x, contains("RT")) |> 
+      report() |>  
+      as.data.frame() |>  
+      select(1:10)
+    )
+
+df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
+df_rt
+
+# explicit upper outlier threshold
+df_rt$Median[1] + 3*df_rt$MAD[1]
+# 1.35
+
+# implicit upper outlier threshold
+df_rt$Median[2] + 3*df_rt$MAD[2]
+# 1.055
+
+# ─── Listing median rts per subject ───
+list(df_explicit_rt, df_implicit_rt) |> 
+  imap(
+    ~.x |> 
+      group_by(subjectid) |> 
+      summarise(median_rt = median(rt)) |> 
+      arrange(desc(median_rt)) |> 
+      ungroup()
+    )
+```
+
+```{r}
+
+# ═══ Aberrant RT means outliers removal ═══════════════════════════════════════
+
+# ─── Finding outliers ───
+
+df_explicit_rt |> 
+  group_by(subjectid) |> 
+  summarise(median_rt = median(rt)) |> 
+  ungroup() |> 
+  filter(median_rt > 1.35) |> 
+  arrange(desc(median_rt))
+# 3 outliers in the explicit task
+
+df_implicit_rt |>
+  group_by(subjectid) |> 
+  summarise(median_rt = median(rt)) |> 
+  ungroup() |> 
+  filter(median_rt > 1.055) |> 
+  arrange(desc(median_rt))
+# 0 outliers in the implicit task
+
+# ─── Removing specific outliers ───
+df_explicit_rt <- 
+  df_explicit_rt |> 
+  filter(
+    !(subjectid %in% c(
+      "dchimenton",
+      "fc",
+      "mbilodeau"
+    ))
+  )
+
+# total percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
+# 8688 trials left
+# (9664-8688)/9664 # 10.0% out
+```
+
+
+```{r}
+# Examination of remaining trials
+df_explicit_rt |> 
+  group_by(subjectid) |> 
+  count() |> 
+  arrange(n)
+# 3 have very few trials
+
+# ─── Removing specific outliers ───
+df_explicit_rt <- 
+  df_explicit_rt |> 
+  filter(
+    !(subjectid %in% c(
+      "llhermitte",
+      "cmarcenytheault",
+      "mbillon"
+    ))
+  )
+# 8569 trials left
+
+df_implicit_rt |> 
+  group_by(subjectid) |> 
+  count() |> 
+  arrange(n)
+# implicit trials are ok
+```
+
+```{r}
+#| code-summary: "Removing outlier trials by-participant"
+#| echo: true
+#| output: false
+
+# ═══ By-participant MAD outlier detection ═════════════════════════════════════
+
+df_explicit_rt <- # from 8569 trials
+  df_explicit_rt |> 
+  group_by(subjectid, congruence, color) |> 
+  mutate(
+    rt_median = median(rt),
+    rt_mad = mad(rt)
+    ) |> 
+  filter(
+    rt < rt_median + 5 * rt_mad
+  ) |>
+  ungroup()
+
+# total percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
+# 8408 trials left, 12.9% out
+
+
+df_implicit_rt <- # from 8963 trials
+  df_implicit_rt |> 
+  group_by(subjectid, congruence, color) |> 
+  mutate(
+    rt_median = median(rt),
+    rt_mad = mad(rt)
+    ) |> 
+  filter(
+    rt < rt_median + 5 * rt_mad
+  ) |>
+  ungroup()
+
+# total percentage of trials removed in the implicit task
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit)
+# 8661 trials left, 10.4% out
+```
+
+
+```{r}
+# Examination of remaining trials
+df_explicit_rt |> 
+  group_by(subjectid) |> 
+  count() |> 
+  arrange(n)
+# explicit trials are ok
+
+df_implicit_rt |> 
+  group_by(subjectid) |> 
+  count() |> 
+  arrange(n)
+# implicit trials are ok
+```
+
+```{r}
+#| label: fig-rt_per_participant_2
+#| fig-cap: "Resulting distribution of RTs in the implicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
+#| fig-height: 4
+
+(df_explicit_rt |> 
+  ggplot(aes(x = rt, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
+  scale_y_continuous(name = "Density") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) +
+  # coord_cartesian(
+  #   xlim = c(350, 1320),
+  #   ylim = c(0.0005, .01)
+  # ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL)) |>  
+  ggplotly() |> 
+  style(showlegend = FALSE)
+
+(df_implicit_rt |> 
+  ggplot(aes(x = rt, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
+  scale_y_continuous(name = "Density") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) +
+  # coord_cartesian(
+  #   xlim = c(350, 1320),
+  #   ylim = c(0.0005, .01)
+  # ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL)) |>  
+  ggplotly() |> 
+  style(showlegend = FALSE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

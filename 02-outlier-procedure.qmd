@@ -44,7 +44,7 @@ df_explicit_rt <-
 
 # percentage of trials removed in the explicit task
 (count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
-# 8842 trials left = 8.5% removed
+# 9091 trials left = 5.9% removed
 
 df_implicit_rt <- 
   df_implicit |>  
@@ -60,7 +60,7 @@ df_implicit_rt <-
 
 # percentage of trials removed in the implicit task
 (count(df_implicit) - count(df_implicit_rt)) / count(df_implicit) 
-# 8765 trials left = 9.3% removed
+# 9078 trials left = 6.1% removed
 ```
 
 ```{r removing_extreme_rt_outlier_trials}
@@ -77,7 +77,7 @@ df_explicit_rt <-
 
 # total percentage of trials removed in the explicit task
 (count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
-# 8753 trials left = 9.4% removed
+# 9000 trials left = 6.9% removed
 
 df_implicit_rt <- 
   df_implicit_rt |>  
@@ -85,7 +85,7 @@ df_implicit_rt <-
 
 # total percentage of trials removed in the implicit task
 (count(df_implicit) - count(df_implicit_rt)) / count(df_implicit)
-# 8706 left = 9.9% removed
+# 9017 left = 6.7% removed
 ```
 
 ```{r rt_means_table}
@@ -151,6 +151,8 @@ df_explicit_rt <-
     ))
   )
 
+# total percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
 # 8603 trials left
 # (9664-8603)/9664 # 11% out
 
@@ -165,8 +167,10 @@ df_implicit_rt <-
     ))
   )
 
+# total percentage of trials removed in the implicit task
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit)
 # 8777 trials left
-# (9664-8777)/9664 # 9% out
+# (9664-8777)/9664 # 9.2% out
 ```
 
 ```{r removing_rt_outlier_trials_per_participant}
@@ -177,7 +181,7 @@ df_implicit_rt <-
 # ═══ By-participant MAD outlier detection ═════════════════════════════════════
 
 # ─── Explicit task: ───
-# From 8229 observations
+# From 8603 observations
 # 3 MADs threshold
 df_explicit_rt <-
   df_explicit_rt |> 
@@ -191,12 +195,15 @@ df_explicit_rt <-
     rt > rt_median - 2.5 * rt_mad
   ) |>
   ungroup()
+
+# total percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
 # 8366 trials left
 # (9664-8366)/9664 # 13.4% trials out total
 # (8603-8366)/8603 # 2.7% of remaining trials
 
 # ─── Implicit task: ───
-# From 8166 observations
+# From 8777 observations
 # 3 MADs threshold
 df_implicit_rt <-
   df_implicit_rt |> 
@@ -210,7 +217,55 @@ df_implicit_rt <-
     rt > rt_median - 2.5 * rt_mad
   ) |>
   ungroup()
+
+# total percentage of trials removed in the implicit task
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit)
 # 8409 trials left
-# (9664-8409)/9664 # 13% trials out total
+# (9664-8409)/9664 # 12.9% trials out total
 # (8777-8409)/8777 # 4.2% of remaining trials
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

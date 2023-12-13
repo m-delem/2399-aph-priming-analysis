@@ -68,19 +68,16 @@ model_specs_glmm <- list(
 # ─── Writing down the formulas of our models ──────────────────────────────────
 # null model
 formula_0 <- rt ~ (1|subjectid)
-# intercept by-participant only
-formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
 # intercept and slope on congruence by-participant
 formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
 # intercept and slope on color by-participant
 formula_3 <- rt ~ (aphantasia + congruence + color)^2 + (color|subjectid)
 # intercept and slope on congruence and color by-participant
-formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
+formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence + color|subjectid)
 
 # Listing these formulas
 model_formulas <- list(
   formula_0 = formula_0,
-  formula_1 = formula_1,
   formula_2 = formula_2,
   formula_3 = formula_3,
   formula_4 = formula_4
@@ -155,6 +152,8 @@ doParallel::registerDoParallel(cl = parallel_cluster)
 # measuring runtime for benchmarking
 }) |> system.time() -> time_parallel
 
+# 52 seconds on 19 cores
+
 model_all_workflows_fitted <-  
   model_all_workflows_fitted |> 
   select(-c(recipe, model, formula, workflow))
@@ -204,8 +203,6 @@ model_all_workflows_fitted <-
 # stopping the cluster when we're done
 parallel::stopCluster(cl = parallel_cluster)
 
-# 214 seconds (3min30s)
-
 # ─── Comparing the models' quality among those that converged ─────────────────
 model_selection <-
   model_all_workflows_fitted |> 
@@ -222,4 +219,81 @@ model_selection <-
 # best_glmm_explicit <- model_selection$fitted_model[[1]]
 # best_glmm_implicit <- model_selection$fitted_model[[5]]
 ```
+
+```{r}
+# Bayesian multilevel model
+glmm_bayes <- 
+  linear_reg() |> 
+  set_engine(
+    "stan_glmer",
+    family  = inverse.gaussian(link = "log"),
+    cores   = n_cores,
+    chains  = n_cores,
+    verbose = TRUE
+  )
+
+# student_t(df = 10, location = -1.07, scale = 1.15)
+
+model_bayes <-
+  workflow() |> 
+  add_recipe(model_recipe_glmm_ex) |> 
+  add_model(glmm_bayes, formula = formula_4) |> 
+  fit(df_explicit_rt) |> 
+  extract_fit_engine()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
