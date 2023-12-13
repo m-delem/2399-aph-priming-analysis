@@ -235,12 +235,12 @@ glmm_bayes <-
 
 # student_t(df = 10, location = -1.07, scale = 1.15)
 
-model_bayes <-
+(model_bayes <-
   workflow() |> 
   add_recipe(model_recipe_glmm_ex) |> 
   add_model(glmm_bayes, formula = formula_4) |> 
   fit(df_explicit_rt) |> 
-  extract_fit_engine()
+  extract_fit_engine()) |> system.time() -> time_bayesian
 ```
 
 
