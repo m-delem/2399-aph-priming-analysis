@@ -231,7 +231,7 @@ glmm_bayes <-
     family  = Gamma(link = "identity"),
     # prior = student_t(df = 10, location = -1.07, scale = 1.15, autoscale = TRUE),
     # prior_intercept = normal(location = 0.5, scale = 0.1),
-    iter = 10,
+    iter = 1000,
     cores   = n_cores,
     chains  = n_cores,
     verbose = TRUE,
@@ -248,8 +248,15 @@ glmm_bayes <-
   extract_fit_engine()) |> system.time() -> time_bayesian
 
 model_bayes |> prior_summary()
-pp_check(model_bayes) #+
-  # coord_cartesian(xlim = c(-100, 3000))
+pp_check(model_bayes)
+model_bayes |> describe_posterior()
+
+model_glmm_ex <-
+  workflow() |> 
+  add_recipe(model_recipe_glmm_ex) |> 
+  add_model(glmm_inverse_log, formula = formula_2) |> 
+  fit(df_explicit_rt) |> 
+  extract_fit_engine()
 ```
 
 
