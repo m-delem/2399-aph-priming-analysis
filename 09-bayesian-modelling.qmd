@@ -68,6 +68,8 @@ model_specs_glmm <- list(
 # ─── Writing down the formulas of our models ──────────────────────────────────
 # null model
 formula_0 <- rt ~ (1|subjectid)
+# intercept by-participant
+formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
 # intercept and slope on congruence by-participant
 formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
 # intercept and slope on color by-participant
@@ -211,7 +213,7 @@ model_selection <-
     convergence == TRUE
   ) |> 
   group_by(task, model_id) |> 
-  mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
+  mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |>
   filter(best_model == TRUE)
 ```
 
@@ -226,7 +228,10 @@ glmm_bayes <-
   linear_reg() |> 
   set_engine(
     "stan_glmer",
-    family  = inverse.gaussian(link = "log"),
+    family  = Gamma(link = "identity"),
+    # prior = student_t(df = 10, location = -1.07, scale = 1.15, autoscale = TRUE),
+    # prior_intercept = normal(location = 0.5, scale = 0.1),
+    iter = 10,
     cores   = n_cores,
     chains  = n_cores,
     verbose = TRUE,
@@ -238,9 +243,13 @@ glmm_bayes <-
 (model_bayes <-
   workflow() |> 
   add_recipe(model_recipe_glmm_ex) |> 
-  add_model(glmm_bayes, formula = formula_4) |> 
+  add_model(glmm_bayes, formula = formula_2) |> 
   fit(df_explicit_rt) |> 
   extract_fit_engine()) |> system.time() -> time_bayesian
+
+model_bayes |> prior_summary()
+pp_check(model_bayes) #+
+  # coord_cartesian(xlim = c(-100, 3000))
 ```
 
 

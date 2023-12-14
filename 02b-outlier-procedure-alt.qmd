@@ -1,4 +1,68 @@
 
+```{r finding_and_removing_accuracy_outliers}
+#| code-summary: "Removing incorrect trials and task-wise accuracy outliers"
+#| echo: true
+#| output: false
+
+# ═══ Accuracy outliers analysis ═══════════════════════════════════════════════
+
+# ─── Listing error rates per subject ───
+list(df_explicit, df_implicit) |> 
+  imap(
+    ~.x |> 
+      select(subjectid, starts_with("correct"), aphantasia) |> 
+      group_by(subjectid) |> 
+      count(pick(2)) |> 
+      filter(pick(1) == 1) |> 
+      ungroup() |> 
+      mutate(
+        n_tot = max(n),
+        prop = (n_tot - n) / n_tot * 100  # analyzing the error rate per subject
+      ) %>%
+      arrange(desc(prop)) |> 
+      select(1, 5)
+    )
+# 5 accuracy outliers in the explicit task, 4 in the implicit one
+
+# ─── Removing incorrect trials and task-wise accuracy outliers ───
+df_explicit_rt <-
+  df_explicit |> 
+  # filtering out...
+  filter(
+    # incorrect trials
+    correct_explicit == 1 &
+    # participants identified with with high error rates
+    !(subjectid %in% c( 
+      "aknezevic",
+      "lbrunie", 
+      "agayou", 
+      "bluciani",
+      "ldossantos"))
+    ) |>  
+  # removing irrelevant variables
+  select(-c(sex, vviq80, orientation, response, correct_explicit))
+
+# percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
+# 9091 trials left = 5.9% removed
+
+df_implicit_rt <- 
+  df_implicit |>  
+  filter(
+    correct_implicit == 1 &
+    !(subjectid %in% c( 
+      "bdispaux", 
+      "eleveque", 
+      "aleclaire", 
+      "dchimenton"))
+      ) |>  
+  select(-c(sex, vviq80, orientation, response, correct_implicit))
+
+# percentage of trials removed in the implicit task
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit) 
+# 9078 trials left = 6.1% removed
+```
+
 ```{r}
 #| code-summary: "Removing extreme RTs"
 #| echo: true
@@ -193,41 +257,41 @@ df_implicit_rt |>
 #| fig-cap: "Resulting distribution of RTs in the implicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
 #| fig-height: 4
 
-(df_explicit_rt |> 
-  ggplot(aes(x = rt, fill = subjectid)) +
-  geom_density(alpha = .25, color = "black") +
-  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
-  scale_y_continuous(name = "Density") +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
-    ) +
-  # coord_cartesian(
-  #   xlim = c(350, 1320),
-  #   ylim = c(0.0005, .01)
-  # ) +
-  scale_fill_viridis_d(guide = NULL) +
-  scale_color_viridis_d(guide = NULL)) |>  
-  ggplotly() |> 
-  style(showlegend = FALSE)
-
-(df_implicit_rt |> 
-  ggplot(aes(x = rt, fill = subjectid)) +
-  geom_density(alpha = .25, color = "black") +
-  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
-  scale_y_continuous(name = "Density") +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank()
-    ) +
-  # coord_cartesian(
-  #   xlim = c(350, 1320),
-  #   ylim = c(0.0005, .01)
-  # ) +
-  scale_fill_viridis_d(guide = NULL) +
-  scale_color_viridis_d(guide = NULL)) |>  
-  ggplotly() |> 
-  style(showlegend = FALSE)
+# (df_explicit_rt |> 
+#   ggplot(aes(x = rt, fill = subjectid)) +
+#   geom_density(alpha = .25, color = "black") +
+#   scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
+#   scale_y_continuous(name = "Density") +
+#   theme(
+#     axis.text.y = element_blank(),
+#     axis.ticks.y = element_blank()
+#     ) +
+#   # coord_cartesian(
+#   #   xlim = c(350, 1320),
+#   #   ylim = c(0.0005, .01)
+#   # ) +
+#   scale_fill_viridis_d(guide = NULL) +
+#   scale_color_viridis_d(guide = NULL)) |>  
+#   ggplotly() |> 
+#   style(showlegend = FALSE)
+# 
+# (df_implicit_rt |> 
+#   ggplot(aes(x = rt, fill = subjectid)) +
+#   geom_density(alpha = .25, color = "black") +
+#   scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
+#   scale_y_continuous(name = "Density") +
+#   theme(
+#     axis.text.y = element_blank(),
+#     axis.ticks.y = element_blank()
+#     ) +
+#   # coord_cartesian(
+#   #   xlim = c(350, 1320),
+#   #   ylim = c(0.0005, .01)
+#   # ) +
+#   scale_fill_viridis_d(guide = NULL) +
+#   scale_color_viridis_d(guide = NULL)) |>  
+#   ggplotly() |> 
+#   style(showlegend = FALSE)
 ```
 
 
