@@ -16,16 +16,9 @@ library(librarian)
 
 # now putting packages on our library's shelves:
 shelf(
-  # ─── essential package collections ───
-  tidyverse,      # modern R ecosystem
-  easystats,      # data analysis framework
-  tidymodels,     # modelling framework
-  doParallel,     # parallel execution
-  
-  # ─── tidymodels friends ──────────────
-  corrr,          # correlational analyses
-  tidybayes,      # bayesian inference
-  multilevelmod,  # multilevel modelling with lmer and tidymodels
+  # ─── data management ─────────────────
+  readxl,         # importing xlsx
+  openxlsx,       # exporting xlsx
   
   # ─── modelling ───────────────────────
   lme4,           # mixed models
@@ -35,9 +28,10 @@ shelf(
   emmeans,        # marginal estimates
   statmod,        # easystats dependency
   
-  # ─── data management ─────────────────
-  readxl,         # importing xlsx
-  openxlsx,       # exporting xlsx
+  # ─── tidymodels friends ──────────────
+  corrr,          # correlational analyses
+  tidybayes,      # bayesian inference
+  multilevelmod,  # multilevel modelling with lmer and tidymodels
   
   #  data visualization ──────────────
   # plot types and geoms
@@ -52,7 +46,13 @@ shelf(
   ggsci,          # scientific palettes
   viridis,        # colour-blind friendly palettes
   # interactive
-  plotly         # interactive plots
+  plotly,         # interactive plots
+  
+  # ─── essential package collections ───
+  doParallel,     # parallel execution
+  easystats,      # data analysis framework
+  tidymodels,     # modelling framework
+  tidyverse,      # modern R ecosystem
 )
 
 # ─── Global cosmetic theme ───q
