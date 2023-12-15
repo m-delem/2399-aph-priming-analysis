@@ -68,22 +68,27 @@ model_specs_glmm <- list(
 # ─── Writing down the formulas of our models ──────────────────────────────────
 # null model
 formula_0 <- rt ~ (1|subjectid)
+
 # intercept by-participant only
-formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
+formula_1 <- rt ~ (aphantasia + congruence + color)^3 + (1|subjectid)
+
 # intercept and slope on congruence by-participant
-formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
+formula_2 <- rt ~ (aphantasia + congruence + color)^3 + (congruence|subjectid)
+
 # intercept and slope on color by-participant
-formula_3 <- rt ~ (aphantasia + congruence + color)^2 + (color|subjectid)
-# intercept and slope on congruence and color by-participant
-formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
+formula_3 <- rt ~ (aphantasia + congruence + color)^3 + (color|subjectid)
+
+# single intercept and two slopes on congruence and color by-participant
+formula_4 <- rt ~ (aphantasia + congruence + color)^3 + (congruence + color|subjectid)
+
 
 # Listing these formulas
 model_formulas <- list(
-  formula_0 = formula_0,
-  formula_1 = formula_1,
-  formula_2 = formula_2,
-  formula_3 = formula_3,
-  formula_4 = formula_4
+  # formula_0  = formula_0,
+  # formula_1  = formula_1,
+  # formula_2  = formula_2,
+  # formula_3  = formula_3,
+  formula_4  = formula_4
   )
 
 # ─── Table to combine everything in workflows and fit the models ──────────────
@@ -204,7 +209,7 @@ model_all_workflows_fitted <-
 # stopping the cluster when we're done
 parallel::stopCluster(cl = parallel_cluster)
 
-# 214 seconds (3min30s)
+# 119 seconds
 
 # ─── Comparing the models' quality among those that converged ─────────────────
 model_selection <-
@@ -219,7 +224,68 @@ model_selection <-
 ```
 
 ```{r best_models}
-# best_glmm_explicit <- model_selection$fitted_model[[1]]
-# best_glmm_implicit <- model_selection$fitted_model[[5]]
+best_glmm_explicit <- model_selection$fitted_model[[2]]
+best_glmm_implicit <- model_selection$fitted_model[[6]]
+
+saveRDS(best_glmm_explicit, "analyses-results/best_glmm_explicit_5MADs.RDS") # readRDS to import
+saveRDS(best_glmm_implicit, "analyses-results/best_glmm_implicit_5MADs.RDS")
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

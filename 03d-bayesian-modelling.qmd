@@ -1,0 +1,136 @@
+
+```{r fitting_glmms}
+#| output: false
+ 
+# ═══ Fitting Generalized Linear Mixed Models in parallel ══════════════════════
+
+# ─── Preparing variable roles ─────────────────────────────────────────────────
+model_recipe_glmm_ex <- 
+  df_explicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, aphantasia, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+model_recipe_glmm_im <- 
+  df_implicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, aphantasia, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+# null model
+formula_0 <- rt ~ (1|subjectid)
+# intercept by-participant
+formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
+# intercept and slope on congruence by-participant
+formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
+# intercept and slope on color by-participant
+formula_3 <- rt ~ (aphantasia + congruence + color)^2 + (color|subjectid)
+# intercept and slope on congruence and color by-participant
+formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence + color|subjectid)
+
+# finding the available cores for parallel processing
+n_cores <- parallel::detectCores() - 1
+
+# Bayesian multilevel model
+glmm_bayes <- 
+  linear_reg() |> 
+  set_engine(
+    "stan_glmer",
+    family  = inverse.gaussian(link = "identity"),
+    prior = normal(
+      location = c(   0,   0,   0,   0,   0,   0), 
+      scale    = c( .45, .45, .45, .45, .45, .45)
+      ),
+    prior_intercept = student_t(
+      df = 10, 
+      location = .557, 
+      scale = .309
+      ),
+    iter = 2000,
+    cores   = n_cores,
+    chains  = n_cores,
+    verbose = TRUE,
+    refresh = TRUE
+  )
+
+(model_bayes <-
+  workflow() |> 
+  add_recipe(model_recipe_glmm_im) |> 
+  add_model(glmm_bayes, formula = formula_2) |> 
+  fit(df_implicit_rt) |> 
+  extract_fit_engine()) |> system.time() -> time_bayesian
+
+saveRDS(model_bayes, "results/bayesian_glmm.RDS")
+```
+
+
+```{r}
+# Examination
+model_bayes |> prior_summary()
+pp_check(model_bayes)
+model_bayes |> describe_posterior()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

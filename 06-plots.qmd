@@ -1,0 +1,310 @@
+
+
+# EDA
+
+```{r}
+
+# ─── RT distributions per participant, both tasks ─────────────────────────────
+
+(df_explicit_rt |>
+  ggplot(aes(x = rt, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
+  scale_y_continuous(name = "Density") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) +
+  # coord_cartesian(
+  #   xlim = c(350, 1320),
+  #   ylim = c(0.0005, .01)
+  # ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL)) |>
+  ggplotly() |>
+  style(showlegend = FALSE)
+
+(df_implicit_rt |>
+  ggplot(aes(x = rt, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
+  scale_y_continuous(name = "Density") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) +
+  # coord_cartesian(
+  #   xlim = c(350, 1320),
+  #   ylim = c(0.0005, .01)
+  # ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL)) |>
+  ggplotly() |>
+  style(showlegend = FALSE)
+```
+
+# Modelling
+
+```{r}
+
+# ─── Model checks ─────────────────────────────────────────────────────────────
+
+# characteristics to check
+model_checks = c("homogeneity", "vif", "outliers", "qq", "reqq")
+
+# plots
+p_glmm_checks_explicit <-
+  best_glmm_explicit |> check_model(check = model_checks, detrend = FALSE)
+p_glmm_checks_implicit <- 
+  best_glmm_implicit |> check_model(check = model_checks, detrend = FALSE)
+
+# exporting plots
+ggexport(
+  p_glmm_checks_explicit,
+  filename = "plots/glmm_checks_explicit.png",
+  width = 1000,
+  height = 800,
+  dpi = 600
+  )
+
+ggexport(
+  p_glmm_checks_implicit,
+  filename = "plots/glmm_checks_implicit.png",
+  width = 1000,
+  height = 800,
+  dpi = 600
+  )
+```
+
+
+```{r}
+
+# ─── Setup variables for the plots ────────────────────────────────────────────
+
+# dodge width for all the geoms
+dw <- .75
+# stat text size
+st <- 7
+# legend and axis text size
+txt <- 14
+
+# marginal means predictions
+best_glmm_explicit_preds <-
+  best_glmm_explicit |>
+  estimate_means(at = c("aphantasia", "congruence"))
+
+best_glmm_implicit_preds <-
+  best_glmm_implicit |>
+  estimate_means(at = c("aphantasia", "congruence"))
+  
+# overall means and medians
+rt_mean_explicit <- df_explicit_rt$rt |> mean()
+rt_mean_implicit <- df_implicit_rt$rt |> mean()
+rt_median_explicit <- df_explicit_rt$rt |> median()
+rt_median_implicit <- df_implicit_rt$rt |> median()
+```
+
+## Explicit task
+
+```{r}
+
+# ─── Plotting Groups and Congruence ───────────────────────────────────────────
+
+# annotations for significance
+plot_annotations_ex <-
+  df_explicit_rt |>
+  group_by(aphantasia) |> 
+  pairwise_wilcox_test(rt ~ congruence) |> 
+  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
+  mutate(
+    y.position = c(785, 795),
+    p.adj.signif = c("ns", "***")
+    )
+
+# plot
+p_glmm_explicit <-
+  df_explicit_rt |>
+  ggplot(aes(
+    x = congruence,
+    y = rt,
+    color = aphantasia
+  )) +
+  # linear modelling of the differences
+  geom_line(
+    data = best_glmm_explicit_preds,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1
+  ) +
+  # predicted means of the model
+  geom_pointrange2(
+    data = best_glmm_explicit_preds,
+    aes(
+      x = congruence,
+      y = Mean,
+      ymin = Mean - SE,
+      ymax = Mean + SE,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  # intercept
+  geom_hline(yintercept = rt_mean_explicit, linetype = 2) +
+  
+  # stats display
+  stat_pvalue_manual(
+    plot_explicit_annotations, 
+    label = "p.adj.signif", 
+    tip.length = 0,
+    size = st
+    ) +
+  labs(
+    title = "Explicit task",
+    x = NULL,
+    y = ""
+    ) +
+  coord_cartesian(
+    ylim = c(680, 800)
+  ) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt)
+    )
+```
+
+#### Implicit task
+
+```{r glmm_plots_im}
+
+# ─── Plotting Groups and Congruence ───────────────────────────────────────────
+
+# annotations
+plot_implicit_annotations <-
+  df_implicit_rt |>
+  group_by(aphantasia) |> 
+  pairwise_wilcox_test(rt ~ congruence) |> 
+  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
+  mutate(
+    # y.position = c(646, 653),
+    p.adj.signif = c("ns", "***")
+    )
+
+# ─── Model effects plot ───────────────────────────
+p_glmm_implicit <-
+  df_implicit_rt |>
+  ggplot(aes(
+    x = congruence,
+    y = rt,
+    color = aphantasia
+  )) +
+  geom_violin(
+    aes(fill = aphantasia),
+    data = df_implicit_rt |> 
+      group_by(subjectid, congruence, aphantasia) |> 
+      summarise(rt = mean(rt)),
+    position = position_dodge(width = dw),
+    alpha = .2
+    ) +
+  geom_beeswarm(
+    data = df_implicit_rt |> 
+      group_by(subjectid, congruence, aphantasia) |> 
+      summarise( rt = mean(rt)),
+    alpha = .6,
+    dodge.width = dw
+    ) +
+  # linear modelling of the differences
+  geom_line(
+    data = best_glmm_implicit_preds,
+    aes(
+      y = Mean,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1
+  ) +
+  # predicted means of the model
+  geom_pointrange2(
+    data = best_glmm_implicit_preds,
+    aes(
+      x = congruence,
+      y = Mean,
+      ymin = Mean - SE,
+      ymax = Mean + SE,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  # intercept
+  geom_hline(yintercept = rt_mean_implicit, linetype = 2) +
+  
+  # stats display
+  # stat_pvalue_manual(
+  #   plot_implicit_annotations, 
+  #   label = "p.adj.signif", 
+  #   tip.length = 0,
+  #   size = st
+  #   ) +
+  labs(
+    title = "Implicit task",
+    x = NULL,
+    y = "Response time (ms)"
+    ) +
+  # coord_cartesian(
+  #   ylim = c(580, 655)
+  # ) +
+  scale_y_continuous(breaks = breaks_pretty(8)) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
+  scale_fill_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt)
+    )
+
+p_glmm_implicit
+```
+:::
+
+``` {r glmm_ggarrange}
+#| label: fig-glmm_ggarrange
+
+p_glmms <-
+  ggarrange(
+    p_glmm_implicit,
+    p_glmm_explicit,
+    common.legend = TRUE,
+    legend = "top",
+    ncol = 2,
+    align = "v"
+  )
+
+ggexport(
+  p_glmms, 
+  filename = "plots/plots_glmm.png", 
+  width = 4000,
+  height = 1500,
+  res = 300
+  )
+```

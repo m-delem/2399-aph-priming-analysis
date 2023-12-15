@@ -252,48 +252,6 @@ df_implicit_rt |>
 # implicit trials are ok
 ```
 
-```{r}
-#| label: fig-rt_per_participant_2
-#| fig-cap: "Resulting distribution of RTs in the implicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
-#| fig-height: 4
-
-# (df_explicit_rt |> 
-#   ggplot(aes(x = rt, fill = subjectid)) +
-#   geom_density(alpha = .25, color = "black") +
-#   scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
-#   scale_y_continuous(name = "Density") +
-#   theme(
-#     axis.text.y = element_blank(),
-#     axis.ticks.y = element_blank()
-#     ) +
-#   # coord_cartesian(
-#   #   xlim = c(350, 1320),
-#   #   ylim = c(0.0005, .01)
-#   # ) +
-#   scale_fill_viridis_d(guide = NULL) +
-#   scale_color_viridis_d(guide = NULL)) |>  
-#   ggplotly() |> 
-#   style(showlegend = FALSE)
-# 
-# (df_implicit_rt |> 
-#   ggplot(aes(x = rt, fill = subjectid)) +
-#   geom_density(alpha = .25, color = "black") +
-#   scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
-#   scale_y_continuous(name = "Density") +
-#   theme(
-#     axis.text.y = element_blank(),
-#     axis.ticks.y = element_blank()
-#     ) +
-#   # coord_cartesian(
-#   #   xlim = c(350, 1320),
-#   #   ylim = c(0.0005, .01)
-#   # ) +
-#   scale_fill_viridis_d(guide = NULL) +
-#   scale_color_viridis_d(guide = NULL)) |>  
-#   ggplotly() |> 
-#   style(showlegend = FALSE)
-```
-
 
 
 
