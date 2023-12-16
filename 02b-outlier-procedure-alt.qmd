@@ -110,11 +110,11 @@ df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
 df_rt
 
 # explicit upper outlier threshold
-df_rt$Median[1] + 3*df_rt$MAD[1]
+threshold_explicit <- df_rt$Median[1] + 3*df_rt$MAD[1]
 # 1.35
 
 # implicit upper outlier threshold
-df_rt$Median[2] + 3*df_rt$MAD[2]
+threshold_implicit <- df_rt$Median[2] + 3*df_rt$MAD[2]
 # 1.055
 
 # ─── Listing median rts per subject ───
@@ -138,7 +138,7 @@ df_explicit_rt |>
   group_by(subjectid) |> 
   summarise(median_rt = median(rt)) |> 
   ungroup() |> 
-  filter(median_rt > 1.35) |> 
+  filter(median_rt > threshold_explicit) |> 
   arrange(desc(median_rt))
 # 3 outliers in the explicit task
 
@@ -146,7 +146,7 @@ df_implicit_rt |>
   group_by(subjectid) |> 
   summarise(median_rt = median(rt)) |> 
   ungroup() |> 
-  filter(median_rt > 1.055) |> 
+  filter(median_rt > threshold_implicit) |> 
   arrange(desc(median_rt))
 # 0 outliers in the implicit task
 

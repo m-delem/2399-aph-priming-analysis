@@ -50,18 +50,22 @@
 # ─── Model checks ─────────────────────────────────────────────────────────────
 
 # characteristics to check
-model_checks = c("homogeneity", "vif", "outliers", "qq", "reqq")
+model_checks = c("pp_check","homogeneity", "vif", "outliers", "qq", "reqq")
 
 # plots
 p_glmm_checks_explicit <-
-  best_glmm_explicit |> check_model(check = model_checks, detrend = FALSE)
+  # best_glmm_explicit |> 
+  glmm_floor_ex |> 
+  check_model(check = model_checks, detrend = FALSE)
 p_glmm_checks_implicit <- 
-  best_glmm_implicit |> check_model(check = model_checks, detrend = FALSE)
+  # best_glmm_implicit |> 
+  glmm_floor_im |> 
+  check_model(check = model_checks, detrend = FALSE)
 
 # exporting plots
 ggexport(
   p_glmm_checks_explicit,
-  filename = "plots/glmm_checks_explicit.png",
+  filename = "plots/glmm_checks_floor_inv_id_explicit.png",
   width = 1000,
   height = 800,
   dpi = 600
@@ -69,7 +73,7 @@ ggexport(
 
 ggexport(
   p_glmm_checks_implicit,
-  filename = "plots/glmm_checks_implicit.png",
+  filename = "plots/glmm_checks_floor_inv_id_implicit.png",
   width = 1000,
   height = 800,
   dpi = 600
@@ -90,18 +94,21 @@ txt <- 14
 
 # marginal means predictions
 best_glmm_explicit_preds <-
-  best_glmm_explicit |>
+  # best_glmm_explicit |>
+  glmm_floor_ex |> 
   estimate_means(at = c("aphantasia", "congruence"))
 
 best_glmm_implicit_preds <-
-  best_glmm_implicit |>
+  # best_glmm_implicit |>
+  glmm_floor_im |> 
   estimate_means(at = c("aphantasia", "congruence"))
-  
+
+glmm_floor_ex |> 
+  estimate_means(at = c("congruence"))
+
 # overall means and medians
 rt_mean_explicit <- df_explicit_rt$rt |> mean()
 rt_mean_implicit <- df_implicit_rt$rt |> mean()
-rt_median_explicit <- df_explicit_rt$rt |> median()
-rt_median_implicit <- df_implicit_rt$rt |> median()
 ```
 
 ## Explicit task
@@ -111,15 +118,15 @@ rt_median_implicit <- df_implicit_rt$rt |> median()
 # ─── Plotting Groups and Congruence ───────────────────────────────────────────
 
 # annotations for significance
-plot_annotations_ex <-
-  df_explicit_rt |>
-  group_by(aphantasia) |> 
-  pairwise_wilcox_test(rt ~ congruence) |> 
-  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
-  mutate(
-    y.position = c(785, 795),
-    p.adj.signif = c("ns", "***")
-    )
+# plot_annotations_ex <-
+#   df_explicit_rt |>
+#   group_by(aphantasia) |> 
+#   pairwise_wilcox_test(rt ~ congruence) |> 
+#   add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
+#   mutate(
+#     y.position = c(785, 795),
+#     p.adj.signif = c("ns", "***")
+#     )
 
 # plot
 p_glmm_explicit <-
@@ -160,20 +167,20 @@ p_glmm_explicit <-
   geom_hline(yintercept = rt_mean_explicit, linetype = 2) +
   
   # stats display
-  stat_pvalue_manual(
-    plot_explicit_annotations, 
-    label = "p.adj.signif", 
-    tip.length = 0,
-    size = st
-    ) +
+  # stat_pvalue_manual(
+  #   plot_explicit_annotations, 
+  #   label = "p.adj.signif", 
+  #   tip.length = 0,
+  #   size = st
+  #   ) +
   labs(
     title = "Explicit task",
     x = NULL,
     y = ""
     ) +
-  coord_cartesian(
-    ylim = c(680, 800)
-  ) +
+  # coord_cartesian(
+  #   ylim = c(680, 800)
+  # ) +
   scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
   scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
@@ -184,6 +191,8 @@ p_glmm_explicit <-
     legend.title = element_text(size = txt),
     legend.text = element_text(size = txt)
     )
+
+p_glmm_explicit
 ```
 
 #### Implicit task
@@ -193,15 +202,15 @@ p_glmm_explicit <-
 # ─── Plotting Groups and Congruence ───────────────────────────────────────────
 
 # annotations
-plot_implicit_annotations <-
-  df_implicit_rt |>
-  group_by(aphantasia) |> 
-  pairwise_wilcox_test(rt ~ congruence) |> 
-  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
-  mutate(
-    # y.position = c(646, 653),
-    p.adj.signif = c("ns", "***")
-    )
+# plot_implicit_annotations <-
+#   df_implicit_rt |>
+#   group_by(aphantasia) |> 
+#   pairwise_wilcox_test(rt ~ congruence) |> 
+#   add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
+#   mutate(
+#     # y.position = c(646, 653),
+#     p.adj.signif = c("ns", "***")
+#     )
 
 # ─── Model effects plot ───────────────────────────
 p_glmm_implicit <-
@@ -211,21 +220,22 @@ p_glmm_implicit <-
     y = rt,
     color = aphantasia
   )) +
-  geom_violin(
-    aes(fill = aphantasia),
-    data = df_implicit_rt |> 
-      group_by(subjectid, congruence, aphantasia) |> 
-      summarise(rt = mean(rt)),
-    position = position_dodge(width = dw),
-    alpha = .2
-    ) +
-  geom_beeswarm(
-    data = df_implicit_rt |> 
-      group_by(subjectid, congruence, aphantasia) |> 
-      summarise( rt = mean(rt)),
-    alpha = .6,
-    dodge.width = dw
-    ) +
+  # geom_violin(
+  #   aes(fill = aphantasia),
+  #   data = df_implicit_rt |> 
+  #     group_by(subjectid, congruence, aphantasia) |> 
+  #     summarise(rt = mean(rt)),
+  #   position = position_dodge(width = dw),
+  #   alpha = .2
+  #   ) +
+  # geom_beeswarm(
+  #   data = df_implicit_rt |> 
+  #     group_by(subjectid, congruence, aphantasia) |> 
+  #     summarise( rt = mean(rt)),
+  #   alpha = .6,
+  #   dodge.width = dw,
+  #   cex = 1.5
+  #   ) +
   # linear modelling of the differences
   geom_line(
     data = best_glmm_implicit_preds,
@@ -268,9 +278,9 @@ p_glmm_implicit <-
     x = NULL,
     y = "Response time (ms)"
     ) +
-  # coord_cartesian(
-  #   ylim = c(580, 655)
-  # ) +
+  coord_cartesian(
+    ylim = c(.60, .69)
+  ) +
   scale_y_continuous(breaks = breaks_pretty(8)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
   scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
