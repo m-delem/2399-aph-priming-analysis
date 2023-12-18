@@ -92,7 +92,7 @@ model_formulas <- list(
   )
 
 # ─── Table to combine everything in workflows and fit the models ──────────────
-# (
+
 model_all_workflows_fitted <- 
   tribble(       ~recipe,     ~ task,           ~model,       ~formula,
     model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas,

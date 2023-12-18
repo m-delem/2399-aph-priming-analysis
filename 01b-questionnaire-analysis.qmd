@@ -1,0 +1,367 @@
+
+```{r}
+# ═══ Modelling questionnaire scores with Generalized Linear Models ════════════
+
+glm_gaussian <-
+  linear_reg() |> 
+  set_engine(
+    "glm",
+    family = gaussian()
+    )
+
+glm_gamma <-
+  linear_reg() |> 
+  set_engine(
+    "glm",
+    family = Gamma()
+    )
+
+glm_poisson <-
+  linear_reg() |> 
+  set_engine(
+    "glm",
+    family = poisson()
+    )
+
+glm_inverse <-
+  linear_reg() |> 
+  set_engine(
+    "glm",
+    family = inverse.gaussian()
+    )
+
+# Listing these models
+model_specs_glm <- list(
+  # glm_gaussian = glm_gaussian
+  glm_gamma    = glm_gamma
+  # glm_poisson  = glm_poisson,
+  # glm_inverse  = glm_inverse
+)
+
+# formulas to fit
+formula_q1 <- vviq80 ~ aphantasia*age
+formula_q2 <- suis60 ~ aphantasia*age
+formula_q3 <- osiq_o75 ~ aphantasia*age
+formula_q4 <- osiq_s75 ~ aphantasia*age
+
+# Listing these formulas
+model_formulas_glm <- list(
+  formula_q1 = formula_q1,
+  formula_q2 = formula_q2,
+  formula_q3 = formula_q3,
+  formula_q4 = formula_q4
+)
+
+model_recipe_glm <-
+  df_questionnaires |> 
+  recipe() |> 
+  update_role(vviq80, suis60, osiq_o75, osiq_s75, new_role = "outcome") |> 
+  update_role(aphantasia, age, new_role = "predictor")
+
+# ─── Table to combine everything in workflows and fit the models ──────────────
+
+model_all_glm_fitted <-
+  tribble(   ~recipe,          ~model,           ~formula,
+    model_recipe_glm, model_specs_glm, model_formulas_glm
+  ) |> 
+  # combining recipes with models
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
+  rowwise() |>
+  mutate(
+    # fitting models
+    fitted_model = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(model, formula = formula) |> 
+      fit(df_questionnaires |> 
+            mutate(across(vviq80:suis60, ~as.numeric(rescale(.x, to = c(0.000001, 1)))))
+          ) |> 
+      extract_fit_engine()
+      )
+  ) |> 
+  select(!c(recipe, model, formula)) |>
+  mutate(
+    parameters = list(model_parameters(fitted_model)),
+    marg_means = list(estimate_means(fitted_model, at = "aphantasia")),
+    marg_contrasts = list(estimate_contrasts(fitted_model, contrast = "aphantasia")),
+    model_perf = list(model_performance(fitted_model)),
+    AICc  = model_perf[[2]]
+  ) |> 
+  # group_by(formula_id) |> 
+  # mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
+  # filter(best_model == TRUE) |> 
+  select(!c(model_perf)) |> 
+  arrange(formula_id)
+
+model_all_glm_fitted
+```
+
+
+```{r}
+model_vviq   <- model_all_glm_fitted[[3]][[1]]
+model_suis   <- model_all_glm_fitted[[3]][[2]]
+model_osiq_o <- model_all_glm_fitted[[3]][[3]]
+model_osiq_s <- model_all_glm_fitted[[3]][[4]]
+
+saveRDS(model_vviq,   file = "analyses-results/00-model-vviq.RDS")
+saveRDS(model_suis,   file = "analyses-results/00-model-suis.RDS")
+saveRDS(model_osiq_o, file = "analyses-results/00-model-osiq-o.RDS")
+saveRDS(model_osiq_s, file = "analyses-results/00-model-osiq-s.RDS")
+```
+
+```{r}
+
+# ─── Model checks ─────────────────────────────────────────────────────────────
+
+# plots
+p_glm_vviq_checks   <- model_vviq   |> check_model(check = "all")
+p_glm_suis_checks   <- model_suis   |> check_model(check = "all")
+p_glm_osiq_o_checks <- model_osiq_o |> check_model(check = "all")
+p_glm_osiq_s_checks <- model_osiq_s |> check_model(check = "all")
+
+# exporting plots
+ggexport(
+  p_glm_vviq_checks,
+  filename = "plots/S0-glm-vviq-checks.png",
+  width = 1000,
+  height = 800,
+  dpi = 600
+  )
+
+ggexport(
+  p_glm_suis_checks,
+  filename = "plots/S0-glm-suis-checks.png",
+  width = 1000,
+  height = 800,
+  dpi = 600
+  )
+
+ggexport(
+  p_glm_osiq_o_checks,
+  filename = "plots/S0-glm-osiq-o-checks.png",
+  width = 1000,
+  height = 800,
+  dpi = 600
+  )
+
+ggexport(
+  p_glm_osiq_s_checks,
+  filename = "plots/S0-glm-osiq-s-checks.png",
+  width = 1000,
+  height = 800,
+  dpi = 600
+  )
+
+
+```
+
+```{r}
+# ─── A Cool little plot ───────────────────────────────────────────────────────
+
+# dodge width for all the geoms
+dw <- 1
+# legend and axis text size
+txt <- 14
+
+# setting up some auxiliary data
+marginal_vviq   <- model_all_glm_fitted[[5]][[1]]
+marginal_suis   <- model_all_glm_fitted[[5]][[2]]
+marginal_osiq_o <- model_all_glm_fitted[[5]][[3]]
+marginal_osiq_s <- model_all_glm_fitted[[5]][[4]]
+ 
+marginal_means <-
+  marginal_vviq |> 
+  mutate(variable = "vviq80") |> 
+  bind_rows(marginal_suis |> mutate(variable = "suis60")) |> 
+  bind_rows(marginal_osiq_o |> mutate(variable = "osiq_o75")) |> 
+  bind_rows(marginal_osiq_s |> mutate(variable = "osiq_s75")) |> 
+  group_by(variable)
+
+p_questionnaires <-
+  df_questionnaires |> 
+  mutate(across(vviq80:suis60, ~as.numeric(rescale(.x, to = c(0, 1))))) |> 
+  pivot_longer(
+    cols = c(vviq80, suis60, osiq_o75, osiq_s75),
+    names_to = "variable"
+  ) |> 
+  ggplot(aes(
+    x = fct_relevel(variable, c("vviq80", "suis60", "osiq_o75", "osiq_s75")),
+    y = value,
+    fill = aphantasia,
+    color = aphantasia
+  )) +
+  geom_hline(
+    yintercept = .5,
+    linetype = 1,
+    color = "grey30",
+    alpha = .3
+  ) +
+  geom_violin(
+    position = position_dodge(dw),
+    alpha = .1,
+    draw_quantiles = c(.25, .5, .75)
+    # scale = "width"
+    ) +
+  # geom_beeswarm(
+  #   dodge.width = dw,
+  #   alpha = .1,
+  #   cex   = .5,
+  #   size  = 2,
+  #   priority = "density",
+  #   side = 0
+  # ) +
+  geom_pointrange(
+    data = marginal_means,
+    aes(
+    x = fct_relevel(variable, c("vviq80", "suis60", "osiq_o75", "osiq_s75")),
+    y = Mean,
+    ymin = CI_low,
+    ymax = CI_high,
+    color = aphantasia
+    ),
+    size = .75,
+    linewidth = 1,
+    position = position_dodge(dw)
+  ) +
+  annotate(
+    geom  = "text",
+    label = "*",
+    color = "black",
+    x = 1,
+    y = .95,
+    # vjust = .1,
+    # hjust = 6,
+    size  = 10 
+    ) +
+  geom_vline(
+    aes(xintercept = stage(variable, after_scale = 1.5)),
+    linetype = 3
+  ) +
+  annotate(
+    geom  = "text",
+    label = "*",
+    color = "black",
+    x = 2,
+    y = .95,
+    # vjust = .1,
+    # hjust = 6,
+    size  = 10 
+    ) +
+  geom_vline(
+    aes(xintercept = stage(variable, after_scale = 2.5)),
+    linetype = 3
+  ) +
+  annotate(
+    geom  = "text",
+    label = "*",
+    color = "black",
+    x = 3,
+    y = .95,
+    # vjust = .1,
+    # hjust = 6,
+    size  = 10 
+    ) +
+  geom_vline(
+    aes(xintercept = stage(variable, after_scale = 3.5)),
+    linetype = 3
+  ) +
+  annotate(
+    geom  = "text",
+    label = "*",
+    color = "black",
+    x = 4,
+    y = .95,
+    # vjust = .1,
+    # hjust = 6,
+    size  = 10 
+    ) +
+  scale_color_okabeito(name = "Group", labels = c("Aphantasic", "Control")) +
+  scale_fill_okabeito(name = "Group", labels = c("Aphantasic", "Control")) +
+  scale_x_discrete(
+    name = "",
+    labels = c("VVIQ", "SUIS", "OSIQ-Object", "OSIQ-Spatial")
+  ) +
+  scale_y_continuous(
+    name = "Standardized score",
+    breaks = breaks_pretty(8)
+  ) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    axis.text.x =  element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text =  element_text(size = txt),
+    legend.position = "top"
+    )
+
+ggexport(
+  p_questionnaires, 
+  filename = "plots/00-plot-questionnaires.png", 
+  width = 3200,
+  height = 1500,
+  res = 300
+  )
+```
+
+```{r}
+model_all_glm_fitted[[6]][[1]]
+model_all_glm_fitted[[6]][[2]]
+model_all_glm_fitted[[6]][[3]]
+model_all_glm_fitted[[6]][[4]]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
