@@ -59,10 +59,10 @@ glmm_gaussian <-
 # Listing these models
 # GLMMs
 model_specs_glmm <- list(
-  glmm_gamma_id    = glmm_gamma_id,
-  glmm_inverse_id  = glmm_inverse_id,
-  glmm_inverse_log = glmm_inverse_log,
-  glmm_gaussian    = glmm_gaussian
+  # glmm_gamma_id    = glmm_gamma_id,
+  glmm_inverse_id  = glmm_inverse_id
+  # glmm_inverse_log = glmm_inverse_log,
+  # glmm_gaussian    = glmm_gaussian
 )
 
 # ─── Writing down the formulas of our models ──────────────────────────────────
@@ -224,18 +224,30 @@ model_selection <-
 ```
 
 ```{r best_models}
-best_glmm_explicit <- model_selection$fitted_model[[2]]
-best_glmm_implicit <- model_selection$fitted_model[[6]]
+# best_glmm_explicit <- model_selection$fitted_model[[2]]
+# best_glmm_implicit <- model_selection$fitted_model[[6]]
 
-saveRDS(
-  best_glmm_explicit, 
-  "analyses-results/01-glmm-inverse-id-explicit.RDS") # readRDS to import
-saveRDS(
-  best_glmm_implicit, 
-  "analyses-results/01-glmm-inverse-id-implicit.RDS")
+# saveRDS(
+#   best_glmm_explicit, 
+#   "analyses-results/01-glmm-inverse-id-explicit.RDS") # readRDS to import
+# saveRDS(
+#   best_glmm_implicit, 
+#   "analyses-results/01-glmm-inverse-id-implicit.RDS")
 ```
 
+```{r}
+# ═══ Post-hoc tests: unstandardized effect sizes ══════════════════════════════
 
+# glmm_im <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-implicit.RDS")
+
+emmeans(
+  glmm_im, 
+  ~aphantasia*congruence, 
+  adjust = "sidak"
+  ) |> 
+  pairs()
+  # plot()
+```
 
 
 

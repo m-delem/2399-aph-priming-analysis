@@ -55,17 +55,17 @@ model_checks = c("pp_check","homogeneity", "vif", "outliers", "qq", "reqq")
 # plots
 p_glmm_checks_explicit <-
   # best_glmm_explicit |> 
-  glmm_floor_ex |> 
+  glmm_ex |> 
   check_model(check = model_checks, detrend = FALSE)
 p_glmm_checks_implicit <- 
   # best_glmm_implicit |> 
-  glmm_floor_im |> 
+  glmm_im |> 
   check_model(check = model_checks, detrend = FALSE)
 
 # exporting plots
 ggexport(
   p_glmm_checks_explicit,
-  filename = "plots/glmm_checks_floor_inv_id_explicit.png",
+  filename = "plots/glmm-checks-explicit.png",
   width = 1000,
   height = 800,
   dpi = 600
@@ -73,7 +73,7 @@ ggexport(
 
 ggexport(
   p_glmm_checks_implicit,
-  filename = "plots/glmm_checks_floor_inv_id_implicit.png",
+  filename = "plots/glmm-checks-implicit.png",
   width = 1000,
   height = 800,
   dpi = 600
@@ -95,16 +95,13 @@ txt <- 14
 # marginal means predictions
 best_glmm_explicit_preds <-
   # best_glmm_explicit |>
-  glmm_floor_ex |> 
+  glmm_ex |> 
   estimate_means(at = c("aphantasia", "congruence"))
 
 best_glmm_implicit_preds <-
   # best_glmm_implicit |>
-  glmm_floor_im |> 
+  glmm_im |> 
   estimate_means(at = c("aphantasia", "congruence"))
-
-glmm_floor_ex |> 
-  estimate_means(at = c("congruence"))
 
 # overall means and medians
 rt_mean_explicit <- df_explicit_rt$rt |> mean()
@@ -133,14 +130,14 @@ p_glmm_explicit <-
   df_explicit_rt |>
   ggplot(aes(
     x = congruence,
-    y = rt,
+    y = rt * 1000,
     color = aphantasia
   )) +
   # linear modelling of the differences
   geom_line(
     data = best_glmm_explicit_preds,
     aes(
-      y = Mean,
+      y = Mean * 1000,
       group = aphantasia
     ),
     position = position_dodge(width = dw),
@@ -152,9 +149,9 @@ p_glmm_explicit <-
     data = best_glmm_explicit_preds,
     aes(
       x = congruence,
-      y = Mean,
-      ymin = Mean - SE,
-      ymax = Mean + SE,
+      y = Mean * 1000,
+      ymin = Mean * 1000 - SE * 1000,
+      ymax = Mean * 1000 + SE * 1000,
       group = aphantasia
       ),
     color = "black",
@@ -164,7 +161,7 @@ p_glmm_explicit <-
     show.legend = FALSE
   ) +
   # intercept
-  geom_hline(yintercept = rt_mean_explicit, linetype = 2) +
+  # geom_hline(yintercept = rt_mean_explicit, linetype = 2) +
   
   # stats display
   # stat_pvalue_manual(
@@ -176,14 +173,15 @@ p_glmm_explicit <-
   labs(
     title = "Explicit task",
     x = NULL,
-    y = ""
+    y = NULL
+    # y = "Response time (ms)"
     ) +
   # coord_cartesian(
   #   ylim = c(680, 800)
   # ) +
-  scale_y_continuous(breaks = breaks_pretty(8)) +
+  scale_y_continuous(breaks = breaks_pretty(6)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
+  scale_color_okabeito(name = "", labels = c("Aphantasic (VVIQ = 16)", "Control (VVIQ > 42)")) +
   theme(
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
@@ -204,12 +202,12 @@ p_glmm_explicit
 # annotations
 # plot_implicit_annotations <-
 #   df_implicit_rt |>
-#   group_by(aphantasia) |> 
-#   pairwise_wilcox_test(rt ~ congruence) |> 
-#   add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
+#   group_by(aphantasia) |>
+#   pairwise_wilcox_test(rt ~ congruence) |>
+#   add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |>
 #   mutate(
-#     # y.position = c(646, 653),
-#     p.adj.signif = c("ns", "***")
+#     y.position = c(680, 687),
+#     p.adj.signif = c("ns", "*")
 #     )
 
 # ─── Model effects plot ───────────────────────────
@@ -217,30 +215,14 @@ p_glmm_implicit <-
   df_implicit_rt |>
   ggplot(aes(
     x = congruence,
-    y = rt,
+    y = rt * 1000,
     color = aphantasia
   )) +
-  # geom_violin(
-  #   aes(fill = aphantasia),
-  #   data = df_implicit_rt |> 
-  #     group_by(subjectid, congruence, aphantasia) |> 
-  #     summarise(rt = mean(rt)),
-  #   position = position_dodge(width = dw),
-  #   alpha = .2
-  #   ) +
-  # geom_beeswarm(
-  #   data = df_implicit_rt |> 
-  #     group_by(subjectid, congruence, aphantasia) |> 
-  #     summarise( rt = mean(rt)),
-  #   alpha = .6,
-  #   dodge.width = dw,
-  #   cex = 1.5
-  #   ) +
   # linear modelling of the differences
   geom_line(
     data = best_glmm_implicit_preds,
     aes(
-      y = Mean,
+      y = Mean * 1000,
       group = aphantasia
     ),
     position = position_dodge(width = dw),
@@ -252,9 +234,9 @@ p_glmm_implicit <-
     data = best_glmm_implicit_preds,
     aes(
       x = congruence,
-      y = Mean,
-      ymin = Mean - SE,
-      ymax = Mean + SE,
+      y = Mean * 1000,
+      ymin = Mean * 1000 - SE * 1000,
+      ymax = Mean * 1000 + SE * 1000,
       group = aphantasia
       ),
     color = "black",
@@ -264,12 +246,22 @@ p_glmm_implicit <-
     show.legend = FALSE
   ) +
   # intercept
-  geom_hline(yintercept = rt_mean_implicit, linetype = 2) +
-  
+  # geom_hline(yintercept = rt_mean_implicit * 1000, linetype = 2) +
+  annotate(
+    geom  = "text",
+    label = "*",
+    fontface = "italic",
+    color = "#56b4e9",
+    x = 2.05,
+    y = 628,
+    vjust = .1,
+    hjust = 6,
+    size  = 12 
+    ) +
   # stats display
   # stat_pvalue_manual(
-  #   plot_implicit_annotations, 
-  #   label = "p.adj.signif", 
+  #   plot_implicit_annotations,
+  #   label = "p.adj.signif",
   #   tip.length = 0,
   #   size = st
   #   ) +
@@ -278,13 +270,12 @@ p_glmm_implicit <-
     x = NULL,
     y = "Response time (ms)"
     ) +
-  coord_cartesian(
-    ylim = c(.60, .69)
-  ) +
-  scale_y_continuous(breaks = breaks_pretty(8)) +
+  # coord_cartesian(
+  #   ylim = c(.60, .69)
+  # ) +
+  scale_y_continuous(breaks = breaks_pretty(9)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
-  scale_fill_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
+  scale_color_okabeito(name = "", labels = c("Aphantasic (VVIQ = 16)", "Control (VVIQ > 42)")) +
   theme(
     panel.grid.major.x = element_blank(),
     axis.ticks.x = element_blank(),
@@ -295,6 +286,8 @@ p_glmm_implicit <-
 
 p_glmm_implicit
 ```
+
+
 :::
 
 ``` {r glmm_ggarrange}
@@ -312,9 +305,64 @@ p_glmms <-
 
 ggexport(
   p_glmms, 
-  filename = "plots/plots_glmm.png", 
+  filename = "plots/02-plots-glmms-floor.png", 
   width = 4000,
   height = 1500,
   res = 300
   )
 ```
+
+```{r}
+glmm_ex <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-explicit.RDS")
+glmm_im <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-implicit.RDS")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

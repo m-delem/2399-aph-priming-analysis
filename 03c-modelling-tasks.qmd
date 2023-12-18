@@ -1,10 +1,14 @@
 
 ```{r}
 # ─── Combining both tables to add tasks as factors ────────────────────────────
-
+df <-
+  bind_rows(
+    df_explicit_rt |> 
+      mutate(task = as.factor("explicit")),
+    df_implicit_rt |> 
+      mutate(task = as.factor("implicit"))
+  )
 ```
-
-
 
 ```{r fitting_glmms}
 #| output: false
@@ -12,22 +16,12 @@
 # ═══ Fitting Generalized Linear Mixed Models in parallel ══════════════════════
 
 # ─── Preparing variable roles ─────────────────────────────────────────────────
-model_recipe_glmm_ex <- 
-  df_explicit_rt |> 
+model_recipe_glmm <- 
+  df |> 
   recipe() |> 
   update_role(rt, new_role = "outcome") %>%
   update_role(
-    subjectid, age, aphantasia, color, congruence, 
-    new_role = "predictor"
-  ) |> 
-  add_role(subjectid, new_role = "group")
-
-model_recipe_glmm_im <- 
-  df_implicit_rt |> 
-  recipe() |> 
-  update_role(rt, new_role = "outcome") %>%
-  update_role(
-    subjectid, age, aphantasia, color, congruence, 
+    subjectid, age, aphantasia, color, congruence, task,
     new_role = "predictor"
   ) |> 
   add_role(subjectid, new_role = "group")
@@ -76,29 +70,31 @@ model_specs_glmm <- list(
 # null model
 formula_0 <- rt ~ (1|subjectid)
 # intercept by-participant only
-formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
+formula_1 <- rt ~ (aphantasia + congruence + color)^3 + (1|subjectid)
 # intercept and slope on congruence by-participant
-formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
+formula_2 <- rt ~ (aphantasia + congruence + color)^3 + (congruence|subjectid)
 # intercept and slope on color by-participant
-formula_3 <- rt ~ (aphantasia + congruence + color)^2 + (color|subjectid)
+formula_3 <- rt ~ (aphantasia + congruence + color)^3 + (color|subjectid)
 # intercept and slope on congruence and color by-participant
-formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
+formula_4 <- rt ~ (aphantasia + congruence + color + task)^3 + (congruence + color|subjectid)
+# intercept and slope on congruence, color, and task by-participant
+formula_5 <- rt ~ (aphantasia + congruence + color + task)^3 + (congruence + color + task|subjectid)
 
 # Listing these formulas
 model_formulas <- list(
   formula_0 = formula_0,
-  formula_1 = formula_1,
-  formula_2 = formula_2,
-  formula_3 = formula_3,
-  formula_4 = formula_4
+  # formula_1 = formula_1,
+  # formula_2 = formula_2,
+  # formula_3 = formula_3,
+  formula_4 = formula_4,
+  formula_5 = formula_5
   )
 
 # ─── Table to combine everything in workflows and fit the models ──────────────
 # (
 model_all_workflows_fitted <- 
-  tribble(       ~recipe,     ~ task,           ~model,       ~formula,
-    model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas,
-    model_recipe_glmm_im, "implicit", model_specs_glmm, model_formulas
+  tribble(    ~recipe,           ~model,       ~formula,
+    model_recipe_glmm, model_specs_glmm, model_formulas
   ) |> 
   # combining recipes with models
   unnest_longer(model) |> 
@@ -136,27 +132,15 @@ doParallel::registerDoParallel(cl = parallel_cluster)
 (model_all_workflows_fitted$fitted_model <-
   foreach(
     workflow = model_all_workflows_fitted$workflow,
-    task     = model_all_workflows_fitted$task,
     .combine  = "c",
     .packages = c("tidymodels", "multilevelmod")
 ) %dopar% {
-  if(task == "explicit"){
     model_fit <-
       list(
         workflow |> 
-        fit(data = df_explicit_rt) |> 
+        fit(data = df) |> 
         extract_fit_engine()
       )
-  }
-  
-  else{
-    model_fit <-
-      list(
-        workflow |> 
-        fit(data = df_implicit_rt) |> 
-        extract_fit_engine()
-      )
-  }
   
   return(model_fit)
 # measuring runtime for benchmarking
@@ -220,7 +204,7 @@ model_selection <-
     formula_id != "formula_0" & 
     convergence == TRUE
   ) |> 
-  group_by(task, model_id) |> 
+  group_by(model_id) |> 
   mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
   filter(best_model == TRUE)
 ```

@@ -68,9 +68,94 @@ df_explicit <- dfs$explicit_task
 rm(dfs)
 ```
 
---------------------------------------------------------------------------------
-Here we need to run the outlier selection procedure in `02b-outlier-procedure-alt.qmd`.
---------------------------------------------------------------------------------
+```{r finding_and_removing_accuracy_outliers}
+#| code-summary: "Removing incorrect trials and task-wise accuracy outliers"
+#| echo: true
+#| output: false
+
+# ═══ Accuracy outliers analysis ═══════════════════════════════════════════════
+
+# ─── Listing error rates per subject ───
+list(df_explicit, df_implicit) |> 
+  imap(
+    ~.x |> 
+      select(subjectid, starts_with("correct"), aphantasia) |> 
+      group_by(subjectid) |> 
+      count(pick(2)) |> 
+      filter(pick(1) == 1) |> 
+      ungroup() |> 
+      mutate(
+        n_tot = max(n),
+        prop = (n_tot - n) / n_tot * 100  # analyzing the error rate per subject
+      ) %>%
+      arrange(desc(prop)) |> 
+      select(1, 5)
+    )
+# 5 accuracy outliers in the explicit task, 4 in the implicit one
+
+# ─── Removing incorrect trials and task-wise accuracy outliers ───
+df_explicit_rt <-
+  df_explicit |> 
+  # filtering out...
+  filter(
+    # incorrect trials
+    correct_explicit == 1 &
+    # participants identified with with high error rates
+    !(subjectid %in% c( 
+      "aknezevic",
+      "lbrunie", 
+      "agayou", 
+      "bluciani",
+      "ldossantos"))
+    ) |>  
+  # removing irrelevant variables
+  select(-c(sex, vviq80, orientation, response, correct_explicit))
+
+# percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
+# 9091 trials left = 5.9% removed
+
+df_implicit_rt <- 
+  df_implicit |>  
+  filter(
+    correct_implicit == 1 &
+    !(subjectid %in% c( 
+      "bdispaux", 
+      "eleveque", 
+      "aleclaire", 
+      "dchimenton"))
+      ) |>  
+  select(-c(sex, vviq80, orientation, response, correct_implicit))
+
+# percentage of trials removed in the implicit task
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit) 
+# 9078 trials left = 6.1% removed
+```
+
+```{r}
+#| code-summary: "Removing extreme RTs"
+#| echo: true
+#| output: false
+
+# ═══ First broad RT outlier trials removal ════════════════════════════════════
+
+df_explicit_rt <- 
+  df_explicit_rt |>  
+  # filtering out extreme RTs
+  filter(rt > .25 & rt < 2)
+
+# total percentage of trials removed in the explicit task
+(count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
+# 8812 trials left = 8.8% removed
+
+df_implicit_rt <- 
+  df_implicit_rt |>  
+  filter(rt > .25 & rt < 2)
+
+# total percentage of trials removed in the implicit task
+(count(df_implicit) - count(df_implicit_rt)) / count(df_implicit)
+# 8963 left = 7.3% removed
+```
 
 ```{r fitting_glmms}
 #| output: false
@@ -132,10 +217,10 @@ glmm_gaussian <-
 # Listing these models
 # GLMMs
 model_specs_glmm <- list(
-  glmm_gamma_id    = glmm_gamma_id,
+  # glmm_gamma_id    = glmm_gamma_id,
   glmm_inverse_id  = glmm_inverse_id,
-  glmm_inverse_log = glmm_inverse_log,
-  glmm_gaussian    = glmm_gaussian
+  glmm_inverse_log = glmm_inverse_log
+  # glmm_gaussian    = glmm_gaussian
 )
 
 # ─── Writing down the formulas of our models ──────────────────────────────────
@@ -292,13 +377,60 @@ model_selection <-
 ```
 
 ```{r}
-best_glmm_explicit <- model_selection$fitted_model[[2]]
-best_glmm_implicit <- model_selection$fitted_model[[6]]
+# best_glmm_explicit <- model_selection$fitted_model[[2]]
+# best_glmm_implicit <- model_selection$fitted_model[[6]]
 
-saveRDS(
-  best_glmm_explicit, 
-  "analyses-results/glmm_floor_inverse_id_explicit.RDS") # readRDS to import
-saveRDS(
-  best_glmm_implicit, 
-  "analyses-results/glmm_floor_inverse_id_implicit.RDS")
+# saveRDS(
+#   best_glmm_explicit, 
+#   "analyses-results/glmm_floor_inverse_id_explicit.RDS") # readRDS to import
+# saveRDS(
+#   best_glmm_implicit, 
+#   "analyses-results/glmm_floor_inverse_id_implicit.RDS")
 ```
+
+```{r}
+# ═══ Post-hoc tests: unstandardized effect sizes ══════════════════════════════
+
+# glmm_ex <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-explicit.RDS")
+
+# glmm_floor_explicit_contrasts <-
+#   emmeans(
+#     glmm_ex, 
+#     ~color, 
+#     adjust = "tukey"
+#   ) |> 
+#   pairs()
+  # plot()
+
+# saveRDS(
+#   glmm_floor_explicit_contrasts,
+#   "analyses-results/02-glmm-floor-explicit-contrasts.RDS") # readRDS to import
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
