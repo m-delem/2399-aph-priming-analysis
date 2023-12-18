@@ -391,21 +391,24 @@ model_selection <-
 ```{r}
 # ═══ Post-hoc tests: unstandardized effect sizes ══════════════════════════════
 
-# glmm_ex <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-explicit.RDS")
+glmm_ex <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-explicit.RDS")
 
-# glmm_floor_explicit_contrasts <-
-#   emmeans(
-#     glmm_ex, 
-#     ~color, 
-#     adjust = "tukey"
-#   ) |> 
-#   pairs()
+glmm_floor_implicit_contrasts <- readRDS(file = "analyses-results/02-glmm-floor-implicit-contrasts.RDS")
+
+  emmeans(
+    glmm_im,
+    ~congruence*color,
+    adjust = "tukey"
+  ) |>
+  pairs()
   # plot()
 
 # saveRDS(
 #   glmm_floor_explicit_contrasts,
 #   "analyses-results/02-glmm-floor-explicit-contrasts.RDS") # readRDS to import
 
+glmm_ex |> model_parameters()
+glmm_floor_explicit_contrasts
 ```
 
 

@@ -73,7 +73,7 @@ df_implicit_rt <-
 df_explicit_rt <- 
   df_explicit_rt |>  
   # filtering out extreme RTs
-  filter(rt > .25 & rt < 2)
+  filter(rt > .25 & rt < 3)
 
 # total percentage of trials removed in the explicit task
 (count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
@@ -81,7 +81,7 @@ df_explicit_rt <-
 
 df_implicit_rt <- 
   df_implicit_rt |>  
-  filter(rt > .25 & rt < 2)
+  filter(rt > .25 & rt < 3)
 
 # total percentage of trials removed in the implicit task
 (count(df_implicit) - count(df_implicit_rt)) / count(df_implicit)

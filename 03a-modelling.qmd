@@ -224,29 +224,33 @@ model_selection <-
 ```
 
 ```{r best_models}
-# best_glmm_explicit <- model_selection$fitted_model[[2]]
-# best_glmm_implicit <- model_selection$fitted_model[[6]]
+best_glmm_explicit <- model_selection$fitted_model[[1]]
+best_glmm_implicit <- model_selection$fitted_model[[2]]
 
-# saveRDS(
-#   best_glmm_explicit, 
-#   "analyses-results/01-glmm-inverse-id-explicit.RDS") # readRDS to import
-# saveRDS(
-#   best_glmm_implicit, 
-#   "analyses-results/01-glmm-inverse-id-implicit.RDS")
+saveRDS(
+  best_glmm_explicit,
+  "analyses-results/01-glmm-inverse-id-explicit.RDS") # readRDS to import
+saveRDS(
+  best_glmm_implicit,
+  "analyses-results/01-glmm-inverse-id-implicit.RDS")
 ```
 
 ```{r}
 # ═══ Post-hoc tests: unstandardized effect sizes ══════════════════════════════
 
-# glmm_im <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-implicit.RDS")
+glmm_im <- readRDS(file = "analyses-results/01-best-glmm-implicit.RDS")
 
 emmeans(
   glmm_im, 
-  ~aphantasia*congruence, 
-  adjust = "sidak"
+  ~aphantasia*congruence|color, 
+  adjust = "tukey"
   ) |> 
   pairs()
   # plot()
+
+estimate_contrasts(glmm_im, contrast = c("aphantasia", "congruence"))
+
+glmm_ex |> model_parameters()
 ```
 
 
