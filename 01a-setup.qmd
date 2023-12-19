@@ -1,6 +1,5 @@
 
 ```{r setup}
-#| echo: true
 #| output: false
 #| code-summary: "Packages"
 
@@ -55,7 +54,7 @@ shelf(
   tidyverse,      # modern R ecosystem
 )
 
-# ─── Global cosmetic theme ───q
+# ─── Global cosmetic theme ───
 theme_set(theme_bw(base_size = 14))
 
 # ─── Fixing a seed for reproducibility ───
@@ -63,7 +62,6 @@ set.seed(14051998)
 ```
 
 ```{r importing_data}
-#| echo: true
 #| output: false
 #| code-summary: "Importing data"
 

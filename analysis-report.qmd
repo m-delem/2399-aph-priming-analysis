@@ -1,19 +1,14 @@
 ---
-title: "Sensory priming in aphantasia - Data analysis report"
+title: "Sensory Priming in Aphantasia - Supplementary Materials - Data analysis report"
 author: "Maël Delem"
 date: 2023-11-03
 date-modified: last-modified
 date-format: "D/MM/YYYY"
-format: html
-editor: source
+format:
+  html: default
+  docx: default
 editor_options: 
-  
   chunk_output_type: inline
-toc: true
-toc-depth: 3
-toc-expand: 2
-number-sections: true
-number-depth: 2
 ---
 
 <!-- CSS options for custom title numbers styling-->
@@ -25,21 +20,25 @@ number-depth: 2
 }
 </style>
 ```
+
 ### Preliminary Set-up {.unnumbered}
 
 ::: {.callout-note collapse="true" appearance="simple"}
 #### Datasets, code availability, software and setup
 
-The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the `analysis_report.qmd` file, for which the best reading software are coding Integrated Development Environments (IDE) like [RStudio](https://posit.co/download/rstudio-desktop/) or [Visual Studio Code](https://code.visualstudio.com/). The file includes detailed commentaries along with the code to ease understanding, accessibility, and potential (welcome) criticism.
+The data is retrieved from the file `data/aphantasia_priming_tidy_data.xlsx`, which contains four sheets, containing the raw data, the data from the association, explicit, and implicit task respectively.
 
-This analysis was conducted in R language on [RStudio](https://posit.co/download/rstudio-desktop/). This analysis report was written with [Quarto](https://quarto.org/). Down below is the set-up code, including two essential steps:
+This analysis was conducted in R language on [RStudio](https://posit.co/download/rstudio-desktop/). This analysis report was written with [Quarto](https://quarto.org/).
+
+The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the `analysis-report.qmd` Quarto file, for which the best reading software are coding Integrated Development Environments (IDE) like [RStudio](https://posit.co/download/rstudio-desktop/) or [Visual Studio Code](https://code.visualstudio.com/). The file includes detailed commentaries along with the code to ease understanding, accessibility, and welcome criticism. The code for heavy computations is not re-run upon rendering the Quarto file to `.docx` or HTML, but can be ran manually in the R code chunks of the file itself if one wishes to re-run the analyses.
+
+ Down below is the set-up code, including two essential steps:
 
 1.  Installing the required packages for this data analysis
 
 2.  importing data into the dataframes used throughout.
 
 ```{r setup}
-#| echo: true
 #| output: false
 #| code-summary: "Packages"
 
@@ -55,54 +54,30 @@ library(librarian)
 
 # now putting packages on our library's shelves:
 shelf(
-  # ─── essential package collections ───
-  tidyverse,      # modern R ecosystem
-  easystats,      # data analysis framework
-  tidymodels,     # modelling framework
-  doParallel,     # parallel execution
-  
-  # ─── tidymodels friends ──────────────
-  corrr,          # correlational analyses
-  tidybayes,      # bayesian inference
-  multilevelmod,  # multilevel modelling with lmer and tidymodels
+  # ─── data management ─────────────────
+  readxl,         # importing xlsx
   
   # ─── modelling ───────────────────────
   lme4,           # mixed models
-  mclust,         # mixture clustering
-  rstanarm,       # bayesian models
-  BayesFactor,    # BFs
   emmeans,        # marginal estimates
   statmod,        # easystats dependency
-  
-  # ─── data management ─────────────────
-  readxl,         # importing xlsx
-  openxlsx,       # exporting xlsx
+  doParallel,     # parallel execution
+  multilevelmod,  # multilevel modelling with lmer and tidymodels
   
   #  data visualization ──────────────
-  # plot types and geoms
-  ricardo-bion/ggradar,  # radar plots
-  ggbeeswarm,            # scatter violin plots
-  GGally,         # complex plots
-  # layout and options
   ggpubr,         # publication plots
-  patchwork,      # layout control
-  rstatix,        # ggplot stat tools
-  # palettes
-  ggsci,          # scientific palettes
-  viridis,        # colour-blind friendly palettes
-  # interactive
-  plotly         # interactive plots
+  
+  # ─── essential package collections ───
+  easystats,      # data analysis framework
+  tidymodels,     # modelling framework
+  tidyverse       # modern R ecosystem
 )
-
-# ─── Global cosmetic theme ───q
-theme_set(theme_bw(base_size = 14))
 
 # ─── Fixing a seed for reproducibility ───
 set.seed(14051998)
 ```
 
 ```{r importing_data}
-#| echo: true
 #| output: false
 #| code-summary: "Importing data"
 
@@ -112,7 +87,9 @@ df_implicit <-
     "data/aphantasia_priming_tidy_data.xlsx",
     sheet = "data_implicit"
     ) |> 
-  rename("rt" = rt_implicit)
+  rename("rt" = rt_implicit) |> 
+  # convert to seconds
+  mutate(rt = rt/1000)
 
 # Explicit task
 df_explicit <- 
@@ -120,7 +97,9 @@ df_explicit <-
     "data/aphantasia_priming_tidy_data.xlsx",
     sheet = "data_explicit"
     ) |> 
-  rename("rt" = rt_explicit)
+  rename("rt" = rt_explicit) |> 
+  # convert to seconds
+  mutate(rt = rt/1000)
 
 # Questionnaires
 df_questionnaires <- 
@@ -170,7 +149,7 @@ rm(dfs)
 ::: {.callout-tip collapse="true" appearance="simple"}
 #### Interactive figures
 
-Many figures in this report are interactive: hover over the plots to see some of the tools available. You can select a zone to zoom on a plot, hover over bars to see details about data, select only specific groups in the legend, among many other features.
+Several figures in this report are interactive: hover over the plots to see some of the tools available. You can select a zone to zoom on a plot, hover over bars to see details about data, select only specific groups in the legend, among many other features.
 :::
 
 # Exploratory Data Analysis (EDA) {#sec-eda}
@@ -660,7 +639,6 @@ model_selection <-
   filter(best_model == TRUE)
 ```
 
-
 ```{r check_the_best_models}
 #| fig-label: fig-model_checks
 #| fig-cap: "Checking the assumptions of all the models for both tasks."
@@ -697,7 +675,6 @@ ggexport(
 ```
 
 ::: {.panel-tabset .column-page-inset-right}
-
 ```{r glmm_plots_setup}
 # setting dodge width for all the geoms
 dw <- .75
@@ -893,7 +870,7 @@ p_glmm_implicit <-
 ```
 :::
 
-``` {r glmm_ggarrange}
+```{r glmm_ggarrange}
 #| label: fig-glmm_ggarrange
 
 p_glmms <-
@@ -919,7 +896,7 @@ ggexport(
 
 ## Continuous predictors: PCA
 
-Theoretically, the four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - could be used as predictors (independent variables) for the RT outcomes (dependent variable) of the experiment. Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: yet here we only modeled the VVIQ as representative of visual imagery, what's more as a categorical predictor by dividing two groups based on it. In order to explore the potential of all these scales, we are going to run a Principal Component Analysis (PCA) on the four questionnaires' standardized scores to evaluate how many different constructs they represent. The suitability of the data for a PCA was assessed with Bartlett's test of sphericity (Bartlett, 1951), suggesting there was sufficient correlation in the data ($\chi^{2}$(55) = 408.01, p < .001) and the KMO measure of sampling adequacy (KMO = 0.73; see Kaiser, H. F., & Rice, J. (1974)). The Eigenvalues and variance explained by the PCA components computed, along with the loadings of each score on them, are displayed in @tbl-pca_tables.
+Theoretically, the four questionnaire variables - VVIQ, OSIQ-Object and Spatial, and SUIS - could be used as predictors (independent variables) for the RT outcomes (dependent variable) of the experiment. Three of these - VVIQ, OSIQ-Object and SUIS - evaluate visual imagery: yet here we only modeled the VVIQ as representative of visual imagery, what's more as a categorical predictor by dividing two groups based on it. In order to explore the potential of all these scales, we are going to run a Principal Component Analysis (PCA) on the four questionnaires' standardized scores to evaluate how many different constructs they represent. The suitability of the data for a PCA was assessed with Bartlett's test of sphericity (Bartlett, 1951), suggesting there was sufficient correlation in the data ($\chi^{2}$(55) = 408.01, p \< .001) and the KMO measure of sampling adequacy (KMO = 0.73; see Kaiser, H. F., & Rice, J. (1974)). The Eigenvalues and variance explained by the PCA components computed, along with the loadings of each score on them, are displayed in @tbl-pca_tables.
 
 ```{r pca}
 #| code-summary: "Computing the PCA"
@@ -1008,8 +985,6 @@ df_implicit_rt <- dfs$implicit_task
 df_explicit_rt <- dfs$explicit_task
 rm(dfs)
 ```
-
-
 
 ```{r fitting_glmms_continuous}
 #| output: false
@@ -1305,7 +1280,7 @@ p_glmm_implicit_continuous_congruence <-
     )
 ```
 
-``` {r glmm_continuous_congruence_ggarrange}
+```{r glmm_continuous_congruence_ggarrange}
 #| label: fig-glmm_continuous_ggarrange
 
 p_glmms_continuous_congruence <-
@@ -1429,7 +1404,7 @@ p_glmm_implicit_continuous_si <-
     )
 ```
 
-``` {r glmm_continuous_si_ggarrange}
+```{r glmm_continuous_si_ggarrange}
 #| label: fig-glmm_continuous_si_ggarrange
 
 p_glmms_continuous_si <-

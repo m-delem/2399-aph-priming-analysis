@@ -1,46 +1,30 @@
+
+# ═══ Project-wide settings for rendering ══════════════════════════════════════
+
+# table of contents
+toc: true
+toc-depth: 3
+toc-expand: 2
+number-sections: true
+number-depth: 2
+fig-align: center
+fig-cap-location: bottom
+tbl-cap-location: top
+
+# setting for proper numbering of sections
 crossref: 
   chapters: true
+  
+# code reading options
+warning: false
+error: false
+message: false
+
+# format-specific options
 format: 
   html:
+    echo: true
     code-fold: true
-    echo: false
-    warning: false
-    error: false
-    message: false
     cap-location: bottom
-  pdf:
-    pdf-engine: pdflatex
-    documentclass: article
-    # table of contents
-    toc: true
-    number-sections: true
-    number-depth: 3
-    # text formatting
-    fontsize: 12pt
-    linestretch: 1.5
-    geometry: margin=1in
-    indent: true
-    # code reading options
+  docx: 
     echo: false
-    warning: false
-    error: false
-    message: false
-    # figure default positioning
-    fig-align: center
-    fig-cap-location: bottom
-    # fig-height: 8
-    # fig-width: 10
-    fig-pos: "h"
-    # captions
-    cap-location: bottom
-    tbl-cap-location: bottom
-    # links
-    links-as-notes: true
-    link-citations: true
-    # style (notably bibliography)
-    csl: apa.csl
-    # language
-    lang: fr
-    langid: french
-    # keeping tex if necessary
-    keep-tex: true
