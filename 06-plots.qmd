@@ -82,6 +82,12 @@ ggexport(
 
 ```{r}
 
+glmm_ex <- readRDS(file = "analyses-results/01-best-glmm-explicit.RDS")
+glmm_im <- readRDS(file = "analyses-results/01-best-glmm-implicit.RDS")
+
+# glmm_ex <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-explicit.RDS")
+# glmm_im <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-implicit.RDS")
+
 # ─── Setup variables for the plots ────────────────────────────────────────────
 
 # dodge width for all the geoms
@@ -89,7 +95,8 @@ dw <- .75
 # stat text size
 st <- 7
 # legend and axis text size
-txt <- 14
+txt <- 18
+title_size <- 20
 
 # marginal means predictions
 best_glmm_explicit_preds <-
@@ -178,11 +185,15 @@ p_glmm_explicit <-
   # coord_cartesian(
   #   ylim = c(680, 800)
   # ) +
-  scale_y_continuous(breaks = breaks_pretty(6)) +
+  scale_y_continuous(breaks = breaks_pretty(10)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_color_okabeito(name = "", labels = c("Aphantasic (VVIQ = 16)", "Control (VVIQ > 42)")) +
+  scale_color_okabeito(name = "", labels = c(" Aphantasic   ", " Control")) +
+  # scale_color_okabeito(name = "", labels = c(" Aphantasic (VVIQ = 16)   ", " Control (VVIQ > 42)")) +
+  theme_modern() +
   theme(
+    plot.title = element_text(hjust = 0.5, size = title_size),
     panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(),
     axis.ticks.x = element_blank(),
     axis.text.x = element_text(size = txt),
     legend.title = element_text(size = txt),
@@ -272,12 +283,17 @@ p_glmm_implicit <-
   # coord_cartesian(
   #   ylim = c(.60, .69)
   # ) +
-  scale_y_continuous(breaks = breaks_pretty(9)) +
+  scale_y_continuous(breaks = breaks_pretty(10)) +
   scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_color_okabeito(name = "", labels = c("Aphantasic (VVIQ = 16)", "Control (VVIQ > 42)")) +
+  scale_color_okabeito(name = "", labels = c(" Aphantasic   ", " Control")) +
+  # scale_color_okabeito(name = "", labels = c(" Aphantasic (VVIQ = 16)   ", " Control (VVIQ > 42)")) +
+  theme_modern() +
   theme(
+    plot.title = element_text(hjust = 0.5, size = title_size),
     panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(),
     axis.ticks.x = element_blank(),
+    axis.title.y = element_text(size = txt),
     axis.text.x = element_text(size = txt),
     legend.title = element_text(size = txt),
     legend.text = element_text(size = txt)
@@ -286,8 +302,6 @@ p_glmm_implicit <-
 p_glmm_implicit
 ```
 
-
-:::
 
 ``` {r glmm_ggarrange}
 #| label: fig-glmm_ggarrange
@@ -304,16 +318,12 @@ p_glmms <-
 
 ggexport(
   p_glmms, 
-  filename = "plots/02-plots-glmms-floor.png", 
+  filename = "plots/01-plots-glmms.png",
+  # filename = "plots/02-plots-glmms-floor.png",
   width = 4000,
-  height = 1500,
+  height = 1600,
   res = 300
   )
-```
-
-```{r}
-glmm_ex <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-explicit.RDS")
-glmm_im <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-implicit.RDS")
 ```
 
 

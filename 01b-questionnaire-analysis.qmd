@@ -75,8 +75,8 @@ model_all_glm_fitted <-
       workflow() |>
       add_recipe(recipe) |> 
       add_model(model, formula = formula) |> 
-      fit(df_questionnaires |> 
-            mutate(across(vviq80:suis60, ~as.numeric(rescale(.x, to = c(0.000001, 1)))))
+      fit(df_questionnaires #|> 
+            # mutate(across(vviq80:suis60, ~as.numeric(rescale(.x, to = c(0.000001, 1)))))
           ) |> 
       extract_fit_engine()
       )
@@ -84,8 +84,8 @@ model_all_glm_fitted <-
   select(!c(recipe, model, formula)) |>
   mutate(
     parameters = list(model_parameters(fitted_model)),
-    marg_means = list(estimate_means(fitted_model, at = "aphantasia")),
-    marg_contrasts = list(estimate_contrasts(fitted_model, contrast = "aphantasia")),
+    # marg_means = list(estimate_means(fitted_model, at = "aphantasia")),
+    # marg_contrasts = list(estimate_contrasts(fitted_model, contrast = "aphantasia")),
     model_perf = list(model_performance(fitted_model)),
     AICc  = model_perf[[2]]
   ) |> 
@@ -96,22 +96,24 @@ model_all_glm_fitted <-
   arrange(formula_id)
 
 model_all_glm_fitted
-```
 
-
-```{r}
 model_vviq   <- model_all_glm_fitted[[3]][[1]]
 model_suis   <- model_all_glm_fitted[[3]][[2]]
 model_osiq_o <- model_all_glm_fitted[[3]][[3]]
 model_osiq_s <- model_all_glm_fitted[[3]][[4]]
 
-saveRDS(model_vviq,   file = "analyses-results/00-model-vviq.RDS")
-saveRDS(model_suis,   file = "analyses-results/00-model-suis.RDS")
-saveRDS(model_osiq_o, file = "analyses-results/00-model-osiq-o.RDS")
-saveRDS(model_osiq_s, file = "analyses-results/00-model-osiq-s.RDS")
+# saveRDS(model_vviq,   file = "analyses-results/00-model-vviq.RDS")
+# saveRDS(model_suis,   file = "analyses-results/00-model-suis.RDS")
+# saveRDS(model_osiq_o, file = "analyses-results/00-model-osiq-o.RDS")
+# saveRDS(model_osiq_s, file = "analyses-results/00-model-osiq-s.RDS")
 ```
 
+
 ```{r}
+model_vviq <- readRDS(file = "analyses-results/00-model-vviq.RDS")
+model_suis <- readRDS(file = "analyses-results/00-model-suis.RDS")
+model_osiq_o <- readRDS(file = "analyses-results/00-model-osiq-o.RDS")
+model_osiq_s <- readRDS(file = "analyses-results/00-model-osiq-s.RDS")
 
 # ─── Model checks ─────────────────────────────────────────────────────────────
 
@@ -121,55 +123,120 @@ p_glm_suis_checks   <- model_suis   |> check_model(check = "all")
 p_glm_osiq_o_checks <- model_osiq_o |> check_model(check = "all")
 p_glm_osiq_s_checks <- model_osiq_s |> check_model(check = "all")
 
+p_glm_vviq_checks
+p_glm_suis_checks
+p_glm_osiq_o_checks
+p_glm_osiq_s_checks
+
 # exporting plots
-ggexport(
-  p_glm_vviq_checks,
-  filename = "plots/S0-glm-vviq-checks.png",
-  width = 1000,
-  height = 800,
-  dpi = 600
-  )
+# ggexport(
+#   p_glm_vviq_checks,
+#   filename = "plots/S0-glm-vviq-checks.png",
+#   width = 1000,
+#   height = 800,
+#   dpi = 600
+#   )
 
-ggexport(
-  p_glm_suis_checks,
-  filename = "plots/S0-glm-suis-checks.png",
-  width = 1000,
-  height = 800,
-  dpi = 600
-  )
+# ggexport(
+#   p_glm_suis_checks,
+#   filename = "plots/S0-glm-suis-checks.png",
+#   width = 1000,
+#   height = 800,
+#   dpi = 600
+#   )
 
-ggexport(
-  p_glm_osiq_o_checks,
-  filename = "plots/S0-glm-osiq-o-checks.png",
-  width = 1000,
-  height = 800,
-  dpi = 600
-  )
+# ggexport(
+#   p_glm_osiq_o_checks,
+#   filename = "plots/S0-glm-osiq-o-checks.png",
+#   width = 1000,
+#   height = 800,
+#   dpi = 600
+#   )
 
-ggexport(
-  p_glm_osiq_s_checks,
-  filename = "plots/S0-glm-osiq-s-checks.png",
-  width = 1000,
-  height = 800,
-  dpi = 600
-  )
-
-
+# ggexport(
+#   p_glm_osiq_s_checks,
+#   filename = "plots/S0-glm-osiq-s-checks.png",
+#   width = 1000,
+#   height = 800,
+#   dpi = 600
+#   )
 ```
 
-```{r}
-# ─── A Cool little plot ───────────────────────────────────────────────────────
 
-# dodge width for all the geoms
-dw <- 1
-# legend and axis text size
-txt <- 14
+```{r}
+# ─── Standardized model refits for the plots ──────────────────────────────────
+df_questionnaires_standard <-
+  df_questionnaires |> 
+  select(!sexe) |> 
+  mutate(
+    vviq80 = as.numeric(scales::rescale(vviq80, from = c(16, 80), to = c(0.000001, 1))),
+    suis60 = as.numeric(scales::rescale(suis60, from = c(12, 60), to = c(0.000001, 1))),
+    osiq_o75 = as.numeric(scales::rescale(osiq_o75, from = c(15, 75), to = c(0.000001, 1))),
+    osiq_s75 = as.numeric(scales::rescale(osiq_s75, from = c(15, 75), to = c(0.000001, 1)))
+    )
+
+# Listing these models
+model_specs_glm <- list(
+  glm_gaussian = glm_gaussian
+  # glm_gamma    = glm_gamma
+  # glm_poisson  = glm_poisson,
+  # glm_inverse  = glm_inverse
+)
+
+model_recipe_glm_standard <-
+  df_questionnaires_standard |> 
+  recipe() |> 
+  update_role(vviq80, suis60, osiq_o75, osiq_s75, new_role = "outcome") |> 
+  update_role(aphantasia, age, new_role = "predictor")
+
+model_all_glm_fitted_standard <-
+  tribble(            ~recipe,          ~model,           ~formula,
+    model_recipe_glm_standard, model_specs_glm, model_formulas_glm
+  ) |> 
+  # combining recipes with models
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
+  rowwise() |>
+  mutate(
+    # fitting models
+    fitted_model = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(model, formula = formula) |> 
+      fit(df_questionnaires_standard) |> 
+      extract_fit_engine()
+      )
+  ) |> 
+  select(!c(recipe, model, formula)) |>
+  mutate(
+    parameters = list(model_parameters(fitted_model)),
+    model_perf = list(model_performance(fitted_model)),
+    AICc  = model_perf[[2]]
+  ) |> 
+  # group_by(formula_id) |> 
+  # mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
+  # filter(best_model == TRUE) |> 
+  select(!c(model_perf)) |> 
+  arrange(formula_id)
+
+model_all_glm_fitted_standard
+
+model_vviq2   <- model_all_glm_fitted_standard[[3]][[1]]
+model_suis2   <- model_all_glm_fitted_standard[[3]][[2]]
+model_osiq_o2 <- model_all_glm_fitted_standard[[3]][[3]]
+model_osiq_s2 <- model_all_glm_fitted_standard[[3]][[4]]
+
+model_vviq2   |> check_model(check = "all")
+model_suis2   |> check_model(check = "all")
+model_osiq_o2 |> check_model(check = "all")
+model_osiq_s2 |> check_model(check = "all")
 
 # setting up some auxiliary data
-marginal_vviq   <- model_all_glm_fitted[[5]][[1]]
-marginal_suis   <- model_all_glm_fitted[[5]][[2]]
-marginal_osiq_o <- model_all_glm_fitted[[5]][[3]]
-marginal_osiq_s <- model_all_glm_fitted[[5]][[4]]
+marginal_vviq   <- estimate_means(model_vviq2, at = "aphantasia")
+marginal_suis   <- estimate_means(model_suis2, at = "aphantasia")
+marginal_osiq_o <- estimate_means(model_osiq_o2, at = "aphantasia")
+marginal_osiq_s <- estimate_means(model_osiq_s2, at = "aphantasia")
  
 marginal_means <-
   marginal_vviq |> 
@@ -179,9 +246,23 @@ marginal_means <-
   bind_rows(marginal_osiq_s |> mutate(variable = "osiq_s75")) |> 
   group_by(variable)
 
+marginal_means
+```
+
+
+```{r}
+# ─── Settings for a cool little plot ──────────────────────────────────────────
+
+# dodge width for all the geoms
+dw <- 1
+# legend and axis text size
+txt <- 14
+
+# ─── A Cool little plot ───────────────────────────────────────────────────────
+
 p_questionnaires <-
-  df_questionnaires |> 
-  mutate(across(vviq80:suis60, ~as.numeric(rescale(.x, to = c(0, 1))))) |> 
+  df_questionnaires_standard |> 
+  # mutate(across(vviq80:suis60, ~as.numeric(rescale(.x, to = c(0, 1))))) |> 
   pivot_longer(
     cols = c(vviq80, suis60, osiq_o75, osiq_s75),
     names_to = "variable"
@@ -196,7 +277,7 @@ p_questionnaires <-
     yintercept = .5,
     linetype = 1,
     color = "grey30",
-    alpha = .3
+    alpha = .2
   ) +
   geom_violin(
     position = position_dodge(dw),
@@ -231,8 +312,6 @@ p_questionnaires <-
     color = "black",
     x = 1,
     y = .95,
-    # vjust = .1,
-    # hjust = 6,
     size  = 10 
     ) +
   geom_vline(
@@ -245,8 +324,6 @@ p_questionnaires <-
     color = "black",
     x = 2,
     y = .95,
-    # vjust = .1,
-    # hjust = 6,
     size  = 10 
     ) +
   geom_vline(
@@ -259,8 +336,6 @@ p_questionnaires <-
     color = "black",
     x = 3,
     y = .95,
-    # vjust = .1,
-    # hjust = 6,
     size  = 10 
     ) +
   geom_vline(
@@ -277,8 +352,8 @@ p_questionnaires <-
     # hjust = 6,
     size  = 10 
     ) +
-  scale_color_okabeito(name = "Group", labels = c("Aphantasic", "Control")) +
-  scale_fill_okabeito(name = "Group", labels = c("Aphantasic", "Control")) +
+  scale_color_okabeito(name = "Group:  ", labels = c(" Aphantasic   ", " Control")) +
+  scale_fill_okabeito(name = "Group:  ", labels = c(" Aphantasic   ", " Control")) +
   scale_x_discrete(
     name = "",
     labels = c("VVIQ", "SUIS", "OSIQ-Object", "OSIQ-Spatial")
@@ -287,28 +362,37 @@ p_questionnaires <-
     name = "Standardized score",
     breaks = breaks_pretty(8)
   ) +
+  theme_modern() +
   theme(
     panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(),
     axis.text.x =  element_text(size = txt),
     legend.title = element_text(size = txt),
     legend.text =  element_text(size = txt),
     legend.position = "top"
     )
 
+p_questionnaires
+
 ggexport(
-  p_questionnaires, 
-  filename = "plots/00-plot-questionnaires.png", 
+  p_questionnaires,
+  filename = "plots/00-plot-questionnaires.png",
   width = 3200,
-  height = 1500,
+  height = 1600,
   res = 300
   )
 ```
 
 ```{r}
-model_all_glm_fitted[[6]][[1]]
-model_all_glm_fitted[[6]][[2]]
-model_all_glm_fitted[[6]][[3]]
-model_all_glm_fitted[[6]][[4]]
+estimate_means(model_vviq, at = "aphantasia", p_adjust = "fdr")
+estimate_means(model_suis, at = "aphantasia", p_adjust = "fdr")
+estimate_means(model_osiq_o, at = "aphantasia", p_adjust = "fdr")
+estimate_means(model_osiq_s, at = "aphantasia", p_adjust = "fdr")
+
+estimate_contrasts(model_vviq, contrast = "aphantasia", p_adjust = "fdr")
+estimate_contrasts(model_suis, contrast = "aphantasia", p_adjust = "fdr")
+estimate_contrasts(model_osiq_o, contrast = "aphantasia", p_adjust = "fdr")
+estimate_contrasts(model_osiq_s, contrast = "aphantasia", p_adjust = "fdr")
 ```
 
 
