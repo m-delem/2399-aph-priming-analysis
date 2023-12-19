@@ -59,10 +59,10 @@ glmm_gaussian <-
 # Listing these models
 # GLMMs
 model_specs_glmm <- list(
-  glmm_gamma_id    = glmm_gamma_id,
-  glmm_inverse_id  = glmm_inverse_id,
-  glmm_inverse_log = glmm_inverse_log,
-  glmm_gaussian    = glmm_gaussian
+  # glmm_gamma_id    = glmm_gamma_id,
+  glmm_inverse_id  = glmm_inverse_id
+  # glmm_inverse_log = glmm_inverse_log,
+  # glmm_gaussian    = glmm_gaussian
 )
 
 # ─── Writing down the formulas of our models ──────────────────────────────────
@@ -92,7 +92,7 @@ model_formulas <- list(
   )
 
 # ─── Table to combine everything in workflows and fit the models ──────────────
-# (
+
 model_all_workflows_fitted <- 
   tribble(       ~recipe,     ~ task,           ~model,       ~formula,
     model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas,
@@ -215,8 +215,8 @@ parallel::stopCluster(cl = parallel_cluster)
 model_selection <-
   model_all_workflows_fitted |> 
   filter(
-    formula_id != "formula_0" & 
-    convergence == TRUE
+    formula_id != "formula_0" #& 
+    # convergence == TRUE
   ) |> 
   group_by(task, model_id) |> 
   mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
@@ -224,14 +224,34 @@ model_selection <-
 ```
 
 ```{r best_models}
-best_glmm_explicit <- model_selection$fitted_model[[2]]
-best_glmm_implicit <- model_selection$fitted_model[[6]]
+best_glmm_explicit <- model_selection$fitted_model[[1]]
+best_glmm_implicit <- model_selection$fitted_model[[2]]
 
-saveRDS(best_glmm_explicit, "analyses-results/best_glmm_explicit_5MADs.RDS") # readRDS to import
-saveRDS(best_glmm_implicit, "analyses-results/best_glmm_implicit_5MADs.RDS")
+saveRDS(
+  best_glmm_explicit,
+  "analyses-results/01-glmm-inverse-id-explicit.RDS") # readRDS to import
+saveRDS(
+  best_glmm_implicit,
+  "analyses-results/01-glmm-inverse-id-implicit.RDS")
 ```
 
+```{r}
+# ═══ Post-hoc tests: unstandardized effect sizes ══════════════════════════════
 
+glmm_im <- readRDS(file = "analyses-results/01-best-glmm-implicit.RDS")
+
+emmeans(
+  glmm_im, 
+  ~aphantasia*congruence|color, 
+  adjust = "tukey"
+  ) |> 
+  pairs()
+  # plot()
+
+estimate_contrasts(glmm_im, contrast = c("aphantasia", "congruence"))
+
+glmm_ex |> model_parameters()
+```
 
 
 

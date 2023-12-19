@@ -1,71 +1,7 @@
 
-```{r setup}
-#| echo: true
-#| output: false
-#| code-summary: "Packages"
-
-# ═══ Packages ═════════════════════════════════════════════════════════════════
-
-# The package `librairian` will ease the package management with the "shelf" 
-# function, which automatically: 
-# 1) checks if a package is installed 
-# 2) installs it if need be
-# 3) loads the package like the "library()" function would.
-if (!require(librarian)) install.packages(librarian)
-library(librarian)
-
-# now putting packages on our library's shelves:
-shelf(
-  # ─── essential package collections ───
-  tidyverse,      # modern R ecosystem
-  easystats,      # data analysis framework
-  tidymodels,     # modelling framework
-  doParallel,     # parallel execution
-  
-  # ─── tidymodels friends ──────────────
-  corrr,          # correlational analyses
-  tidybayes,      # bayesian inference
-  multilevelmod,  # multilevel modelling with lmer and tidymodels
-  
-  # ─── modelling ───────────────────────
-  lme4,           # mixed models
-  mclust,         # mixture clustering
-  rstanarm,       # bayesian models
-  BayesFactor,    # BFs
-  emmeans,        # marginal estimates
-  statmod,        # easystats dependency
-  
-  # ─── data management ─────────────────
-  readxl,         # importing xlsx
-  openxlsx,       # exporting xlsx
-  
-  #  data visualization ──────────────
-  # plot types and geoms
-  ricardo-bion/ggradar,  # radar plots
-  ggbeeswarm,            # scatter violin plots
-  GGally,         # complex plots
-  # layout and options
-  ggpubr,         # publication plots
-  patchwork,      # layout control
-  rstatix,        # ggplot stat tools
-  # palettes
-  ggsci,          # scientific palettes
-  viridis,        # colour-blind friendly palettes
-  # interactive
-  plotly         # interactive plots
-)
-
-# ─── Global cosmetic theme ───q
-theme_set(theme_bw(base_size = 14))
-
-# ─── Fixing a seed for reproducibility ───
-set.seed(14051998)
-```
-
 ```{r importing_data}
-#| echo: true
-#| output: false
-#| code-summary: "Importing data"
+
+# ═══ Importing and keeping only "extreme" VVIQs ═══════════════════════════════
 
 # Implicit task
 df_implicit <- 
@@ -73,7 +9,9 @@ df_implicit <-
     "data/aphantasia_priming_tidy_data.xlsx",
     sheet = "data_implicit"
     ) |> 
-  rename("rt" = rt_implicit)
+  rename("rt" = rt_implicit) |> 
+  # convert to seconds
+  mutate(rt = rt/1000)
 
 # Explicit task
 df_explicit <- 
@@ -81,7 +19,9 @@ df_explicit <-
     "data/aphantasia_priming_tidy_data.xlsx",
     sheet = "data_explicit"
     ) |> 
-  rename("rt" = rt_explicit)
+  rename("rt" = rt_explicit) |> 
+  # convert to seconds
+  mutate(rt = rt/1000)
 
 # Questionnaires
 df_questionnaires <- 
@@ -151,7 +91,7 @@ list(df_explicit, df_implicit) |>
       arrange(desc(prop)) |> 
       select(1, 5)
     )
-# 4 accuracy outliers in the explicit task, 4 in the implicit one
+# 5 accuracy outliers in the explicit task, 4 in the implicit one
 
 # ─── Removing incorrect trials and task-wise accuracy outliers ───
 df_explicit_rt <-
@@ -163,7 +103,8 @@ df_explicit_rt <-
     # participants identified with with high error rates
     !(subjectid %in% c( 
       "aknezevic",
-      "lbrunie",
+      "lbrunie", 
+      "agayou", 
       "bluciani",
       "ldossantos"))
     ) |>  
@@ -172,7 +113,7 @@ df_explicit_rt <-
 
 # percentage of trials removed in the explicit task
 (count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
-# 5988 trials left = 6.4% removed
+# 9091 trials left = 5.9% removed
 
 df_implicit_rt <- 
   df_implicit |>  
@@ -188,10 +129,10 @@ df_implicit_rt <-
 
 # percentage of trials removed in the implicit task
 (count(df_implicit) - count(df_implicit_rt)) / count(df_implicit) 
-# 5936 trials left = 7.2% removed
+# 9078 trials left = 6.1% removed
 ```
 
-```{r removing_extreme_rt_outlier_trials}
+```{r}
 #| code-summary: "Removing extreme RTs"
 #| echo: true
 #| output: false
@@ -201,138 +142,19 @@ df_implicit_rt <-
 df_explicit_rt <- 
   df_explicit_rt |>  
   # filtering out extreme RTs
-  filter(rt > 300 & rt < 3000)
+  filter(rt > .25 & rt < 2)
 
 # total percentage of trials removed in the explicit task
 (count(df_explicit) - count(df_explicit_rt)) / count(df_explicit)
-# 5950 trials left = 7% removed
+# 8812 trials left = 8.8% removed
 
 df_implicit_rt <- 
   df_implicit_rt |>  
-  filter(rt > 300 & rt < 3000)
+  filter(rt > .25 & rt < 2)
 
 # total percentage of trials removed in the implicit task
 (count(df_implicit) - count(df_implicit_rt)) / count(df_implicit)
-# 5896 left = 7.8% removed
-```
-
-```{r rt_means_table}
-#| label: tbl-rt_means
-#| tbl-cap: "Descriptive statistics of the average RTs across the sample in both tasks."
-
-# ═══ RT means table - Both tasks ══════════════════════════════════════════════
-
-df_rt <- 
-  list(
-  df_explicit_rt |>  rename("Explicit task mean RTs" = rt), 
-  df_implicit_rt |>  rename("Implicit task mean RTs" = rt)
-  ) |>  
-  imap(
-    ~select(.x, contains("RT")) |> 
-      report() |>  
-      as.data.frame() |>  
-      select(1:10)
-    )
-
-df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
-df_rt |>  display()
-```
-
-```{r removing_rt_means_outliers}
-#| code-summary: "Removing outliers with aberrant RT means"
-#| echo: true
-#| output: false
-
-# ═══ Aberrant RT means outliers removal ═══════════════════════════════════════
-
-# ─── Finding outliers ───
-
-df_explicit_rt |> 
-  group_by(subjectid) |> 
-  summarise(mean_rt = mean(rt)) |> 
-  ungroup() |> 
-  filter(mean_rt > 1360) |> 
-  arrange(desc(mean_rt))
-# 3 outliers in the explicit task
-
-df_implicit_rt |> 
-  group_by(subjectid) |> 
-  summarise(mean_rt = mean(rt)) |> 
-  ungroup() |> 
-  filter(mean_rt > 1062) |> 
-  arrange(desc(mean_rt))
-# 2 outliers in the implicit task
-
-# ─── Removing specific outliers ───
-
-df_explicit_rt <- 
-  df_explicit_rt |> 
-  filter(
-    !(subjectid %in% c(
-      "dchimenton",
-      "mbillon",
-      "rcarnez"
-    ))
-  )
-
-# 5769 trials left
-(6400-5769)/6400 # 9.8% out
-
-df_implicit_rt <-
-  df_implicit_rt |> 
-  filter(
-    !(subjectid %in% c(
-      "rcarnez",
-      "cbertrand"
-    ))
-  )
-
-# 5777 trials left
-# (6400-5777)/6400 # 9.7% out
-```
-
-```{r removing_rt_outlier_trials_per_participant}
-#| code-summary: "Removing outlier trials by-participant"
-#| echo: true
-#| output: false
-
-# ═══ By-participant MAD outlier detection ═════════════════════════════════════
-
-# ─── Explicit task: ───
-# From 5769 observations
-df_explicit_rt <-
-  df_explicit_rt |> 
-  group_by(subjectid, congruence, color) |> 
-  mutate(
-    rt_median = median(rt),
-    rt_mad = mad(rt)
-    ) |> 
-  filter(
-    rt < rt_median + 5 * rt_mad &
-    rt > rt_median - 2.5 * rt_mad
-  ) |>
-  ungroup()
-# 5613 trials left
-# (6400-5613)/6400 # 12.3% trials out total
-# (5769-5613)/5769 # 2.7% of remaining trials
-
-# ─── Implicit task: ───
-# From 5777 observations
-df_implicit_rt <-
-  df_implicit_rt |> 
-  group_by(subjectid, congruence, color) |> 
-  mutate(
-    rt_median = median(rt),
-    rt_mad = mad(rt)
-    ) |> 
-  filter(
-    rt < rt_median + 5 * rt_mad &
-    rt > rt_median - 2.5 * rt_mad
-  ) |>
-  ungroup()
-# 5542 trials left
-(6400-5542)/6400 # 13.4% trials out total
-(5777-5542)/5777 # 4% of remaining trials
+# 8963 left = 7.3% removed
 ```
 
 ```{r fitting_glmms}
@@ -395,30 +217,30 @@ glmm_gaussian <-
 # Listing these models
 # GLMMs
 model_specs_glmm <- list(
-  glmm_gamma_id    = glmm_gamma_id,
+  # glmm_gamma_id    = glmm_gamma_id,
   glmm_inverse_id  = glmm_inverse_id,
-  glmm_inverse_log = glmm_inverse_log,
-  glmm_gaussian    = glmm_gaussian
+  glmm_inverse_log = glmm_inverse_log
+  # glmm_gaussian    = glmm_gaussian
 )
 
 # ─── Writing down the formulas of our models ──────────────────────────────────
 # null model
 formula_0 <- rt ~ (1|subjectid)
 # intercept by-participant only
-formula_1 <- rt ~ (aphantasia + congruence + color)^2 + (1|subjectid)
+formula_1 <- rt ~ (aphantasia + congruence + color)^3 + (1|subjectid)
 # intercept and slope on congruence by-participant
-formula_2 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid)
+formula_2 <- rt ~ (aphantasia + congruence + color)^3 + (congruence|subjectid)
 # intercept and slope on color by-participant
-formula_3 <- rt ~ (aphantasia + congruence + color)^2 + (color|subjectid)
+formula_3 <- rt ~ (aphantasia + congruence + color)^3 + (color|subjectid)
 # intercept and slope on congruence and color by-participant
-formula_4 <- rt ~ (aphantasia + congruence + color)^2 + (congruence|subjectid) + (color|subjectid)
+formula_4 <- rt ~ (aphantasia + congruence + color)^3 + (congruence + color|subjectid)
 
 # Listing these formulas
 model_formulas <- list(
-  formula_0 = formula_0,
-  formula_1 = formula_1,
-  formula_2 = formula_2,
-  formula_3 = formula_3,
+  # formula_0 = formula_0,
+  # formula_1 = formula_1,
+  # formula_2 = formula_2,
+  # formula_3 = formula_3,
   formula_4 = formula_4
   )
 
@@ -546,410 +368,72 @@ parallel::stopCluster(cl = parallel_cluster)
 model_selection <-
   model_all_workflows_fitted |> 
   filter(
-    formula_id != "formula_0" & 
-    convergence == TRUE
+    formula_id != "formula_0" #& 
+    # convergence == TRUE
   ) |> 
   group_by(task, model_id) |> 
   mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
   filter(best_model == TRUE)
 ```
 
-```{r check_the_best_models}
-#| fig-label: fig-model_checks
-#| fig-cap: "Checking the assumptions of all the models for both tasks."
-#| fig-subcap: true
-#| layout-ncol: 1
+```{r}
+# best_glmm_explicit <- model_selection$fitted_model[[2]]
+# best_glmm_implicit <- model_selection$fitted_model[[6]]
 
-best_glmm_explicit <- model_selection$fitted_model[[2]]
-best_glmm_implicit <- model_selection$fitted_model[[5]]
+# saveRDS(
+#   best_glmm_explicit, 
+#   "analyses-results/glmm_floor_inverse_id_explicit.RDS") # readRDS to import
+# saveRDS(
+#   best_glmm_implicit, 
+#   "analyses-results/glmm_floor_inverse_id_implicit.RDS")
 ```
 
-```{r glmm_plots_setup}
-# setting dodge width for all the geoms
-dw <- .75
-# stat text size
-st <- 7
-# legend and axis text size
-txt <- 14
+```{r}
+# ═══ Post-hoc tests: unstandardized effect sizes ══════════════════════════════
 
-# marginal means predictions
-best_glmm_explicit_preds <-
-  best_glmm_explicit |>
-  estimate_means(at = c("aphantasia", "congruence"))
+glmm_ex <- readRDS(file = "analyses-results/02-glmm-floor-inverse-id-explicit.RDS")
 
-best_glmm_implicit_preds <-
-  best_glmm_implicit |>
-  estimate_means(at = c("aphantasia", "congruence"))
-  
-# overall means
-rt_mean_explicit <- df_explicit_rt$rt |> mean()
-rt_mean_implicit <- df_implicit_rt$rt |> mean()
-```
+glmm_floor_implicit_contrasts <- readRDS(file = "analyses-results/02-glmm-floor-implicit-contrasts.RDS")
 
-#### Explicit task
-
-```{r glmm_plots_ex}
-#| label: fig-model_plots_ex
-#| fig-cap: "Plots for the effects of interest in the explicit task."
-#| fig-subcap:
-#|   - "Group x Congruence interaction in the GLMM for the explicit task."
-#|   - "Group x Congruence interaction in the LMM for the explicit task."
-
-# ─── Model effects plots ───────────────────────────
-
-# annotations
-plot_explicit_annotations <-
-  df_explicit_rt |>
-  group_by(aphantasia) |> 
-  pairwise_wilcox_test(rt ~ congruence) |> 
-  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
-  mutate(
-    y.position = c(785, 795),
-    p.adj.signif = c("ns", "***")
-    )
-
-# plot
-p_glmm_explicit <-
-  df_explicit_rt |>
-  ggplot(aes(
-    x = congruence,
-    y = rt,
-    color = aphantasia
-  )) +
-  # linear modelling of the differences
-  geom_line(
-    data = best_glmm_explicit_preds,
-    aes(
-      y = Mean,
-      group = aphantasia
-    ),
-    position = position_dodge(width = dw),
-    linewidth = 1.5,
-    linetype = 1
-  ) +
-  # predicted means of the model
-  geom_pointrange2(
-    data = best_glmm_explicit_preds,
-    aes(
-      x = congruence,
-      y = Mean,
-      ymin = Mean - SE,
-      ymax = Mean + SE,
-      group = aphantasia
-      ),
-    color = "black",
-    position = position_dodge(width = dw),
-    size = 1,
-    linewidth = .75,
-    show.legend = FALSE
-  ) +
-  # intercept
-  # geom_hline(yintercept = rt_mean_explicit, linetype = 2) +
-  
-  # stats display
-  # stat_pvalue_manual(
-  #   plot_explicit_annotations, 
-  #   label = "p.adj.signif", 
-  #   tip.length = 0,
-  #   size = st
-  #   ) +
-  labs(
-    title = "Explicit task",
-    x = NULL,
-    y = ""
-    ) +
-  # coord_cartesian(
-  #   ylim = c(680, 800)
-  # ) +
-  scale_y_continuous(breaks = breaks_pretty(8)) +
-  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
-  theme(
-    panel.grid.major.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    axis.text.x = element_text(size = txt),
-    legend.title = element_text(size = txt),
-    legend.text = element_text(size = txt)
-    )
-```
-
-#### Implicit task
-
-```{r glmm_plots_im}
-#| label: fig-model_plots_im
-#| fig-cap: "Plots for the effects of interest in the implicit task."
-#| fig-subcap:
-#|   - "Group x Congruence interaction in the GLMM for the implicit task."
-#|   - "Group x Congruence interaction in the LMM for the implicit task."
-
-# annotations
-plot_implicit_annotations <-
-  df_implicit_rt |>
-  group_by(aphantasia) |> 
-  pairwise_wilcox_test(rt ~ congruence) |> 
-  add_xy_position(x = "congruence", group = "aphantasia", dodge = dw) |> 
-  mutate(
-    y.position = c(646, 653),
-    p.adj.signif = c("ns", "***")
-    )
-
-# ─── Model effects plot ───────────────────────────
-p_glmm_implicit <-
-  df_implicit_rt |>
-  ggplot(aes(
-    x = congruence,
-    y = rt,
-    color = aphantasia
-  )) +
-  # linear modelling of the differences
-  geom_line(
-    data = best_glmm_implicit_preds,
-    aes(
-      y = Mean,
-      group = aphantasia
-    ),
-    position = position_dodge(width = dw),
-    linewidth = 1.5,
-    linetype = 1
-  ) +
-  # predicted means of the model
-  geom_pointrange2(
-    data = best_glmm_implicit_preds,
-    aes(
-      x = congruence,
-      y = Mean,
-      ymin = Mean - SE,
-      ymax = Mean + SE,
-      group = aphantasia
-      ),
-    color = "black",
-    position = position_dodge(width = dw),
-    size = 1,
-    linewidth = .75,
-    show.legend = FALSE
-  ) +
-  # intercept
-  # geom_hline(yintercept = rt_mean_implicit, linetype = 2) +
-  
-  # stats display
-  # stat_pvalue_manual(
-  #   plot_implicit_annotations, 
-  #   label = "p.adj.signif", 
-  #   tip.length = 0,
-  #   size = st
-  #   ) +
-  labs(
-    title = "Implicit task",
-    x = NULL,
-    y = "Response time (ms)"
-    ) +
-  # coord_cartesian(
-  #   ylim = c(580, 655)
-  # ) +
-  scale_y_continuous(breaks = breaks_pretty(8)) +
-  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
-  scale_color_okabeito(name = "", labels = c("Aphantasia", "Controls")) +
-  theme(
-    panel.grid.major.x = element_blank(),
-    axis.ticks.x = element_blank(),
-    axis.text.x = element_text(size = txt),
-    legend.title = element_text(size = txt),
-    legend.text = element_text(size = txt)
-    )
-```
-:::
-
-``` {r glmm_ggarrange}
-#| label: fig-glmm_ggarrange
-
-p_glmms <-
-  ggarrange(
-    p_glmm_implicit,
-    p_glmm_explicit,
-    common.legend = TRUE,
-    legend = "top",
-    ncol = 2,
-    align = "v"
-  )
-
-ggexport(
-  p_glmms, 
-  filename = "plots/plots_glmm_floor_vviq.png", 
-  width = 4000,
-  height = 1500,
-  res = 300
-  )
-```
-
-```{r congruence_effect}
-#| echo: true
-#| code-summary: "Computing the Congruence effect per subject"
-
-# ═══ Congruence effect by-participant ═════════════════════════════════════════
-
-# ─── Empirical approach ───────────────────────────────────────────────────────
-
-# explicit task
-congruence_effect_ex_empiric <-
-  df_explicit_rt |> 
-  group_by(subjectid, congruence) |> 
-  summarise(mean_rt = mean(rt)) |> 
-  pivot_wider(
-    names_from = congruence,
-    values_from = mean_rt
-  ) |> 
-  mutate(
-    congruence_eff_ex_emp = uncongruent - congruent,
-    .keep = "unused"
-  )
-
-# implicit task
-congruence_effect_im_empiric <-
-  df_implicit_rt |> 
-  group_by(subjectid, congruence) |> 
-  summarise(mean_rt = mean(rt)) |> 
-  pivot_wider(
-    names_from = congruence,
-    values_from = mean_rt
-  ) |> 
-  mutate(
-    congruence_eff_im_emp = uncongruent - congruent,
-    .keep = "unused"
-  )
-
-# ─── Merging both ─────────────────────────────────────────────────────────────
-
-df_congruence_effect <-
-  inner_join(
-    congruence_effect_ex_empiric,
-    # subjectid, aphantasia, visual and spatial imagery
-    df_questionnaires |> select(1, 4:8),
-    by = "subjectid"
-  ) |> 
-  inner_join(
-    congruence_effect_im_empiric,
-    by = "subjectid"
-  ) |> 
-  select(subjectid, aphantasia, vviq80:suis60, 2, 8) |>
-  mutate(across(c(vviq80:congruence_eff_im_emp), ~round(as.numeric(.x), digits = 2))) |> 
-  ungroup()
-```
-
-```{r correlation_congruence_effect}
-#| code-summary: "Computing correlations"
-#| echo: true
-
-# ═══ Bayesian partial correlations ════════════════════════════════════════════
-
-congruence_correlations_explicit <-
-  df_congruence_effect |> 
-  select(!c(
-    # visual_imagery, spatial_imagery, 
-    contains("congruence_eff_im"))) |>
-  correlation(
-    # bayesian = TRUE,
-    # partial = TRUE,
-    # partial_bayesian = TRUE,
-    # bayesian_test = "bf"
-    )
-  # summary() |> 
+  emmeans(
+    glmm_im,
+    ~congruence*color,
+    adjust = "tukey"
+  ) |>
+  pairs()
   # plot()
 
-congruence_correlations_implicit <-
-  df_congruence_effect |> 
-  select(!c(
-    # visual_imagery, spatial_imagery, 
-    contains("congruence_eff_ex"))) |>  
-  correlation(
-    # bayesian = TRUE,
-    # partial = TRUE,
-    # partial_bayesian = TRUE,
-    # bayesian_test = "bf"
-    )
-  # summary() |> 
-  # plot()
+# saveRDS(
+#   glmm_floor_explicit_contrasts,
+#   "analyses-results/02-glmm-floor-explicit-contrasts.RDS") # readRDS to import
 
-p_congruence_corr_ex <-
-  congruence_correlations_explicit |> 
-  mutate(across(c(Parameter1, Parameter2),
-    ~ case_when(
-      .x == "vviq80" ~ "VVIQ",
-      .x == "osiq_o75" ~ "OSIQ-O",
-      .x == "osiq_s75" ~ "OSIQ-S",
-      .x == "suis60" ~ "SUIS",
-      .x == "congruence_eff_ex_emp" ~ "Congruence\neffect (Empirical)",
-      TRUE ~ .x))
-    ) |>  
-  summary(digits = 2) |>  
-  plot(
-    text = list(size = 5),
-    labs = list(title = "Explicit task")
-    ) +
-  scale_fill_viridis(
-    option = "D",
-    guide = NULL,
-    # name = expression(rho),
-    alpha = .6,
-    direction = 1,
-    limits = c(-1,1)
-    ) +
-  theme_bw() +
-  theme(
-    panel.grid = element_blank(),
-    axis.text = element_text(size = 14),
-    title = element_text(size = 14)
-    )
-
-p_congruence_corr_im <-
-  congruence_correlations_implicit |> 
-  mutate(across(c(Parameter1, Parameter2),
-    ~ case_when(
-      .x == "vviq80" ~ "VVIQ",
-      .x == "osiq_o75" ~ "OSIQ-O",
-      .x == "osiq_s75" ~ "OSIQ-S",
-      .x == "suis60" ~ "SUIS",
-      .x == "congruence_eff_im_emp" ~ "Congruence\neffect (Empirical)",
-      TRUE ~ .x))
-    ) |>  
-  summary(digits = 2) |>  
-  plot(
-    text = list(size = 5),
-    labs = list(title = "Implicit task")
-    ) +
-  scale_fill_viridis(
-    option = "D",
-    guide = NULL,
-    # name = expression(rho),
-    alpha = .6,
-    direction = 1,
-    limits = c(-1,1)
-    ) +
-  theme_bw() +
-  theme(
-    panel.grid = element_blank(),
-    axis.text = element_text(size = 14),
-    title = element_text(size = 14)
-    )
-
-df_congruence_effect |> 
-  ggplot(aes(x = suis60, y = congruence_eff_im_emp)) + 
-  geom_point()
-
-p_congruence_correlations <-
-  ggarrange(
-    p_congruence_corr_ex,
-    p_congruence_corr_im,
-    common.legend = TRUE,
-    legend = "top",
-    ncol = 2,
-    align = "v"
-  )
-
-ggexport(
-  p_congruence_correlations,
-  filename = "plots/plots_congruence_effects_floor_vviq.png",
-  width = 7000,
-  height = 3000,
-  res = 300
-  )
+glmm_ex |> model_parameters()
+glmm_floor_explicit_contrasts
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
