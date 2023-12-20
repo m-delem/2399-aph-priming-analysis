@@ -1361,7 +1361,7 @@ model_selection <-
   filter(best_model == TRUE)
 ```
 
-The quality checks of the optimal models selected for the implicit and explicit tasks, that used inverse Gaussian distributions, are displayed in @fig-implicit-checks and @fig-explicit-checks. The summaries of estimated model parameters are presented in @tbl-implicit-parameters-conventional and @tbl-explicit-parameters-conventional. Pair-wise contrast analyses for both tasks on the relevant factor levels are displayed in @tbl-implicit-contrasts-conventional and tbl-explicit-contrasts-conventional. The visualizations of the interaction of interest for our hypotheses, Group x Congruence, are depicted in @fig-implicit-model-conventional and @fig-explicit-model-conventional.
+The quality checks of the optimal models selected for the implicit and explicit tasks, that used inverse Gaussian distributions, are displayed in @fig-implicit-checks and @fig-explicit-checks. The summaries of estimated model parameters are presented in @tbl-implicit-parameters-conventional and @tbl-explicit-parameters-conventional. Pair-wise contrast analyses for both tasks on the relevant factor levels are displayed in @tbl-implicit-contrasts-conventional and @tbl-explicit-contrasts-conventional. The visualizations of the interaction of interest for our hypotheses, Group x Congruence, are depicted in @fig-implicit-model-conventional and @fig-explicit-model-conventional.
 
 ```{r loading-glmms-rds}
 #| echo: false
