@@ -60,6 +60,7 @@ extract_coefficients <- function(effectsize) {
   return(coef(lm_coef)/1000)
 }
 ```
+
 ### Model & effect sizes
 
 ```{r}

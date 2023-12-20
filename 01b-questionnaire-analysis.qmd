@@ -110,8 +110,8 @@ model_osiq_s <- model_all_glm_fitted[[3]][[4]]
 
 
 ```{r}
-model_vviq <- readRDS(file = "analyses-results/00-model-vviq.RDS")
-model_suis <- readRDS(file = "analyses-results/00-model-suis.RDS")
+model_vviq  <-  readRDS(file = "analyses-results/00-model-vviq.RDS")
+model_suis  <-  readRDS(file = "analyses-results/00-model-suis.RDS")
 model_osiq_o <- readRDS(file = "analyses-results/00-model-osiq-o.RDS")
 model_osiq_s <- readRDS(file = "analyses-results/00-model-osiq-s.RDS")
 

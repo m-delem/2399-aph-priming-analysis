@@ -1,0 +1,1075 @@
+---
+title: "Supplementary Materials - Data analysis report"
+subtitle: "No sensory visual imagery in aphantasia? An intricate question when it comes to priming"
+author: 
+  - name: Maël Delem
+    orcid: 0009-0005-8518-1991
+  - name: Rudy Purkart
+    orcid: 0000-0002-5491-9958
+  - name: Eddy Cavalli
+    orcid: 0000-0003-3944-1973
+  - name: Virginie Ranson
+  - name: Charlotte Andrey
+  - name: Rémy Versace
+    orcid: 0000-0002-4219-6617
+  - name: Gaën Plancher
+    orcid: 0000-0002-0178-6207
+date: 2023-11-03
+date-modified: last-modified
+date-format: "D/MM/YYYY"
+format:
+  html: default
+editor_options: 
+  chunk_output_type: inline
+crossref: 
+  fig-title:  "Figure S-"
+  fig-prefix: "Figure S-"
+  tbl-title:  "Table S-"
+  tbl-prefix: "Table S-"
+  chapters: true
+---
+
+<!-- CSS options for custom title numbers styling-->
+
+```{=html}
+<style>
+.header-section-number:after {
+  content: ". ";
+}
+</style>
+```
+
+# Preliminary Set-up {.unnumbered}
+
+::: {.callout-note collapse="true" appearance="simple"}
+## Datasets, code availability, software and setup
+
+The data is retrieved from the file `data/aphantasia_priming_tidy_data.xlsx`, which contains four sheets, containing the raw data, the data from the association, explicit, and implicit task respectively.
+
+This analysis was conducted in R language on [RStudio](https://posit.co/download/rstudio-desktop/). This analysis report was written with [Quarto](https://quarto.org/).
+
+The code generating all the computations, figures, tables, etc. (only partially exposed here for clarity) can be found in the `analysis-report.qmd` Quarto file, for which the best reading software are coding Integrated Development Environments (IDE) like [RStudio](https://posit.co/download/rstudio-desktop/) or [Visual Studio Code](https://code.visualstudio.com/). The file includes detailed commentaries along with the code to ease understanding, accessibility, and welcome criticism. The code for heavy computations is not re-run upon rendering the Quarto file to `.docx` or HTML, but can be ran manually in the R code chunks of the file itself if one wishes to re-run the analyses.
+
+Down below is the set-up code, including two essential steps:
+
+1.  Installing the required packages for this data analysis
+
+2.  importing data into the dataframes used throughout.
+
+```{r setup}
+#| output: false
+#| code-summary: "Packages"
+
+# The package `librairian` will ease the package management with the "shelf" 
+# function, which automatically: 
+# 1) checks if a package is installed 
+# 2) installs it if need be
+# 3) loads the package like the "library()" function would.
+if (!require(librarian)) install.packages(librarian)
+library(librarian)
+
+# now putting packages on our library's shelves:
+shelf(
+  # ─── data management ─────────────────
+  readxl,         # importing xlsx
+  
+  # ─── modelling ───────────────────────
+  lme4,           # mixed models
+  emmeans,        # marginal estimates
+  statmod,        # easystats dependency
+  doParallel,     # parallel execution
+  multilevelmod,  # multilevel modelling with lmer and tidymodels
+  simr,           # simulation for power analysis
+  
+  # ─── data visualization ──────────────
+  ggpubr,         # publication plots
+  plotly,         # interactive plots
+  gt,             # tables
+  
+  # ─── essential package collections ───
+  easystats,      # data analysis framework
+  tidymodels,     # modelling framework
+  tidyverse       # modern R ecosystem
+)
+
+# ─── Fixing a seed for reproducibility ───
+set.seed(14051998)
+```
+
+```{r importing_data}
+#| output: false
+#| code-summary: "Importing data"
+
+# Implicit task
+df_implicit <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_implicit"
+    ) |> 
+  rename("rt" = rt_implicit) |> 
+  # converting RTs to seconds
+  mutate(rt = rt/1000)
+
+# Explicit task
+df_explicit <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_explicit"
+    ) |> 
+  rename("rt" = rt_explicit) |> 
+  # convert RTs to seconds
+  mutate(rt = rt/1000)
+
+# Questionnaires
+df_questionnaires <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_questionnaires"
+    ) %>% 
+  # creating the a/phantasia groups
+  mutate(
+    aphantasia = ifelse(vviq80 < 32, "yes", "no"),
+    aphantasia = fct_relevel(aphantasia, "yes", "no")
+    )
+
+# updating all the dataframes with the questionnaires data
+dfs <- 
+  list(
+    implicit_task = df_implicit, 
+    explicit_task = df_explicit
+    ) |> 
+  # adding the vviq and group column to every dataframe
+  imap(~left_join(
+    .x, 
+    df_questionnaires |>  
+      select(
+        # column to match with the correct participants
+        subjectid, 
+        # new variables to add
+        age,
+        sexe,
+        vviq80,
+        aphantasia), by = "subjectid") |>  
+      rename("sex" = sexe) |>  
+      # reordering the final dfs
+      select(
+        subjectid, 
+        age, sex, aphantasia,
+        vviq80,
+        everything())
+    )
+
+df_implicit <- dfs$implicit_task
+df_explicit <- dfs$explicit_task
+rm(dfs)
+```
+:::
+
+# Self-report questionnaires
+
+We modeled the scores at each questionnaire with Generalized Linear Models (GLMs) to accommodate the non-normal distributions in the sample. To ensure the best fit to the data, we fitted models with Gaussian, Gamma and inverse Gaussian distributions  and compared thel with the AIC and BIC as indices of model quality. The code of the model fitting workflow using the `tidymodels` R package is available below. The quality checks of the optimal models selected, that used Gamma distributions, are displayed in @fig-vviq-model and subsequent tabs. The summary of the estimated marginal means and post-hoc contrast analyses of between-group differences is presented in @tbl-questionnaire-results and depicted in @fig-questionnaire-results.
+
+```{r fitting-glm-questionnaires}
+#| eval: false
+#| code-summary: "Fitting GLMs on questionnaire scores with `tidymodels`"
+
+# ─── Defining a tidymodels "recipe" to prepare the data ───────────────────────
+model_recipe_glm <-
+  df_questionnaires |> 
+  recipe() |> 
+  # declaring scores as dependent variables
+  update_role(vviq80, suis60, osiq_o75, osiq_s75, new_role = "outcome") |> 
+  # declaring groups and age as independent variables
+  update_role(aphantasia, age, new_role = "predictor")
+
+# ─── Specifying models with various distributions to be compared ──────────────
+
+# Gaussian distribution
+glm_gaussian <-
+  linear_reg() |> 
+  set_engine(
+    "glm",
+    family = gaussian()
+    )
+
+# Gamma distribution
+glm_gamma <-
+  linear_reg() |> 
+  set_engine(
+    "glm",
+    family = Gamma()
+    )
+
+# Inverse Gaussian distribution
+glm_inverse <-
+  linear_reg() |> 
+  set_engine(
+    "glm",
+    family = inverse.gaussian()
+    )
+
+# Listing these models
+model_specs_glm <- list(
+  glm_gaussian = glm_gaussian,
+  glm_gamma    = glm_gamma,
+  glm_inverse  = glm_inverse
+)
+
+# ─── Formulas for each questionnaire model ────────────────────────────────────
+formula_q1 <-   vviq80 ~ aphantasia*age
+formula_q2 <-   suis60 ~ aphantasia*age
+formula_q3 <- osiq_o75 ~ aphantasia*age
+formula_q4 <- osiq_s75 ~ aphantasia*age
+
+# Listing these formulas
+model_formulas_glm <- list(
+  formula_q1 = formula_q1,
+  formula_q2 = formula_q2,
+  formula_q3 = formula_q3,
+  formula_q4 = formula_q4
+)
+
+# ─── Table to combine everything in workflows and fit the models ──────────────
+
+model_all_glm_fitted <-
+  tribble(   ~recipe,          ~model,           ~formula,
+    model_recipe_glm, model_specs_glm, model_formulas_glm
+  ) |> 
+  # combining recipes with models
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
+  rowwise() |>
+  mutate(
+    # fitting models
+    fitted_model = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(model, formula = formula) |> 
+      fit(df_questionnaires) |> 
+      extract_fit_engine()
+      )
+  ) |> 
+  select(!c(recipe, model, formula)) |>
+  mutate(
+    parameters = list(model_parameters(fitted_model)),
+    model_perf = list(model_performance(fitted_model)),
+    AICc  = model_perf[[2]]
+  ) |> 
+  select(!c(model_perf)) |> 
+  arrange(formula_id)
+```
+
+
+::: {.panel-tabset .column-page-inset-right}
+### VVIQ Model
+
+![Model assumption checks for the Generalized Linear Model fit on the VVIQ scores.](plots/S0-glm-vviq-checks.png){#fig-vviq-model}
+
+### SUIS Model
+
+![Model assumption checks for the Generalized Linear Model fit on the VVIQ scores.](plots/S0-glm-suis-checks.png){#fig-suis-model}
+
+### OSIQ-Object Model
+
+![Model assumption checks for the Generalized Linear Model fit on the VVIQ scores.](plots/S0-glm-osiq-o-checks.png){#fig-osiqo-model}
+
+### OSIQ-Spatial Model
+
+![Model assumption checks for the Generalized Linear Model fit on the VVIQ scores.](plots/S0-glm-osiq-s-checks.png){#fig-osiqs-model}
+:::
+
+```{r loading-rds-questionnaires}
+#| echo: false
+
+model_vviq   <- readRDS(file = "analyses-results/00-model-vviq.RDS")
+model_suis   <- readRDS(file = "analyses-results/00-model-suis.RDS")
+model_osiq_o <- readRDS(file = "analyses-results/00-model-osiq-o.RDS")
+model_osiq_s <- readRDS(file = "analyses-results/00-model-osiq-s.RDS")
+```
+
+```{r table-questionnaire-results}
+#| label: tbl-questionnaire-results
+#| code-summary: "Generating the summary table of the model results"
+#| tbl-cap: "Estimated marginal means (± standard errors) of the groups at each questionnaire and results of the post-hoc contrast analyses of between-group differences."
+
+# ─── Creating a function to extract all the information from a model ──────────
+generate_model_summary <- 
+  function(model, questionnaire_name){
+    table_summary <-
+      estimate_means(model, at = "aphantasia", p_adjust = "fdr") |> 
+      select(!c(CI_low, CI_high)) |>
+      mutate(across(c(Mean, SE), ~as.character(round(.x, digits = 2)))) |> 
+      unite("Mean ± SE", Mean:SE, sep = " ± ") |> 
+      pivot_wider(
+        names_from = aphantasia,
+        values_from = "Mean ± SE"
+      ) |> 
+      mutate(Questionnaire = questionnaire_name) |> 
+      rename(
+        "Aphantasics" = yes,
+        "Controls" = no
+      ) |> 
+      select(Questionnaire, everything()) |> 
+      bind_cols(
+        estimate_contrasts(
+          model, 
+          contrast = "aphantasia", 
+          p_adjust = "fdr")[,7:9]
+      ) 
+    
+    return(table_summary)
+}
+
+# ─── Merging the resulting tables of each questionnaire ───────────────────────
+table_vviq   <- generate_model_summary(model_vviq,   "VVIQ")
+table_suis   <- generate_model_summary(model_suis,   "SUIS")
+table_osiq_o <- generate_model_summary(model_osiq_o, "OSIQ-Object")
+table_osiq_s <- generate_model_summary(model_osiq_s, "OSIQ-Spatial")
+
+table_questionnaire_results <-
+  bind_rows(
+    table_vviq,
+    table_suis,
+    table_osiq_o,
+    table_osiq_s
+  )
+
+# ─── Displaying ───────────────────────────────────────────────────────────────
+table_questionnaire_results |>
+  gt() |> 
+  cols_align(
+    align = "center",
+    columns = 2:6
+  ) |> 
+  fmt_markdown(columns = 1:6) |> 
+  fmt_number(columns = 5, decimals = 2) |> 
+  fmt_scientific(columns = 6) |> 
+  tab_options(table.width = pct(100))
+```
+
+```{r standardized-questionnaire-plots}
+#| eval: false
+#| code-summary: "Generating the standardized model plots"
+
+# ─── Standardized model refits for the plots ──────────────────────────────────
+df_questionnaires_standard <-
+  df_questionnaires |>
+  mutate(
+    # Note: the "0.000001" comes
+    vviq80   = as.numeric(scales::rescale(vviq80, 
+                                          from = c(16, 80), 
+                                          to = c(0, 1))),
+    suis60   = as.numeric(scales::rescale(suis60, 
+                                          from = c(12, 60), 
+                                          to = c(0, 1))),
+    osiq_o75 = as.numeric(scales::rescale(osiq_o75, 
+                                          from = c(15, 75), 
+                                          to = c(0, 1))),
+    osiq_s75 = as.numeric(scales::rescale(osiq_s75, 
+                                          from = c(15, 75), 
+                                          to = c(0., 1)))
+    )
+
+model_recipe_glm_standard <-
+  df_questionnaires_standard |> 
+  recipe() |> 
+  update_role(vviq80, suis60, osiq_o75, osiq_s75, new_role = "outcome") |> 
+  update_role(aphantasia, age, new_role = "predictor")
+
+model_specs_glm_standard<- list(glm_gaussian = glm_gaussian)
+
+model_all_glm_fitted_standard <-
+  tribble(            ~recipe,                   ~model,           ~formula,
+    model_recipe_glm_standard, model_specs_glm_standard, model_formulas_glm
+  ) |> 
+  # combining recipes with models
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
+  rowwise() |>
+  mutate(
+    # fitting models
+    fitted_model = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(model, formula = formula) |> 
+      fit(df_questionnaires_standard) |> 
+      extract_fit_engine()
+      )
+  ) |> 
+  select(!c(recipe, model, formula)) |> 
+  arrange(formula_id)
+
+model_vviq_standard   <- model_all_glm_fitted_standard[[3]][[1]]
+model_suis_standard   <- model_all_glm_fitted_standard[[3]][[2]]
+model_osiq_o_standard <- model_all_glm_fitted_standard[[3]][[3]]
+model_osiq_s_standard <- model_all_glm_fitted_standard[[3]][[4]]
+
+# ─── Settings for the plot ────────────────────────────────────────────────────
+
+# calculating marginal means and CIs
+marginal_vviq   <- estimate_means(model_vviq_standard,   at = "aphantasia")
+marginal_suis   <- estimate_means(model_suis_standard,   at = "aphantasia")
+marginal_osiq_o <- estimate_means(model_osiq_o_standard, at = "aphantasia")
+marginal_osiq_s <- estimate_means(model_osiq_s_standard, at = "aphantasia")
+ 
+marginal_means <-
+  marginal_vviq |> 
+  mutate(variable = "vviq80") |> 
+  bind_rows(marginal_suis   |> mutate(variable = "suis60")) |> 
+  bind_rows(marginal_osiq_o |> mutate(variable = "osiq_o75")) |> 
+  bind_rows(marginal_osiq_s |> mutate(variable = "osiq_s75"))
+
+# dodge width for all the geoms
+dw <- 1
+# legend and axis text size
+txt <- 14
+
+# ─── Plotting ─────────────────────────────────────────────────────────────────
+df_questionnaires_standard |> 
+  pivot_longer(
+    cols = c(vviq80, suis60, osiq_o75, osiq_s75),
+    names_to = "variable"
+  ) |> 
+  ggplot(aes(
+    x = fct_relevel(variable, c("vviq80", "suis60", "osiq_o75", "osiq_s75")),
+    y = value,
+    fill = aphantasia,
+    color = aphantasia
+  )) +
+  # accentuation of the median line at 0.5
+  geom_hline(
+    yintercept = .5,
+    linetype = 1,
+    color = "grey30",
+    alpha = .2
+  ) +
+  # violin shapes for the distributions and quantiles
+  geom_violin(
+    position = position_dodge(dw),
+    alpha = .1,
+    draw_quantiles = c(.25, .5, .75)
+    ) +
+  # points for means and lines for CIs
+  geom_pointrange(
+    data = marginal_means,
+    aes(
+    x = fct_relevel(variable, c("vviq80", "suis60", "osiq_o75", "osiq_s75")),
+    y = Mean,
+    ymin = CI_low,
+    ymax = CI_high,
+    color = aphantasia
+    ),
+    size = .75,
+    linewidth = 1,
+    position = position_dodge(dw)
+  ) +
+  # star for significance
+  annotate(
+    geom  = "text",
+    label = "*",
+    color = "black",
+    x = 1,
+    y = .95,
+    size  = 10 
+    ) +
+  # dotted line that separates the different questionnaires
+  geom_vline(
+    aes(xintercept = stage(variable, after_scale = 1.5)),
+    linetype = 3
+  ) +
+  # star for significance
+  annotate(
+    geom  = "text",
+    label = "*",
+    color = "black",
+    x = 2,
+    y = .95,
+    size  = 10 
+    ) +
+  # dotted line that separates the different questionnaires
+  geom_vline(
+    aes(xintercept = stage(variable, after_scale = 2.5)),
+    linetype = 3
+  ) +
+  # star for significance
+  annotate(
+    geom  = "text",
+    label = "*",
+    color = "black",
+    x = 3,
+    y = .95,
+    size  = 10 
+    ) +
+  # dotted line that separates the different questionnaires
+  geom_vline(
+    aes(xintercept = stage(variable, after_scale = 3.5)),
+    linetype = 3
+  ) +
+  # star for significance
+  annotate(
+    geom  = "text",
+    label = "*",
+    color = "black",
+    x = 4,
+    y = .95,
+    # vjust = .1,
+    # hjust = 6,
+    size  = 10 
+    ) +
+  # Aesthetics
+  scale_color_okabeito(name = "Group:  ", labels = c(" Aphantasic   ", " Control")) +
+  scale_fill_okabeito(name = "Group:  ", labels = c(" Aphantasic   ", " Control")) +
+  scale_x_discrete(
+    name = "",
+    labels = c("VVIQ", "SUIS", "OSIQ-Object", "OSIQ-Spatial")
+  ) +
+  scale_y_continuous(
+    name = "Standardized score",
+    breaks = breaks_pretty(8)
+  ) +
+  theme_modern() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(),
+    axis.text.x =  element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text =  element_text(size = txt),
+    legend.position = "top"
+    )
+```
+
+:::{.column-page-inset-right}
+
+![Visualization of self-report questionnaires results for aphantasics and controls. Violin plots depict the distributions and quantiles of the scores in each group, median-centered on each scale. Colored dots depict marginal means estimated by the models fitted on the scores, while the solid lines represent their 95\% confidence intervals. On the vertical axis, 0.0 is the normalized lowest possible score, 0.5 the median score, and 1 the maximum possible score for each questionnaire. Stars denote \textit{p}-values inferior to .001 for each pairwise contrast between groups.](plots/00-plot-questionnaires.png){#fig-questionnaire-results}
+:::
+
+# Response times
+
+## Power analysis
+
+### Rationale
+
+In the approach-avoidance task (AAT), we hypothesised that difference in reaction times (RT) between approach and avoidance responses (the AA bias) would be strongly modulated in novice practitioners by the context associated with the video, with a higher bias when the video featured characters responsible for their suffering compared to the alternative, not-responsible condition. We further expected this modulation by Context to be diminished or even absent in expert practitioners. This hypothesis is represented graphically as a pattern of expected cell means in figure S2-A. In a statistical model with categorical predictors, such as an Anova or multilevel model, evidence in favour of our hypothesis would be provided by a significant, three-way, Group-by-Context-by-Target interaction. Estimating the statistical power to capture such a complex effect ‒ given an experimental design, a sample size and an effect size ‒ requires simulations from a model close to the one that will be used for the analysis of real data, as well as assumptions about the structure of data. The power estimation procedure requires 3 steps:
+1)	Specify the structure and coefficients of a generative model
+2)	Generate a synthetic dataset using the generative model and an expected effect size
+3)	Fit the same model on the simulated data and test the statistical significance of the main effect or interaction of interest
+Steps 2 and 3 are repeated as many times as necessary to reach a desired precision of estimation. The proportion of synthetic datasets for which the effect of interest is significant is an estimation of power. Steps 2 and 3 can also be repeated for a range of effect sizes, if the expected effect size is not known exactly.
+
+Step 1
+
+We detail and justify below every assumption made for the generative model:
+
+### Data structure
+
+-	Distribution. In real datasets, the distributions of RT are right-skewed and can be modelled untransformed using the Gamma or inverse-Gaussian distributions (Lo & Andrews 2015); but such a modelling choice is only an approximation as RT do not follow exactly any distribution of the exponential family for which generalized models can be fitted. It is difficult to evaluate the impact of such approximation on type I and type II errors. For power calculation, we generated normally distributed RT and modelled them with a regular mixed model, which simplifies the model parametrization as well as alleviates the computational burden.
+
+The generative model will be created using the `simr` R package.
+
+```{r generate-data}
+#| code-summary: "Creation of a generative model using simulation"
+#| eval: false
+
+# First creating a dataframe with no response data, but whose structure reflects the dataset that will be collected. 
+
+# vectors for subjects
+id <- seq(1:150)
+groups <- rep(c("aphantasia", "control"), 75)
+
+# conditions
+congruences <- list("congruent", "incongruent")
+colors <- list("colored", "uncolored")
+# repeated 4 times each
+congruence = rep(congruence, 4)
+color = rep(colors, 4)
+
+# creating the simulation df
+df <- 
+  tibble(
+    id = id, 
+    group = groups,
+    congruence = list(congruence),
+    color = list(color)
+    ) |> 
+  # crossing conditions for 64 trials/subject total
+  unnest_longer(congruence) |> 
+  unnest_longer(color)
+```
+
+-	Fixed effects. We included the categorical predictors Group (novices/experts), State (empathy/compassion), Context (responsible/not-responsible) and Target (approach/avoid) as fixed effects along with all their interactions. Regression coefficients were set in such a way as to produce the pattern of means illustrated in figure S2-A
+
+`simr` requires regression coefficients in order to simulate data. The functions below transform a pattern of cell means to regressions coefficients of a linear model, using a simple trick: modelling a dataframe of hypothesized cell means, as if each of them was one noise-less observation of a combination of experimental factors, provides the desired coefficient estimates.
+
+```{r sim-regression-coefs}
+#| code-summary: "Specifying regression coefficients"
+#| eval: false
+
+# creating dataframes of regression coefficients
+extract_coefficients <- function(effectsize) {
+  df_temp <- tribble(
+          ~group,   ~congruence,       ~color,   ~y,
+    "aphantasia",   "congruent",    "colored",  -30,
+    "aphantasia",   "congruent",  "uncolored",    0,
+    "aphantasia", "incongruent",    "colored",  -30, 
+    "aphantasia", "incongruent",  "uncolored",    0,
+       "control",   "congruent",    "colored", -30 - effectsize,
+       "control",   "congruent",  "uncolored",   0 - effectsize,
+       "control", "incongruent",    "colored",  -30,
+       "control", "incongruent",  "uncolored",    0
+  )
+  
+  lm_coef <- lm(y ~ (group + congruence + color)^3, data = df_temp)
+
+  # Set numerical errors to 0
+  coef(lm_coef)[abs(coef(lm_coef)) < 10^(-10)] <- 0
+  
+  # converting to ms upon return
+  return(coef(lm_coef)/1000)
+}
+```
+
+-	Random intercepts. We included a random intercept for Participant and another for Video, with standard deviation of 150ms and 50ms respectively. These numbers, especially the first one, were derived from the literature (Deary & Der 2005). However, previous simulation studies have shown that the magnitude of random intercepts has no effect on statistical power whatsoever (Stevens & Brysbaert 2016), a result that we could verify in our own simulations.
+
+-	Random slopes. We included random by-Participant slopes for the main effects of State, Context and Target but not their interactions. We opted for this simplification partly to ease the computational burden (model complexity increases quadratically with the number of random effects because of the additional covariance terms) and partly because, in our experience, random slopes for interactions in models fitted on RT often cause computational issues (such as misconvergence and unreliable estimates). Standard deviations of random slopes are virtually never reported in scientific publications; here we chose to set them to 50ms, which is in the same range as the maximum expected population-average effect size.
+
+-	Correlations between random effects were all set to 0, but an alternative value (0.5) produced similar results.
+
+```{r sim-random-effects}
+#| code-summary: "Specifying random effects"
+#| eval: false
+
+## Fixed effects: initialized at 0
+fixed <- c(700,   # intercept
+           0,0,0, # main effects
+           0,0,0, # 2-way interactions
+           0     # 3-way interactions
+           )/1000
+
+## Random intercepts for participants
+v1 <- 0.150
+
+## Random intercept, slopes (main effects only) and their covariances
+slope  <- .05
+correl <- 0
+v2 <- matrix(
+  c(1, correl, correl,
+    correl, 1, correl,
+    correl, correl, 1),
+  3)
+
+v2 <- cor_to_cov(v2, sd = c((v1), slope, slope))
+
+## residual std dev
+res <- .15
+
+model <- makeLmer(
+  formula = y ~ (group + congruence + color)^3 + (congruence + color|id),
+  fixef   = fixed, 
+  VarCorr = list(v2), 
+  sigma = res,
+  data  = df
+  )
+```
+
+Steps 2 and 3
+
+Effect sizes. For the detection of the Group x Context x Target interaction, the effect size can be formalised as the triple difference (novices ‒ experts) x (responsible ‒ not-responsible) x (approach ‒ avoid). Assuming that the strongest bias (presumably in novices for responsible context) would not exceed 60ms and that reductions below 10ms are of little interest, we ran simulations for effect sizes between 10ms and 60ms, in steps of 10ms.
+Number of simulations. For each effect size, we ran as many simulations as were needed to obtain a confidence interval width below 10 points. It required between 100 and 400 simulations (confidence interval width for proportions is maximal for middle values [0.5] and minimal for extreme values [0 or 1]).
+
+We ran 200 simulations for each effect size.
+
+```{r simulations}
+#| code-summary: "Running the simulations for various effect sizes"
+#| eval: false
+
+# ─── Running simulations with parallel processing ─────────────────────────────
+
+# finding the available cores for parallel processing
+n_cores <- parallel::detectCores() - 1
+
+# creating the cluster of cores
+parallel_cluster <- 
+  parallel::makeCluster(
+    n_cores,
+    type = "PSOCK"
+  )
+
+# registering the cluster for `foreach`
+doParallel::registerDoParallel(cl = parallel_cluster)
+# checking
+# foreach::getDoParRegistered()
+# foreach::getDoParWorkers()
+
+# initializing, ready for takeoff
+nsim <- 200
+
+# Run calculations for a range of effect sizes
+(simulations <-
+  foreach (
+    effectsize = c(10, 15, 20, 25, 30, 35, 40), 
+    .packages = c("tidyverse", "simr")
+    ) %dopar% {
+      # Calculate regression coefficients corresponding to the effect size and 
+      # update the model to simulate from accordingly
+      fixef(model) <- extract_coefficients(effectsize)
+      
+      # Simulate data and estimate power
+      powerSim(
+        model, 
+        nsim = nsim,
+        test = simr::fixed(
+          xname = "group:congruence", 
+          method = 'anova'
+          ))
+    }) |> system.time() -> time_simulating
+
+# stopping the cluster when we're done
+parallel::stopCluster(cl = parallel_cluster)
+```
+
+Results
+
+The complete results are summarised in @tbl-simulations-table and @fig-simulations-plot It includes the same power analysis applied to the exploratory, State x Context x Target interaction. The power profile is actually the same for the two interactions investigated. This result might come as surprising if one considers that Group is a between-subject factor and State a within-subject one, given the well-known and established fact that the use of within-subject experimental factors provide superior statistical power. However, our design includes two crossed factors, Participant and Video, and each of Group and State are within for at least one of them (State is within for both). Interestingly, Stevens & Brysbaert (2016) have already demonstrated with simulations that whether a factor is within-within or within-between in a crossed design does not impact power (figures 10 and 11).
+
+```{r simulations-table}
+#| label: tbl-simulations-table
+#| code-summary: "Generating the summary table for the power analysis"
+#| tbl-cap: "Results of the power analysis through simulation."
+#| tbl-cap-location: margin
+
+simulations_table <- 
+  readRDS(file = "analyses-results/00-power-analyses-table.RDS")
+
+simulations_table |> 
+  # All the code below is simple formatting of the table that is in the RDS
+  rename(
+    "Effect size (difference in ms)" = effectsize,
+    "Successes"   = successes,
+    "Simulations" = trials,
+    "Power" = mean
+  ) |> 
+  mutate(across(c(lower:upper), ~round(.x, digits = 2))) |> 
+  unite("CI", lower:upper, sep = ", ") |> 
+  mutate(CI = paste("[", CI, "]")) |> 
+  rename("95% CI" = CI) |> 
+  gt() |> 
+  cols_align(
+    align = "center",
+    columns = 1:5
+  ) |>
+  fmt_markdown(columns = 1:5) |> 
+  fmt_number(columns = 4, decimals = 2) |> 
+  tab_options(table.width = pct(100))
+```
+
+```{r simulations-plot}
+#| label: fig-simulations-plot
+#| code-summary: "Generating the plot of the power analysis results"
+#| fig-cap: "Results of the power analysis using simulations. 200 simulations have been computed for each effect size."
+
+simulations_table |> 
+  ggplot(aes(
+    x = effectsize,
+    y = mean,
+    ymin  = lower,
+    ymax  = upper,
+    label = effectsize
+    )) +
+  # the band representing the 95% CIs
+  geom_ribbon(fill = "aquamarine", alpha = .2) +
+  # the means and CIs at each specific effect size
+  geom_pointrange(colour = "aquamarine4") +
+  geom_point(colour = "aquamarine4") +
+  # line connecting the dots
+  geom_line(colour = "aquamarine4") +
+  # horizontal line at 80% power and corresponding annotation
+  geom_hline(yintercept = .8, color = "black", linetype = 1) +
+  annotate(
+    geom  = "text",
+    label = "80% power",
+    fontface = "italic",
+    color = "black",
+    x = -Inf,
+    y = .8,
+    vjust = -.5,
+    hjust = -.3,
+    size  = 4 
+    ) +
+  # horizontal dotted line at 90% power and corresponding annotation
+  geom_hline(yintercept = .9, color = "gray60", linetype = 2) +
+  annotate(
+    geom  = "text",
+    label = "90% power",
+    fontface = "italic",
+    color = "grey60",
+    x = -Inf,
+    y = .9,
+    vjust = -.5,
+    hjust = -.3,
+    size  = 4 
+    ) +
+  # Aesthetics
+  scale_x_continuous(
+    name = "Effect size (RT difference in ms)",
+    breaks = unique(simulations_table$effectsize)
+  ) +
+  scale_y_continuous(
+    name = "Statistical power",
+    breaks = seq(0, 1, .1),
+    limits = c(0, 1)
+    ) +
+  theme_modern() +
+  theme(
+    panel.grid.major = element_line()
+  )
+```
+
+## Outlier detection procedure {#sec-outliers}
+
+We removed missed trials in the analyses of the RTs. Beforehand, we analysed the proportion of missed trials for each participant and removed for each task the participants with abnormally high rates of missed trials (> 20%).
+
+```{r accuracy-outliers}
+#| code-summary: "Removing incorrect trials and task-wise accuracy outliers"
+#| output: false
+
+# ─── Listing error rates per subject ───
+list(df_explicit, df_implicit) |> 
+  imap(
+    ~.x |> 
+      select(subjectid, starts_with("correct"), aphantasia) |> 
+      group_by(subjectid) |> 
+      count(pick(2)) |> 
+      filter(pick(1) == 1) |> 
+      ungroup() |> 
+      mutate(
+        n_tot = max(n),
+        prop = (n_tot - n) / n_tot * 100  # analyzing the error rate per subject
+      ) %>%
+      arrange(desc(prop)) |> 
+      select(1, 5)
+    )
+# 5 accuracy outliers in the explicit task, 4 in the implicit one
+
+# ─── Removing incorrect trials and task-wise accuracy outliers ───
+df_explicit_rt <-
+  df_explicit |> 
+  # filtering out...
+  filter(
+    # incorrect trials
+    correct_explicit == 1 &
+    # participants identified with with high error rates
+    !(subjectid %in% c( 
+      "aknezevic",
+      "lbrunie", 
+      "agayou", 
+      "bluciani",
+      "ldossantos"))
+    ) |>  
+  # removing irrelevant variables
+  select(-c(sex, vviq80, orientation, response, correct_explicit))
+
+df_implicit_rt <- 
+  df_implicit |>  
+  filter(
+    correct_implicit == 1 &
+    !(subjectid %in% c( 
+      "bdispaux", 
+      "eleveque", 
+      "aleclaire", 
+      "dchimenton"))
+      ) |>  
+  select(-c(sex, vviq80, orientation, response, correct_implicit))
+```
+
+As a preprocessing, response times below 250ms and above 3000ms will be removed as they could represent false alarms.
+
+```{r removing-extreme-rts}
+#| code-summary: "Removing extreme RTs"
+#| output: false
+
+df_explicit_rt <- 
+  df_explicit_rt |>  
+  # filtering out extreme RTs
+  filter(rt > .25 & rt < 3)
+
+df_implicit_rt <- 
+  df_implicit_rt |>  
+  filter(rt > .25 & rt < 3)
+```
+
+```{r rt-means-df}
+#| echo: false
+#| output: false
+
+# ═══ RT means table - Both tasks ══════════════════════════════════════════════
+
+df_rt <- 
+  list(
+  df_explicit_rt |>  rename("Explicit task mean RTs" = rt), 
+  df_implicit_rt |>  rename("Implicit task mean RTs" = rt)
+  ) |>  
+  imap(
+    ~select(.x, contains("RT")) |> 
+      report() |>  
+      as.data.frame() |>  
+      select(1:10)
+    )
+
+df_rt <- bind_rows(df_rt[[1]], df_rt[[2]])
+
+# explicit upper outlier threshold
+threshold_explicit <- df_rt$Median[1] + 3*df_rt$MAD[1]
+# 1.35
+
+# implicit upper outlier threshold
+threshold_implicit <- df_rt$Median[2] + 3*df_rt$MAD[2]
+# 1.055
+```
+
+A first level of the RT outliers analysis is based on the overall mean RT of the participants. Using a procedure based on , participants with abnormally high RT means were removed from the dataset of the task. Using an outlier detection procedure based on Mean Absolute Deviations (MADs), a common scaling factor to determine acceptable values is $\pm$ 3 MADs: this resulted in our case in an upper threshold of `r round(threshold_implicit, digits = 3)*1000`ms for the implicit task and `r round(threshold_explicit, digits = 3)*1000`ms for the explicit task.
+
+```{r rt-means-outliers}
+#| code-summary: "Removing outliers with aberrant RT means"
+#| output: false
+
+# ═══ Aberrant RT means outliers removal ═══════════════════════════════════════
+
+# ─── Finding outliers ───
+
+df_explicit_rt |> 
+  group_by(subjectid) |> 
+  summarise(median_rt = median(rt)) |> 
+  ungroup() |> 
+  filter(median_rt > threshold_explicit) |> 
+  arrange(desc(median_rt))
+# 3 outliers in the explicit task
+
+df_implicit_rt |>
+  group_by(subjectid) |> 
+  summarise(median_rt = median(rt)) |> 
+  ungroup() |> 
+  filter(median_rt > threshold_implicit) |> 
+  arrange(desc(median_rt))
+# 0 outliers in the implicit task
+
+# ─── Removing specific outliers ───
+df_explicit_rt <- 
+  df_explicit_rt |> 
+  filter(
+    !(subjectid %in% c(
+      "dchimenton",
+      "fc",
+      "mbilodeau"
+    ))
+  )
+
+# Examination of remaining trials
+df_explicit_rt |> 
+  group_by(subjectid) |> 
+  count() |> 
+  arrange(n)
+# 3 have very few trials
+
+# ─── Removing specific outliers ───
+df_explicit_rt <- 
+  df_explicit_rt |> 
+  filter(
+    !(subjectid %in% c(
+      "llhermitte",
+      "cmarcenytheault",
+      "mbillon"
+    ))
+  )
+
+df_implicit_rt |> 
+  group_by(subjectid) |> 
+  count() |> 
+  arrange(n)
+# implicit trials are ok
+```
+
+Finally, we conducted a more detailed inspection of the RTs on a by-participant level. Once again, we detected these outliers using MAD thresholds. The RTs have been group by subsets of conditions, as we know that our experimental conditions could have affected them: thus, using a global median would necessarily flatten within-participant outcomes and have a major impact on the analyses. After close inspection of the distributions and individual MADs of participants, a threshold at 5 MADs was chosen for outlier detection.The resulting RT distributions per participant in each task are presented in @fig-rt-per-participant-1 and [-@fig-rt-per-participant-2].
+
+```{r removing-outliers-by-participant}
+#| code-summary: "Removing outlier trials by-participant"
+#| output: false
+
+df_explicit_rt <- 
+  df_explicit_rt |> 
+  group_by(subjectid, congruence) |> 
+  mutate(
+    rt_median = median(rt),
+    rt_mad = mad(rt)
+    ) |> 
+  filter(
+    rt < rt_median + 5 * rt_mad
+  ) |>
+  ungroup()
+
+df_implicit_rt <-
+  df_implicit_rt |> 
+  group_by(subjectid, congruence) |> 
+  mutate(
+    rt_median = median(rt),
+    rt_mad = mad(rt)
+    ) |> 
+  filter(
+    rt < rt_median + 5 * rt_mad
+  ) |>
+  ungroup()
+```
+
+:::{.panel-tabset .column-page-inset-right}
+### RT distributions - Implicit task
+
+```{r rt-per-participant-1}
+#| label: fig-rt-per-participant-1
+#| code-summary: "Generating distribution plots"
+#| fig-cap: "Resulting distribution of RTs in the implicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
+
+(df_implicit_rt |>
+  ggplot(aes(x = rt, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
+  scale_y_continuous(name = "Density") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL) +
+  theme_modern()) |>
+  ggplotly() |>
+  style(showlegend = FALSE)
+```
+
+### RT distributions - Explicit task
+
+```{r rt-per-participant-2}
+#| label: fig-rt-per-participant-2
+#| code-summary: "Generating distribution plots"
+#| fig-cap: "Resulting distribution of RTs in the explicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
+
+(df_explicit_rt |>
+  ggplot(aes(x = rt, fill = subjectid)) +
+  geom_density(alpha = .25, color = "black") +
+  scale_x_continuous(name = "Response time", breaks = breaks_pretty(5)) +
+  scale_y_continuous(name = "Density") +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+    ) +
+  scale_fill_viridis_d(guide = NULL) +
+  scale_color_viridis_d(guide = NULL) +
+  theme_modern()) |>
+  ggplotly() |>
+  style(showlegend = FALSE)
+```
+:::
+
+## Modelling
+
+### Conventional VVIQ Groups
+
+### Extremal VVIQ Groups

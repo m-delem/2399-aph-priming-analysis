@@ -9,7 +9,7 @@ number-sections: true
 number-depth: 2
 fig-align: center
 fig-cap-location: bottom
-tbl-cap-location: top
+tbl-cap-location: margin
 
 # setting for proper numbering of sections
 crossref: 
