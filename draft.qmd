@@ -33,6 +33,9 @@ crossref:
 
 ```{=html}
 <style>
+.header-section-number:before {
+  content: "S ";
+}
 .header-section-number:after {
   content: ". ";
 }
@@ -170,7 +173,7 @@ rm(dfs)
 We modeled the scores at each questionnaire with Generalized Linear Models (GLMs) to accommodate the non-normal distributions in the sample. To ensure the best fit to the data, we fitted models with Gaussian, Gamma and inverse Gaussian distributions  and compared thel with the AIC and BIC as indices of model quality. The code of the model fitting workflow using the `tidymodels` R package is available below. The quality checks of the optimal models selected, that used Gamma distributions, are displayed in @fig-vviq-model and subsequent tabs. The summary of the estimated marginal means and post-hoc contrast analyses of between-group differences is presented in @tbl-questionnaire-results and depicted in @fig-questionnaire-results.
 
 ```{r fitting-glm-questionnaires}
-#| eval: false
+#| output: false
 #| code-summary: "Fitting GLMs on questionnaire scores with `tidymodels`"
 
 # ─── Defining a tidymodels "recipe" to prepare the data ───────────────────────
@@ -262,19 +265,63 @@ model_all_glm_fitted <-
 
 
 ::: {.panel-tabset .column-page-inset-right}
-### VVIQ Model
+### VVIQ Model checks
+
+```{r running-model-checks-vviq}
+#| eval: false
+#| code-summary: "Running model checks"
+
+# loading the model saved after the analysis
+model_vviq <- readRDS(file = "analyses-results/00-model-vviq.RDS")
+
+# plotting
+model_vviq |> check_model(check = "all")
+```
 
 ![Model assumption checks for the Generalized Linear Model fit on the VVIQ scores.](plots/S0-glm-vviq-checks.png){#fig-vviq-model}
 
-### SUIS Model
+### SUIS Model checks
+
+```{r running-model-checks-suis}
+#| eval: false
+#| code-summary: "Running model checks"
+
+# loading the model saved after the analysis
+model_suis <- readRDS(file = "analyses-results/00-model-suis.RDS")
+
+# plotting
+model_suis |> check_model(check = "all")
+```
 
 ![Model assumption checks for the Generalized Linear Model fit on the VVIQ scores.](plots/S0-glm-suis-checks.png){#fig-suis-model}
 
-### OSIQ-Object Model
+### OSIQ-Object Model checks
+
+```{r running-model-checks-osiqo}
+#| eval: false
+#| code-summary: "Running model checks"
+
+# loading the model saved after the analysis
+model_osiq_o <- readRDS(file = "analyses-results/00-model-osiq-o.RDS")
+
+# plotting
+model_osiq_o |> check_model(check = "all")
+```
 
 ![Model assumption checks for the Generalized Linear Model fit on the VVIQ scores.](plots/S0-glm-osiq-o-checks.png){#fig-osiqo-model}
 
-### OSIQ-Spatial Model
+### OSIQ-Spatial Model checks
+
+```{r running-model-checks-osiqs}
+#| eval: false
+#| code-summary: "Running model checks"
+
+# loading the model saved after the analysis
+model_osiq_s <- readRDS(file = "analyses-results/00-model-osiq-s.RDS")
+
+# plotting
+model_osiq_s |> check_model(check = "all")
+```
 
 ![Model assumption checks for the Generalized Linear Model fit on the VVIQ scores.](plots/S0-glm-osiq-s-checks.png){#fig-osiqs-model}
 :::
@@ -345,18 +392,23 @@ table_questionnaire_results |>
   fmt_markdown(columns = 1:6) |> 
   fmt_number(columns = 5, decimals = 2) |> 
   fmt_scientific(columns = 6) |> 
-  tab_options(table.width = pct(100))
+  tab_options(table.width = pct(100)) |> 
+  tab_style(
+    style = cell_text(style = "italic"),
+    locations = cells_column_labels(columns = 5:6)
+  )
 ```
 
 ```{r standardized-questionnaire-plots}
-#| eval: false
+#| label: fig-questionnaire-results
 #| code-summary: "Generating the standardized model plots"
+#| fig-cap: "Visualization of self-report questionnaires results for aphantasics and controls. Violin plots depict the distributions and quantiles of the scores in each group, median-centered on each scale. Colored dots depict marginal means estimated by the models fitted on the scores, while the solid lines represent their 95% confidence intervals. On the vertical axis, 0.0 is the normalized lowest possible score, 0.5 the median score, and 1 the maximum possible score for each questionnaire. Stars denote *p*-values inferior to .001 for each pairwise contrast between groups."
+#| out-width: 100%
 
 # ─── Standardized model refits for the plots ──────────────────────────────────
 df_questionnaires_standard <-
   df_questionnaires |>
   mutate(
-    # Note: the "0.000001" comes
     vviq80   = as.numeric(scales::rescale(vviq80, 
                                           from = c(16, 80), 
                                           to = c(0, 1))),
@@ -423,8 +475,10 @@ marginal_means <-
 
 # dodge width for all the geoms
 dw <- 1
-# legend and axis text size
+# axis text size
 txt <- 14
+# legend text size
+txt_legend <- 12
 
 # ─── Plotting ─────────────────────────────────────────────────────────────────
 df_questionnaires_standard |> 
@@ -533,17 +587,13 @@ df_questionnaires_standard |>
   theme(
     panel.grid.major.x = element_blank(),
     panel.grid.major.y = element_line(),
-    axis.text.x =  element_text(size = txt),
-    legend.title = element_text(size = txt),
-    legend.text =  element_text(size = txt),
+    axis.text.x  = element_text(size = txt),
+    axis.title.y = element_text(size = txt),
+    legend.title = element_text(size = txt_legend),
+    legend.text  = element_text(size = txt_legend),
     legend.position = "top"
     )
 ```
-
-:::{.column-page-inset-right}
-
-![Visualization of self-report questionnaires results for aphantasics and controls. Violin plots depict the distributions and quantiles of the scores in each group, median-centered on each scale. Colored dots depict marginal means estimated by the models fitted on the scores, while the solid lines represent their 95\% confidence intervals. On the vertical axis, 0.0 is the normalized lowest possible score, 0.5 the median score, and 1 the maximum possible score for each questionnaire. Stars denote \textit{p}-values inferior to .001 for each pairwise contrast between groups.](plots/00-plot-questionnaires.png){#fig-questionnaire-results}
-:::
 
 # Response times
 
@@ -551,7 +601,9 @@ df_questionnaires_standard |>
 
 ### Rationale
 
-In the approach-avoidance task (AAT), we hypothesised that difference in reaction times (RT) between approach and avoidance responses (the AA bias) would be strongly modulated in novice practitioners by the context associated with the video, with a higher bias when the video featured characters responsible for their suffering compared to the alternative, not-responsible condition. We further expected this modulation by Context to be diminished or even absent in expert practitioners. This hypothesis is represented graphically as a pattern of expected cell means in figure S2-A. In a statistical model with categorical predictors, such as an Anova or multilevel model, evidence in favour of our hypothesis would be provided by a significant, three-way, Group-by-Context-by-Target interaction. Estimating the statistical power to capture such a complex effect ‒ given an experimental design, a sample size and an effect size ‒ requires simulations from a model close to the one that will be used for the analysis of real data, as well as assumptions about the structure of data. The power estimation procedure requires 3 steps:
+We hypothesised that difference in reaction times (RT) between congruent and incongruent trials (the congruence effect) in the tasks would be modulated by the visual imagery ability of participants, and therefore that we would observe between-group differences in the magnitude of this effect.
+
+In a statistical model with categorical predictors, evidence in favour of our hypothesis would be provided by a significant two-way interaction. Estimating the statistical power to capture such a complex effect ‒ given an experimental design, a sample size and an effect size ‒ requires simulations from a model close to the one that will be used for the analysis of real data, as well as assumptions about the structure of data. The power estimation procedure requires 3 steps:
 1)	Specify the structure and coefficients of a generative model
 2)	Generate a synthetic dataset using the generative model and an expected effect size
 3)	Fit the same model on the simulated data and test the statistical significance of the main effect or interaction of interest
@@ -767,6 +819,7 @@ simulations_table |>
 #| label: fig-simulations-plot
 #| code-summary: "Generating the plot of the power analysis results"
 #| fig-cap: "Results of the power analysis using simulations. 200 simulations have been computed for each effect size."
+#| out-width: 100%
 
 simulations_table |> 
   ggplot(aes(
@@ -820,9 +873,7 @@ simulations_table |>
     limits = c(0, 1)
     ) +
   theme_modern() +
-  theme(
-    panel.grid.major = element_line()
-  )
+  theme(panel.grid.major = element_line())
 ```
 
 ## Outlier detection procedure {#sec-outliers}
@@ -834,7 +885,7 @@ We removed missed trials in the analyses of the RTs. Beforehand, we analysed the
 #| output: false
 
 # ─── Listing error rates per subject ───
-list(df_explicit, df_implicit) |> 
+list(df_implicit, df_explicit) |> 
   imap(
     ~.x |> 
       select(subjectid, starts_with("correct"), aphantasia) |> 
@@ -852,13 +903,27 @@ list(df_explicit, df_implicit) |>
 # 5 accuracy outliers in the explicit task, 4 in the implicit one
 
 # ─── Removing incorrect trials and task-wise accuracy outliers ───
-df_explicit_rt <-
-  df_explicit |> 
+df_implicit_rt <- 
+  df_implicit |>  
   # filtering out...
   filter(
     # incorrect trials
-    correct_explicit == 1 &
+    correct_implicit == 1 &
     # participants identified with with high error rates
+    !(subjectid %in% c( 
+      "bdispaux", 
+      "eleveque", 
+      "aleclaire", 
+      "dchimenton"))
+      ) |>  
+  # removing irrelevant variables
+  select(-c(sex, vviq80, orientation, response, correct_implicit))
+
+# same for the explicit task
+df_explicit_rt <-
+  df_explicit |> 
+  filter(
+    correct_explicit == 1 &
     !(subjectid %in% c( 
       "aknezevic",
       "lbrunie", 
@@ -866,20 +931,8 @@ df_explicit_rt <-
       "bluciani",
       "ldossantos"))
     ) |>  
-  # removing irrelevant variables
   select(-c(sex, vviq80, orientation, response, correct_explicit))
 
-df_implicit_rt <- 
-  df_implicit |>  
-  filter(
-    correct_implicit == 1 &
-    !(subjectid %in% c( 
-      "bdispaux", 
-      "eleveque", 
-      "aleclaire", 
-      "dchimenton"))
-      ) |>  
-  select(-c(sex, vviq80, orientation, response, correct_implicit))
 ```
 
 As a preprocessing, response times below 250ms and above 3000ms will be removed as they could represent false alarms.
@@ -888,13 +941,15 @@ As a preprocessing, response times below 250ms and above 3000ms will be removed 
 #| code-summary: "Removing extreme RTs"
 #| output: false
 
-df_explicit_rt <- 
-  df_explicit_rt |>  
+# in the implicit task
+df_implicit_rt <- 
+  df_implicit_rt |>  
   # filtering out extreme RTs
   filter(rt > .25 & rt < 3)
 
-df_implicit_rt <- 
-  df_implicit_rt |>  
+# and the explicit one
+df_explicit_rt <- 
+  df_explicit_rt |>  
   filter(rt > .25 & rt < 3)
 ```
 
@@ -933,9 +988,14 @@ A first level of the RT outliers analysis is based on the overall mean RT of the
 #| code-summary: "Removing outliers with aberrant RT means"
 #| output: false
 
-# ═══ Aberrant RT means outliers removal ═══════════════════════════════════════
-
 # ─── Finding outliers ───
+df_implicit_rt |>
+  group_by(subjectid) |> 
+  summarise(median_rt = median(rt)) |> 
+  ungroup() |> 
+  filter(median_rt > threshold_implicit) |> 
+  arrange(desc(median_rt))
+# 0 outliers in the implicit task
 
 df_explicit_rt |> 
   group_by(subjectid) |> 
@@ -944,14 +1004,6 @@ df_explicit_rt |>
   filter(median_rt > threshold_explicit) |> 
   arrange(desc(median_rt))
 # 3 outliers in the explicit task
-
-df_implicit_rt |>
-  group_by(subjectid) |> 
-  summarise(median_rt = median(rt)) |> 
-  ungroup() |> 
-  filter(median_rt > threshold_implicit) |> 
-  arrange(desc(median_rt))
-# 0 outliers in the implicit task
 
 # ─── Removing specific outliers ───
 df_explicit_rt <- 
@@ -995,20 +1047,22 @@ Finally, we conducted a more detailed inspection of the RTs on a by-participant 
 #| code-summary: "Removing outlier trials by-participant"
 #| output: false
 
-df_explicit_rt <- 
-  df_explicit_rt |> 
+df_implicit_rt <-
+  df_implicit_rt |> 
   group_by(subjectid, congruence) |> 
   mutate(
     rt_median = median(rt),
     rt_mad = mad(rt)
     ) |> 
+  # filtering based on a 5 MAD threshold      
   filter(
     rt < rt_median + 5 * rt_mad
   ) |>
   ungroup()
 
-df_implicit_rt <-
-  df_implicit_rt |> 
+# same for the explicit task
+df_explicit_rt <- 
+  df_explicit_rt |> 
   group_by(subjectid, congruence) |> 
   mutate(
     rt_median = median(rt),
@@ -1027,6 +1081,7 @@ df_implicit_rt <-
 #| label: fig-rt-per-participant-1
 #| code-summary: "Generating distribution plots"
 #| fig-cap: "Resulting distribution of RTs in the implicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
+#| out-width: 100%
 
 (df_implicit_rt |>
   ggplot(aes(x = rt, fill = subjectid)) +
@@ -1039,7 +1094,9 @@ df_implicit_rt <-
     ) +
   scale_fill_viridis_d(guide = NULL) +
   scale_color_viridis_d(guide = NULL) +
-  theme_modern()) |>
+  theme_modern() +
+  theme(panel.grid.major = element_line())
+ ) |>
   ggplotly() |>
   style(showlegend = FALSE)
 ```
@@ -1050,6 +1107,7 @@ df_implicit_rt <-
 #| label: fig-rt-per-participant-2
 #| code-summary: "Generating distribution plots"
 #| fig-cap: "Resulting distribution of RTs in the explicit task for each participant. Each colored distribution represents a single participant. *Hover to see details on the individual distributions*."
+#| out-width: 100%
 
 (df_explicit_rt |>
   ggplot(aes(x = rt, fill = subjectid)) +
@@ -1062,7 +1120,9 @@ df_implicit_rt <-
     ) +
   scale_fill_viridis_d(guide = NULL) +
   scale_color_viridis_d(guide = NULL) +
-  theme_modern()) |>
+  theme_modern() +
+  theme(panel.grid.major = element_line())
+ ) |>
   ggplotly() |>
   style(showlegend = FALSE)
 ```
@@ -1070,6 +1130,1257 @@ df_implicit_rt <-
 
 ## Modelling
 
+To account for the non-normal, positively skewed distributions of the RTs, we fitted Generalized Linear Mixed Models (GLMMs) with inverse Gaussian distributions. The models were implemented in the `lme4` R package and integrated in `tidymodels` workflows using the package `multilevelmod`. Models with Gamma and Gaussian distributions were also fitted and compared with the AIC and BIC to ensure that we chose the best distribution available. 
+
+The models included the ***Group*** (aphantasic, control), ***Congruence*** condition (congruent or incongruent) and ***Color*** condition (color or uncolored) along with all their two and three way interactions as fixed categorical predictors, while ***participants*** have been included as grouping factors (i.e. "random effects"). The random effect structure was chosen by fitting and comparing models with every possible combination of distribution and structure (intercept by participant, congruence or color, slope by participant on congruence and/or color) aiming for the best balance between goodness of fit and parsimony. The optimal models included a single by-participant random intercept and random slopes on congruence and color.
+
+We reported unstandardized effect sizes for post-hoc tests in the form of estimated marginal contrasts in milliseconds (i.e. differences in marginal means estimated by the model). The family-wise error rate on parameters and pairwise contrasts was controlled using a FDR correction on *p*-values.
+
+The complete `tidymodels` workflows coded to fit and compare all the models are presented in the code sections down below.
+
 ### Conventional VVIQ Groups
 
+```{r fitting-glmms-conventional-groups}
+#| eval: false
+#| code-summary: "Fitting Generalized Linear Mixed Models on RTs in both tasks with `tidymodels`"
+
+# ─── Defining tidymodels recipes to prepare the data ──────────────────────────
+
+# implicit task recipe
+model_recipe_glmm_im <- 
+  df_implicit_rt |> 
+  recipe() |> 
+  # RT as the dependent variable
+  update_role(rt, new_role = "outcome") %>%  
+  # All our predictors
+  update_role(
+    subjectid, age, aphantasia, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  # participants as grouping factors, i.e. "random effects"
+  add_role(subjectid, new_role = "group")
+
+# same for the explicit data
+model_recipe_glmm_ex <- 
+  df_explicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, aphantasia, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+# ─── Specifying the distributions for the models ──────────────────────────────
+
+# Gamma distribution
+glmm_gamma_id <-
+  linear_reg() |> 
+  set_engine(
+    "glmer",
+    family = Gamma(link = "identity")
+  )
+
+# Inverse Gaussian distribution
+glmm_inverse_id <-
+  linear_reg() |> 
+  set_engine(
+    "glmer",
+    family = inverse.gaussian(link = "identity")
+  )
+
+# Gaussian distribution
+glmm_gaussian <-
+  linear_reg() |> 
+  set_engine("lmer")
+
+# Listing these models
+model_specs_glmm <- list(
+  glmm_gamma_id    = glmm_gamma_id,
+  glmm_inverse_id  = glmm_inverse_id,
+  glmm_gaussian    = glmm_gaussian
+)
+
+# ─── Writing down the formulas with different random effect structures ────────
+
+# null model
+formula_0 <- rt ~ (1|subjectid)
+
+# intercept by-participant only
+formula_1 <- rt ~ (aphantasia + congruence + color)^3 + (1|subjectid)
+
+# intercept and slope on congruence by-participant
+formula_2 <- rt ~ (aphantasia + congruence + color)^3 + (congruence|subjectid)
+
+# intercept and slope on color by-participant
+formula_3 <- rt ~ (aphantasia + congruence + color)^3 + (color|subjectid)
+
+# single intercept and two slopes on congruence and color by-participant
+formula_4 <- rt ~ (aphantasia + congruence + color)^3 + (congruence + color|subjectid)
+
+# Listing these formulas
+model_formulas_glmm <- list(
+  formula_0  = formula_0,
+  formula_1  = formula_1,
+  formula_2  = formula_2,
+  formula_3  = formula_3,
+  formula_4  = formula_4
+  )
+
+# ─── Table to combine everything in workflows and fit the models ──────────────
+model_all_glmms_fitted <- 
+  tribble(       ~recipe,     ~ task,           ~model,       ~formula,
+    model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas_glmm,
+    model_recipe_glmm_im, "implicit", model_specs_glmm, model_formulas_glmm
+  ) |> 
+  # combining recipes with models
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
+  rowwise() |>
+  mutate(
+    # creating workflows
+    workflow = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(model, formula = formula)  
+      )
+  )
+
+# ─── Fitting the models with parallel processing ──────────────────────────────
+
+# finding the available cores for parallel processing
+n_cores <- parallel::detectCores() - 1
+
+# creating the cluster of cores
+parallel_cluster <- 
+  parallel::makeCluster(
+    n_cores,
+    type = "PSOCK"
+  )
+
+# registering the cluster for the `foreach` package
+doParallel::registerDoParallel(cl = parallel_cluster)
+# checking
+# foreach::getDoParRegistered()
+# foreach::getDoParWorkers()
+
+# creating a new list-column with all the models fitted in parallel
+(model_all_workflows_fitted$fitted_model <-
+  foreach(
+    workflow = model_all_workflows_fitted$workflow,
+    task     = model_all_workflows_fitted$task,
+    .combine  = "c",
+    .packages = c("tidymodels", "multilevelmod")
+) %dopar% {
+  # fitting the models for the implicit task with the appropriate dataset
+  if(task == "implicit"){
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_implicit_rt) |> 
+        extract_fit_engine()
+      )
+  }
+  # and for the explicit task
+  else{
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_explicit_rt) |> 
+        extract_fit_engine()
+      )
+  }
+  
+  return(model_fit)
+# (measuring runtime for benchmarking)
+}) |> system.time() -> time_parallel
+
+# removing irrelevant used columns
+model_all_workflows_fitted <-  
+  model_all_workflows_fitted |> 
+  select(-c(recipe, model, formula, workflow))
+
+# ─── Examining the quality of the models, estimating the parameters ───────────
+
+# parameter tables with all estimates
+model_all_workflows_fitted$parameters <-
+  foreach(
+    fitted_model = model_all_workflows_fitted$fitted_model,
+    .combine  = "c",
+    .packages = c("parameters")
+) %dopar% {
+  parameters <- list(model_parameters(fitted_model))
+  return(parameters)
+}
+
+# convergence checks
+model_all_workflows_fitted$convergence <-
+  foreach(
+    fitted_model = model_all_workflows_fitted$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  convergence <- check_convergence(fitted_model)
+  return(convergence)
+}
+
+# model quality and performance indices
+model_all_workflows_fitted$model_perf <-
+  foreach(
+    fitted_model = model_all_workflows_fitted$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  model_perf <- list(model_performance(fitted_model))
+  return(model_perf)
+}
+
+# extracting relevant indices
+model_all_workflows_fitted <-
+  model_all_workflows_fitted |>
+  mutate(
+    # extracting model quality indices
+    AIC  = model_perf[[1]],
+    AICc = model_perf[[2]],
+    BIC  = model_perf[[3]]
+  ) |>
+  ungroup() |> 
+  select(-model_perf)
+
+# stopping the cluster when we're done
+parallel::stopCluster(cl = parallel_cluster)
+
+# 119 seconds on 19 cores
+
+# ─── Comparing the models' quality among those that converged ─────────────────
+model_selection <-
+  model_all_workflows_fitted |> 
+  filter(convergence == TRUE) |> 
+  group_by(task, model_id) |> 
+  mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
+  filter(best_model == TRUE)
+```
+
+The quality checks of the optimal models selected for the implicit and explicit tasks, that used inverse Gaussian distributions, are displayed in @fig-implicit-checks and @fig-explicit-checks. The summaries of estimated model parameters are presented in @tbl-implicit-parameters-conventional and @tbl-explicit-parameters-conventional. Pair-wise contrast analyses for both tasks on the relevant factor levels are displayed in @tbl-implicit-contrasts-conventional and tbl-explicit-contrasts-conventional. The visualizations of the interaction of interest for our hypotheses, Group x Congruence, are depicted in @fig-implicit-model-conventional and @fig-explicit-model-conventional.
+
+```{r loading-glmms-rds}
+#| echo: false
+
+# implicit task
+model_task_implicit <- 
+  readRDS(file = "analyses-results/01-glmm-inverse-id-implicit.RDS")
+
+# explicit task
+model_task_explicit <- 
+  readRDS(file = "analyses-results/01-glmm-inverse-id-explicit.RDS")
+```
+
+#### Models' quality and assumptions
+
+:::{.panel-tabset .column-page-inset-right}
+##### Implicit task - Model checks
+
+```{r running-model-checks-implicit}
+#| eval: false
+#| code-summary: "Running model checks"
+
+# loading the model saved after the analysis
+model_task_implicit <- 
+  readRDS(file = "analyses-results/01-glmm-inverse-id-implicit.RDS")
+
+# characteristics to check
+model_checks = c("pp_check","homogeneity", "vif", "outliers", "qq", "reqq")
+
+# plotting
+model_task_implicit |> check_model(check = model_checks, detrend = FALSE)
+```
+
+![Model assumption checks for the Generalized Linear Mixed Model fit on the RTs in the implicit task.](plots/S1-glmm-checks-implicit.png){#fig-implicit-checks}
+
+##### Explicit task - Model checks
+
+```{r running-model-checks-explicit}
+#| eval: false
+#| code-summary: "Running model checks"
+
+# loading the model saved after the analysis
+model_task_explicit <- 
+  readRDS(file = "analyses-results/01-glmm-inverse-id-explicit.RDS")
+
+# characteristics to check
+model_checks = c("pp_check","homogeneity", "vif", "outliers", "qq", "reqq")
+
+# plotting
+model_task_explicit |> check_model(check = model_checks, detrend = FALSE)
+```
+
+![Model assumption checks for the Generalized Linear Mixed Model fit on the RTs in the explicit task.](plots/S1-glmm-checks-explicit.png){#fig-explicit-checks}
+:::
+
+#### Models' estimates
+
+:::{.panel-tabset .column-page-inset-right}
+##### Implicit task estimates
+
+```{r implicit-parameters-table-conventional}
+#| label: tbl-implicit-parameters-conventional
+#| echo: false
+#| tbl-cap: "Estimates of the GLMM fitted on the RTs in the implicit task. *'aphantasia (no)' refers to the control group*."
+
+# printing with the package `parameters`
+model_task_implicit |> 
+  model_parameters() |>
+  print_html() 
+```
+
+##### Explicit task estimates
+
+```{r explicit-parameters-table-conventional}
+#| label: tbl-explicit-parameters-conventional
+#| echo: false
+#| tbl-cap: "Estimates of the GLMM fitted on the RTs in the explicit task. *'aphantasia (no)' refers to the control group*."
+
+# printing with the package `parameters`
+model_task_explicit |> 
+  model_parameters() |> 
+  print_html() 
+```
+
+##### Plot - Implicit task
+
+```{r implicit-parameters-fig-conventional}
+#| label: fig-implicit-parameters-conventional
+#| echo: false
+#| fig-cap: "Estimates of the GLMM fitted on the RTs in the implicit task. *'aphantasia (no)' refers to the control group*."
+#| out-width: 100%
+
+# plotting with the packages `parameters` and `see`
+model_task_implicit |> 
+  model_parameters() |> 
+  plot()
+```
+
+##### Plot - Explicit task
+
+```{r explicit-parameters-fig-conventional}
+#| label: fig-explicit-parameters-conventional
+#| echo: false
+#| fig-cap: "Estimates of the GLMM fitted on the RTs in the explicit task. *'aphantasia (no)' refers to the control group*."
+#| out-width: 100%
+
+# plotting with the packages `parameters` and `see`
+model_task_explicit |> 
+  model_parameters() |> 
+  plot()
+```
+
+:::
+
+#### Marginal contrasts
+
+:::{.panel-tabset .column-page-inset-right}
+##### Implicit task marginal contrasts
+
+```{r implicit-contrasts-conventional}
+#| label: tbl-implicit-contrasts-conventional
+#| echo: false
+#| tbl-cap: "Pair-wise contrast analyses between levels of factors in the implicit task. *'No' represents the control group. Thus, 'no congruent' is the estimates of the control group in the congruent condition, etc.*" 
+
+model_task_implicit |> 
+  estimate_contrasts(
+    contrast = c("aphantasia", "congruence"),
+    p_adjust = "fdr"
+  ) |> 
+  format() |> 
+  select(1,2,3,4,7,8) |> 
+  print_html()
+```
+
+##### Explicit task marginal contrasts
+
+```{r explicit-contrasts-conventional}
+#| label: tbl-explicit-contrasts-conventional
+#| echo: false
+#| tbl-cap: "Pair-wise contrast analyses between levels of factors in the explicit task. *'No' represents the control group. Thus, 'no coloured' is the estimates of the control group in the coloured condition, etc.*" 
+
+model_task_explicit |> 
+  estimate_contrasts(
+    contrast = c("aphantasia", "color"),
+    p_adjust = "fdr"
+  ) |> 
+  format() |> 
+  select(1,2,3,4,7,8) |> 
+  print_html()
+```
+
+:::
+
+#### Group x Congruence interaction plots
+
+:::{.panel-tabset}
+##### Implicit task
+
+```{r model-implicit-plot-conventional}
+#| label: fig-implicit-model-conventional
+#| code-summary: "Creating the plot for the Group x Congruence interaction"
+#| fig-cap: "Visualizations of the interactions between Group and Congruence in the optimal models for the implicit task. The black dots indicate marginal means predicted by the models whereas the black bars represent the standard error of these estimates. The stars represent FDR-corrected *p*-values inferior to .05."
+#| out-width: 100%
+
+# ─── Setup variables ──────────────────────────────────────────────────────────
+
+# dodge width for all the geoms
+dw <- .75
+# stat text size
+st <- 7
+# legend and axis text size
+txt <- 18
+title_size <- 20
+
+# ─── Marginal means for the plots ─────────────────────────────────────────────
+model_implicit_preds <-
+  model_task_implicit |> 
+  estimate_means(
+    at = c("aphantasia", "congruence"),
+    p_adjust = "fdr"
+    )
+
+# ─── Plotting ─────────────────────────────────────────────────────────────────
+df_implicit_rt |>
+  ggplot(aes(
+    x = congruence,
+    y = rt * 1000,
+    color = aphantasia
+  )) +
+  # linear modelling of the differences
+  geom_line(
+    data = model_implicit_preds,
+    aes(
+      y = Mean * 1000,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1
+  ) +
+  # predicted means of the model and their SE
+  geom_pointrange2(
+    data = model_implicit_preds,
+    aes(
+      x = congruence,
+      y = Mean * 1000,
+      ymin = Mean * 1000 - SE * 1000,
+      ymax = Mean * 1000 + SE * 1000,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  # adding a star for the significant contrast
+  annotate(
+    geom  = "text",
+    label = "*",
+    fontface = "italic",
+    color = "#56b4e9",
+    x = 2.05,
+    y = 628,
+    vjust = .1,
+    hjust = 6,
+    size  = 12 
+    ) +
+  labs(
+    title = NULL,
+    x = NULL,
+    y = "Response time (ms)"
+    ) +
+  # Aesthetics
+  scale_y_continuous(breaks = breaks_pretty(10)) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_color_okabeito(name = "", labels = c(" Aphantasic   ", " Control")) +
+  theme_modern() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(),
+    axis.ticks.x = element_blank(),
+    axis.title.y = element_text(size = txt),
+    axis.text.x = element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt),
+    legend.position = "top"
+    )
+```
+
+##### Explicit task
+
+```{r model-explicit-plot-conventional}
+#| label: fig-explicit-model-conventional
+#| code-summary: "Creating the plot for the Group x Congruence interaction"
+#| fig-cap: "Visualizations of the interactions between Group and Congruence in the optimal models for the explicit task. The black dots indicate marginal means predicted by the models whereas the black bars represent the standard error of these estimates. The stars represent FDR-corrected *p*-values inferior to .05."
+#| out-width: 100%
+
+# ─── Setup variables ──────────────────────────────────────────────────────────
+
+# dodge width for all the geoms
+dw <- .75
+# stat text size
+st <- 7
+# legend and axis text size
+txt <- 18
+title_size <- 20
+
+# ─── Marginal means for the plots ─────────────────────────────────────────────
+model_explicit_preds <-
+  model_task_explicit |> 
+  estimate_means(
+    at = c("aphantasia", "congruence"),
+    p_adjust = "fdr"
+    )
+
+# ─── Plotting ─────────────────────────────────────────────────────────────────
+df_implicit_rt |>
+  ggplot(aes(
+    x = congruence,
+    y = rt * 1000,
+    color = aphantasia
+  )) +
+  # linear modelling of the differences
+  geom_line(
+    data = model_explicit_preds,
+    aes(
+      y = Mean * 1000,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1
+  ) +
+  # predicted means of the model and their SE
+  geom_pointrange2(
+    data = model_explicit_preds,
+    aes(
+      x = congruence,
+      y = Mean * 1000,
+      ymin = Mean * 1000 - SE * 1000,
+      ymax = Mean * 1000 + SE * 1000,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  labs(
+    title = NULL,
+    x = NULL,
+    y = "Response time (ms)"
+    ) +
+  # Aesthetics
+  scale_y_continuous(breaks = breaks_pretty(10)) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_color_okabeito(name = "", labels = c(" Aphantasic   ", " Control")) +
+  theme_modern() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(),
+    axis.ticks.x = element_blank(),
+    axis.title.y = element_text(size = txt),
+    axis.text.x = element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt),
+    legend.position = "top"
+    )
+```
+:::
+
 ### Extremal VVIQ Groups
+
+The same modelling pipeline has been applied to a dataset restricted to participants scoring at floor VVIQ (VVIQ = 16, N = 50) and matched controls scoring the highest at the VVIQ in the sample (VVIQ between 42 and 78). The full pre-processing of the data to get this new dataset ready for modelling, along with the modelling and analyses themselves, are presented in the *very long* code section down below. It is essentially equivalent to a concatenation in one code chunk of all the successive steps followed in the previous sections, with very few modifications.
+
+```{r extremal-groups-data-analysis}
+#| eval: false
+#| code-summary: "Full pipeline for the extreme VVIQ groups analyses (*warning: long code section*)"
+
+# ═══ Importing and keeping only "extreme" VVIQs ═══════════════════════════════
+
+# Implicit task
+df_implicit <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_implicit"
+    ) |> 
+  rename("rt" = rt_implicit) |> 
+  # convert to seconds
+  mutate(rt = rt/1000)
+
+# Explicit task
+df_explicit <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_explicit"
+    ) |> 
+  rename("rt" = rt_explicit) |> 
+  # convert to seconds
+  mutate(rt = rt/1000)
+
+# Questionnaires
+df_questionnaires <- 
+  read_excel(
+    "data/aphantasia_priming_tidy_data.xlsx",
+    sheet = "data_questionnaires"
+    ) |>  
+  # creating the a/phantasia groups
+  mutate(
+    aphantasia = ifelse(vviq80 < 32, "yes", "no"),
+    aphantasia = fct_relevel(aphantasia, "yes", "no")
+    ) |>
+  filter(vviq80 <= 16.5 | vviq80 >= 42)
+
+# updating all the dataframes with the questionnaires data
+dfs <- 
+  list(
+    implicit_task = df_implicit, 
+    explicit_task = df_explicit
+    ) |> 
+  # adding the vviq and group column to every dataframe
+  imap(~right_join(
+    .x, 
+    df_questionnaires |>  
+      select(
+        # column to match with the correct participants
+        subjectid, 
+        # new variables to add
+        age,
+        sexe,
+        vviq80,
+        aphantasia), by = "subjectid") |>  
+      rename("sex" = sexe) |>  
+      # reordering the final dfs
+      select(
+        subjectid, 
+        age, sex, aphantasia,
+        vviq80,
+        everything())
+    )
+
+df_implicit <- dfs$implicit_task
+df_explicit <- dfs$explicit_task
+rm(dfs)
+
+# ═══ Accuracy outliers analysis ═══════════════════════════════════════════════
+
+# ─── Listing error rates per subject ───
+list(df_explicit, df_implicit) |> 
+  imap(
+    ~.x |> 
+      select(subjectid, starts_with("correct"), aphantasia) |> 
+      group_by(subjectid) |> 
+      count(pick(2)) |> 
+      filter(pick(1) == 1) |> 
+      ungroup() |> 
+      mutate(
+        n_tot = max(n),
+        prop = (n_tot - n) / n_tot * 100  # analyzing the error rate per subject
+      ) %>%
+      arrange(desc(prop)) |> 
+      select(1, 5)
+    )
+# 5 accuracy outliers in the explicit task, 4 in the implicit one
+
+# ─── Removing incorrect trials and task-wise accuracy outliers ───
+df_explicit_rt <-
+  df_explicit |> 
+  filter(
+    correct_explicit == 1 &
+    !(subjectid %in% c( 
+      "aknezevic",
+      "lbrunie", 
+      "agayou", 
+      "bluciani",
+      "ldossantos"))
+    ) |>  
+  select(-c(sex, vviq80, orientation, response, correct_explicit))
+
+df_implicit_rt <- 
+  df_implicit |>  
+  filter(
+    correct_implicit == 1 &
+    !(subjectid %in% c( 
+      "bdispaux", 
+      "eleveque", 
+      "aleclaire", 
+      "dchimenton"))
+      ) |>  
+  select(-c(sex, vviq80, orientation, response, correct_implicit))
+
+# ═══ First broad RT outlier trials removal ════════════════════════════════════
+
+df_explicit_rt <- 
+  df_explicit_rt |>  
+  # filtering out extreme RTs
+  filter(rt > .25 & rt < 2)
+
+df_implicit_rt <- 
+  df_implicit_rt |>  
+  filter(rt > .25 & rt < 2)
+
+
+# ─── Defining tidymodels recipes to prepare the data ──────────────────────────
+
+# implicit task recipe
+model_recipe_glmm_im <- 
+  df_implicit_rt |> 
+  recipe() |> 
+  # RT as the dependent variable
+  update_role(rt, new_role = "outcome") %>%  
+  # All our predictors
+  update_role(
+    subjectid, age, aphantasia, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  # participants as grouping factors, i.e. "random effects"
+  add_role(subjectid, new_role = "group")
+
+# same for the explicit data
+model_recipe_glmm_ex <- 
+  df_explicit_rt |> 
+  recipe() |> 
+  update_role(rt, new_role = "outcome") %>%
+  update_role(
+    subjectid, age, aphantasia, color, congruence, 
+    new_role = "predictor"
+  ) |> 
+  add_role(subjectid, new_role = "group")
+
+# ─── Specifying the distributions for the models ──────────────────────────────
+
+# Gamma distribution
+glmm_gamma_id <-
+  linear_reg() |> 
+  set_engine(
+    "glmer",
+    family = Gamma(link = "identity")
+  )
+
+# Inverse Gaussian distribution
+glmm_inverse_id <-
+  linear_reg() |> 
+  set_engine(
+    "glmer",
+    family = inverse.gaussian(link = "identity")
+  )
+
+# Gaussian distribution
+glmm_gaussian <-
+  linear_reg() |> 
+  set_engine("lmer")
+
+# Listing these models
+model_specs_glmm <- list(
+  glmm_gamma_id    = glmm_gamma_id,
+  glmm_inverse_id  = glmm_inverse_id,
+  glmm_gaussian    = glmm_gaussian
+)
+
+# ─── Writing down the formulas with different random effect structures ────────
+
+# null model
+formula_0 <- rt ~ (1|subjectid)
+
+# intercept by-participant only
+formula_1 <- rt ~ (aphantasia + congruence + color)^3 + (1|subjectid)
+
+# intercept and slope on congruence by-participant
+formula_2 <- rt ~ (aphantasia + congruence + color)^3 + (congruence|subjectid)
+
+# intercept and slope on color by-participant
+formula_3 <- rt ~ (aphantasia + congruence + color)^3 + (color|subjectid)
+
+# single intercept and two slopes on congruence and color by-participant
+formula_4 <- rt ~ (aphantasia + congruence + color)^3 + (congruence + color|subjectid)
+
+# Listing these formulas
+model_formulas_glmm <- list(
+  formula_0  = formula_0,
+  formula_1  = formula_1,
+  formula_2  = formula_2,
+  formula_3  = formula_3,
+  formula_4  = formula_4
+  )
+
+# ─── Table to combine everything in workflows and fit the models ──────────────
+model_all_glmms_fitted <- 
+  tribble(       ~recipe,     ~ task,           ~model,       ~formula,
+    model_recipe_glmm_ex, "explicit", model_specs_glmm, model_formulas_glmm,
+    model_recipe_glmm_im, "implicit", model_specs_glmm, model_formulas_glmm
+  ) |> 
+  # combining recipes with models
+  unnest_longer(model) |> 
+  # combining them with formulas
+  unnest_longer(formula) |>
+  rowwise() |>
+  mutate(
+    # creating workflows
+    workflow = list(
+      workflow() |>
+      add_recipe(recipe) |> 
+      add_model(model, formula = formula)  
+      )
+  )
+
+# ─── Fitting the models with parallel processing ──────────────────────────────
+
+# finding the available cores for parallel processing
+n_cores <- parallel::detectCores() - 1
+
+# creating the cluster of cores
+parallel_cluster <- 
+  parallel::makeCluster(
+    n_cores,
+    type = "PSOCK"
+  )
+
+# registering the cluster for the `foreach` package
+doParallel::registerDoParallel(cl = parallel_cluster)
+# checking
+# foreach::getDoParRegistered()
+# foreach::getDoParWorkers()
+
+# creating a new list-column with all the models fitted in parallel
+(model_all_workflows_fitted$fitted_model <-
+  foreach(
+    workflow = model_all_workflows_fitted$workflow,
+    task     = model_all_workflows_fitted$task,
+    .combine  = "c",
+    .packages = c("tidymodels", "multilevelmod")
+) %dopar% {
+  # fitting the models for the implicit task with the appropriate dataset
+  if(task == "implicit"){
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_implicit_rt) |> 
+        extract_fit_engine()
+      )
+  }
+  # and for the explicit task
+  else{
+    model_fit <-
+      list(
+        workflow |> 
+        fit(data = df_explicit_rt) |> 
+        extract_fit_engine()
+      )
+  }
+  
+  return(model_fit)
+# (measuring runtime for benchmarking)
+}) |> system.time() -> time_parallel
+
+# removing irrelevant used columns
+model_all_workflows_fitted <-  
+  model_all_workflows_fitted |> 
+  select(-c(recipe, model, formula, workflow))
+
+# ─── Examining the quality of the models, estimating the parameters ───────────
+
+# parameter tables with all estimates
+model_all_workflows_fitted$parameters <-
+  foreach(
+    fitted_model = model_all_workflows_fitted$fitted_model,
+    .combine  = "c",
+    .packages = c("parameters")
+) %dopar% {
+  parameters <- list(model_parameters(fitted_model))
+  return(parameters)
+}
+
+# convergence checks
+model_all_workflows_fitted$convergence <-
+  foreach(
+    fitted_model = model_all_workflows_fitted$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  convergence <- check_convergence(fitted_model)
+  return(convergence)
+}
+
+# model quality and performance indices
+model_all_workflows_fitted$model_perf <-
+  foreach(
+    fitted_model = model_all_workflows_fitted$fitted_model,
+    .combine  = "c",
+    .packages = c("performance")
+) %dopar% {
+  model_perf <- list(model_performance(fitted_model))
+  return(model_perf)
+}
+
+# extracting relevant indices
+model_all_workflows_fitted <-
+  model_all_workflows_fitted |>
+  mutate(
+    # extracting model quality indices
+    AIC  = model_perf[[1]],
+    AICc = model_perf[[2]],
+    BIC  = model_perf[[3]]
+  ) |>
+  ungroup() |> 
+  select(-model_perf)
+
+# stopping the cluster when we're done
+parallel::stopCluster(cl = parallel_cluster)
+
+# ─── Comparing the models' quality among those that converged ─────────────────
+model_selection <-
+  model_all_workflows_fitted |> 
+  filter(convergence == TRUE) |> 
+  group_by(task, model_id) |> 
+  mutate(best_model = ifelse(AICc == min(AICc), TRUE, FALSE)) |> 
+  filter(best_model == TRUE)
+```
+
+The quality checks of the optimal models selected for the implicit and explicit tasks, that used inverse Gaussian distributions, are displayed in @fig-implicit-checks-extreme and @fig-explicit-checks-extreme. The summaries of estimated model parameters are presented in @tbl-implicit-parameters-extreme and @tbl-explicit-parameters-extreme. The visualizations of the interaction of interest for our hypotheses, Group x Congruence, are depicted in @fig-implicit-model-extreme and @fig-explicit-model-extreme.
+
+```{r loading-glmms-extreme-rds}
+#| echo: false
+
+# implicit task
+model_task_implicit_extreme <- 
+  readRDS(file = "analyses-results/02-glmm-floor-inverse-id-implicit.RDS")
+
+# explicit task
+model_task_explicit_extreme <- 
+  readRDS(file = "analyses-results/02-glmm-floor-inverse-id-explicit.RDS")
+```
+
+#### Models' quality and assumptions
+
+:::{.panel-tabset .column-page-inset-right}
+##### Implicit task - Model checks
+
+```{r running-model-checks-implicit-extreme}
+#| eval: false
+#| code-summary: "Running model checks"
+
+# loading the model saved after the analysis
+model_task_implicit_extreme <- 
+  readRDS(file = "analyses-results/02-glmm-floor-inverse-id-implicit.RDS")
+
+# characteristics to check
+model_checks = c("pp_check","homogeneity", "vif", "outliers", "qq", "reqq")
+
+# plotting
+model_task_implicit_extreme |> check_model(check = model_checks, detrend = FALSE)
+```
+
+![Model assumption checks for the Generalized Linear Mixed Model fit on the RTs in the implicit task.](plots/S2-glmm-checks-floor-inv-id-implicit.png){#fig-implicit-checks-extreme}
+
+##### Explicit task - Model checks
+
+```{r running-model-checks-explicit-extreme}
+#| eval: false
+#| code-summary: "Running model checks"
+
+# loading the model saved after the analysis
+model_task_explicit_extreme <- 
+  readRDS(file = "analyses-results/02-glmm-floor-inverse-id-explicit.RDS")
+
+# characteristics to check
+model_checks = c("pp_check","homogeneity", "vif", "outliers", "qq", "reqq")
+
+# plotting
+model_task_explicit_extreme |> check_model(check = model_checks, detrend = FALSE)
+```
+
+![Model assumption checks for the Generalized Linear Mixed Model fit on the RTs in the explicit task.](plots/S2-glmm-checks-floor-inv-id-explicit.png){#fig-explicit-checks-extreme}
+:::
+
+#### Models' estimates
+
+:::{.panel-tabset .column-page-inset-right}
+##### Implicit task estimates
+
+```{r implicit-parameters-table-extreme}
+#| label: tbl-implicit-parameters-extreme
+#| echo: false
+#| tbl-cap: "Estimates of the GLMM fitted on the RTs in the implicit task. *'aphantasia (no)' refers to the control group*."
+
+# printing with the package `parameters`
+model_task_implicit_extreme |> 
+  model_parameters() |>
+  print_html() 
+```
+
+##### Explicit task estimates
+
+```{r explicit-parameters-table-extreme}
+#| label: tbl-explicit-parameters-extreme
+#| echo: false
+#| tbl-cap: "Estimates of the GLMM fitted on the RTs in the explicit task. *'aphantasia (no)' refers to the control group*."
+
+# printing with the package `parameters`
+model_task_explicit_extreme |> 
+  model_parameters() |> 
+  print_html() 
+```
+
+##### Plot - Implicit task
+
+```{r implicit-parameters-fig-extreme}
+#| label: fig-implicit-parameters-extreme
+#| echo: false
+#| fig-cap: "Estimates of the GLMM fitted on the RTs in the implicit task. *'aphantasia (no)' refers to the control group*."
+#| out-width: 100%
+
+# plotting with the packages `parameters` and `see`
+model_task_implicit_extreme |> 
+  model_parameters() |> 
+  plot()
+```
+
+##### Plot - Explicit task
+
+```{r explicit-parameters-fig-extreme}
+#| label: fig-explicit-parameters-extreme
+#| echo: false
+#| fig-cap: "Estimates of the GLMM fitted on the RTs in the explicit task. *'aphantasia (no)' refers to the control group*."
+#| out-width: 100%
+
+# plotting with the packages `parameters` and `see`
+model_task_explicit_extreme |> 
+  model_parameters() |> 
+  plot()
+```
+
+:::
+
+#### Group x Congruence interaction plots
+
+:::{.panel-tabset}
+##### Implicit task
+
+```{r model-implicit-plot-extreme}
+#| label: fig-implicit-model-extreme
+#| code-summary: "Creating the plot for the Group x Congruence interaction"
+#| fig-cap: "Visualizations of the interactions between Group and Congruence in the optimal models for the implicit task. The black dots indicate marginal means predicted by the models whereas the black bars represent the standard error of these estimates. The stars represent FDR-corrected *p*-values inferior to .05."
+#| out-width: 100%
+
+# ─── Setup variables ──────────────────────────────────────────────────────────
+
+# dodge width for all the geoms
+dw <- .75
+# stat text size
+st <- 7
+# legend and axis text size
+txt <- 18
+title_size <- 20
+
+# ─── Marginal means for the plots ─────────────────────────────────────────────
+model_implicit_preds_extreme <-
+  model_task_implicit_extreme |> 
+  estimate_means(
+    at = c("aphantasia", "congruence"),
+    p_adjust = "fdr"
+    )
+
+# ─── Plotting ─────────────────────────────────────────────────────────────────
+df_implicit_rt |>
+  ggplot(aes(
+    x = congruence,
+    y = rt * 1000,
+    color = aphantasia
+  )) +
+  # linear modelling of the differences
+  geom_line(
+    data = model_implicit_preds_extreme,
+    aes(
+      y = Mean * 1000,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1
+  ) +
+  # predicted means of the model and their SE
+  geom_pointrange2(
+    data = model_implicit_preds_extreme,
+    aes(
+      x = congruence,
+      y = Mean * 1000,
+      ymin = Mean * 1000 - SE * 1000,
+      ymax = Mean * 1000 + SE * 1000,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  # adding a star for the significant contrast
+  annotate(
+    geom  = "text",
+    label = "*",
+    fontface = "italic",
+    color = "#56b4e9",
+    x = 2.05,
+    y = 628,
+    vjust = .1,
+    hjust = 6,
+    size  = 12 
+    ) +
+  labs(
+    title = NULL,
+    x = NULL,
+    y = "Response time (ms)"
+    ) +
+  # Aesthetics
+  scale_y_continuous(breaks = breaks_pretty(10)) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_color_okabeito(
+    name = "", 
+    labels = c(" Aphantasic (VVIQ = 16)   ", " Control (VVIQ > 42)")) +
+  theme_modern() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(),
+    axis.ticks.x = element_blank(),
+    axis.title.y = element_text(size = txt),
+    axis.text.x = element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt),
+    legend.position = "top"
+    )
+```
+
+##### Explicit task
+
+```{r model-explicit-plot-extreme}
+#| label: fig-explicit-model-extreme
+#| code-summary: "Creating the plot for the Group x Congruence interaction"
+#| fig-cap: "Visualizations of the interactions between Group and Congruence in the optimal models for the explicit task. The black dots indicate marginal means predicted by the models whereas the black bars represent the standard error of these estimates. The stars represent FDR-corrected *p*-values inferior to .05."
+#| out-width: 100%
+
+# ─── Setup variables ──────────────────────────────────────────────────────────
+
+# dodge width for all the geoms
+dw <- .75
+# stat text size
+st <- 7
+# legend and axis text size
+txt <- 18
+title_size <- 20
+
+# ─── Marginal means for the plots ─────────────────────────────────────────────
+model_explicit_preds_extreme <-
+  model_task_explicit_extreme |> 
+  estimate_means(
+    at = c("aphantasia", "congruence"),
+    p_adjust = "fdr"
+    )
+
+# ─── Plotting ─────────────────────────────────────────────────────────────────
+df_implicit_rt |>
+  ggplot(aes(
+    x = congruence,
+    y = rt * 1000,
+    color = aphantasia
+  )) +
+  # linear modelling of the differences
+  geom_line(
+    data = model_explicit_preds_extreme,
+    aes(
+      y = Mean * 1000,
+      group = aphantasia
+    ),
+    position = position_dodge(width = dw),
+    linewidth = 1.5,
+    linetype = 1
+  ) +
+  # predicted means of the model and their SE
+  geom_pointrange2(
+    data = model_explicit_preds_extreme,
+    aes(
+      x = congruence,
+      y = Mean * 1000,
+      ymin = Mean * 1000 - SE * 1000,
+      ymax = Mean * 1000 + SE * 1000,
+      group = aphantasia
+      ),
+    color = "black",
+    position = position_dodge(width = dw),
+    size = 1,
+    linewidth = .75,
+    show.legend = FALSE
+  ) +
+  labs(
+    title = NULL,
+    x = NULL,
+    y = "Response time (ms)"
+    ) +
+  # Aesthetics
+  scale_y_continuous(breaks = breaks_pretty(10)) +
+  scale_x_discrete(labels = c("Congruent", "Incongruent")) +
+  scale_color_okabeito(
+    name = "", 
+    labels = c(" Aphantasic (VVIQ = 16)   ", " Control (VVIQ > 42)")) +
+  theme_modern() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(),
+    axis.ticks.x = element_blank(),
+    axis.title.y = element_text(size = txt),
+    axis.text.x = element_text(size = txt),
+    legend.title = element_text(size = txt),
+    legend.text = element_text(size = txt),
+    legend.position = "top"
+    )
+```
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
