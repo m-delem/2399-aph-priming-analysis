@@ -170,7 +170,7 @@ rm(dfs)
 
 # Self-report questionnaires
 
-We modeled the scores at each questionnaire with Generalized Linear Models (GLMs) to accommodate the non-normal distributions in the sample. To ensure the best fit to the data, we fitted models with Gaussian, Gamma and inverse Gaussian distributions  and compared thel with the AIC and BIC as indices of model quality. The code of the model fitting workflow using the `tidymodels` R package is available below. The quality checks of the optimal models selected, that used Gamma distributions, are displayed in @fig-vviq-model and subsequent tabs. The summary of the estimated marginal means and post-hoc contrast analyses of between-group differences is presented in @tbl-questionnaire-results and depicted in @fig-questionnaire-results.
+We modeled the scores at each questionnaire with Generalized Linear Models (GLMs) to accommodate the non-normal distributions in the sample. To ensure the best fit to the data, we fitted models with Gaussian, Gamma and inverse Gaussian distributions  and compared them with the AIC and BIC as indices of model quality. The code of the model fitting workflow using the `tidymodels` R package is available below. The quality checks of the optimal models selected, that used Gamma distributions, are displayed in @fig-vviq-model and subsequent tabs. The summary of the estimated marginal means and post-hoc contrast analyses of between-group differences is presented in @tbl-questionnaire-results and depicted in @fig-questionnaire-results.
 
 ```{r fitting-glm-questionnaires}
 #| output: false
